@@ -919,7 +919,7 @@ export default function App() {
             <div className="absolute bottom-0 right-1/4 w-72 h-72 rounded-full bg-indigo-500 filter blur-3xl animate-pulse delay-1000" />
           </div>
 
-          <div className="relative z-10 max-w-5xl mx-auto px-4 py-10 sm:py-12 space-y-8">
+          <div className="hidden relative z-10 max-w-5xl mx-auto px-4 py-10 sm:py-12 space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Brand descriptor */}
               <div className="space-y-4">
