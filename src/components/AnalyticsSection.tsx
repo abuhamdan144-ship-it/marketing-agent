@@ -71,6 +71,98 @@ const DEFAULT_COMPETITOR_DATA = [
   { name: 'Modern Exchange', reports: 2, score: 4, level: 'Low Impact' },
 ];
 
+const CustomVisitTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const visitsPld = payload.find((p: any) => p.dataKey === 'visits');
+    const peoplePld = payload.find((p: any) => p.dataKey === 'people');
+
+    return (
+      <div className="bg-slate-900 border border-slate-800 text-slate-100 p-3 rounded-xl shadow-xl space-y-2 min-w-[200px] text-xs font-sans">
+        <div className="border-b border-slate-800 pb-1.5 mb-1 flex justify-between items-center">
+          <span className="text-[10px] font-bold text-slate-400 font-mono uppercase tracking-wider">
+            Operational Month
+          </span>
+          <span className="text-xs font-black text-indigo-400">
+            {label}
+          </span>
+        </div>
+        <div className="space-y-2 pt-0.5">
+          {visitsPld && (
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-1.5 font-medium text-slate-300">
+                <span className="w-2 h-2 rounded-full inline-block bg-[#6366f1]" />
+                Deployments Logged
+              </div>
+              <span className="font-extrabold text-white text-right">
+                {visitsPld.value} visits
+              </span>
+            </div>
+          )}
+          {peoplePld && (
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-1.5 font-medium text-slate-300">
+                <span className="w-2 h-2 rounded-full inline-block bg-[#10b981]" />
+                Audience Reach
+              </div>
+              <span className="font-extrabold text-white text-right">
+                {Number(peoplePld.value).toLocaleString()} reached
+              </span>
+            </div>
+          )}
+        </div>
+        {visitsPld && Number(visitsPld.value) >= 30 && (
+          <div className="border-t border-slate-800/80 pt-1.5 mt-1 text-[9px] text-indigo-300 font-semibold flex items-center gap-1">
+            🚀 Period of high labor camp campaign intensity.
+          </div>
+        )}
+      </div>
+    );
+  }
+  return null;
+};
+
+const CustomCompetitorTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    
+    let badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+    if (data.level?.includes('High')) {
+      badgeColor = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+    } else if (data.level?.includes('Medium')) {
+      badgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+    }
+
+    return (
+      <div className="bg-slate-900 border border-slate-800 text-slate-100 p-3 rounded-xl shadow-xl space-y-2 min-w-[210px] text-xs font-sans">
+        <div className="border-b border-slate-800 pb-1.5 mb-1">
+          <p className="text-xs font-black text-slate-200 line-clamp-1">{data.name}</p>
+          <span className={`inline-block text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border mt-1 ${badgeColor}`}>
+            {data.level}
+          </span>
+        </div>
+        <div className="space-y-1.5 pt-0.5">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-400 font-medium">Monitoring Actions</span>
+            <span className="font-extrabold text-indigo-300">{data.reports} logs</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-400 font-medium">Threat Level Weight</span>
+            <span className="font-extrabold text-amber-400">{data.score} severity score</span>
+          </div>
+        </div>
+        <div className="border-t border-slate-800/80 pt-1.5 mt-1 text-[9px] text-slate-400 leading-relaxed italic">
+          {data.level?.includes('High') ? (
+            <span>🚨 Aggressive fee waiver campaigns detected. Critical threat to local camp market share.</span>
+          ) : (
+            <span>💡 Active remittance operator being standardly monitored.</span>
+          )}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
   // 1. Prepare Visit Growth Data
   const visitChartData = useMemo(() => {
@@ -533,17 +625,7 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
                   axisLine={false}
                   tickLine={false}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1e293b', 
-                    borderRadius: '12px', 
-                    border: 'none', 
-                    color: '#fff',
-                    fontSize: '11px',
-                    fontWeight: 'bold',
-                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
-                  }}
-                />
+                <Tooltip content={<CustomVisitTooltip />} />
                 <Legend 
                   wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '15px' }}
                   iconType="circle"
@@ -608,17 +690,7 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
                   axisLine={false}
                   tickLine={false}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1e293b', 
-                    borderRadius: '12px', 
-                    border: 'none', 
-                    color: '#fff',
-                    fontSize: '11px',
-                    fontWeight: 'bold',
-                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
-                  }}
-                />
+                <Tooltip content={<CustomCompetitorTooltip />} />
                 <Legend 
                   wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '15px' }}
                   iconType="circle"

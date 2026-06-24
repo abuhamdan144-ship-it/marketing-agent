@@ -9,6 +9,7 @@ import AnalyticsSection from './components/AnalyticsSection';
 import GoalTracker from './components/GoalTracker';
 import Tabs from './components/Tabs';
 import Toast from './components/Toast';
+import ExportPreviewModal from './components/ExportPreviewModal';
 import { AppData, Company, Camp, Customer, Visit, Feedback, Complaint, CompetitorIntel, SocialAd, MarketingPlan, Settings } from './types';
 import { generateFullReport, exportPDF, exportExcel, CORRIDORS, SOCIAL_PLATFORMS } from './utils/exportUtils';
 import { 
@@ -50,6 +51,7 @@ export default function App() {
   const [rateSource, setRateSource] = useState<string>('Offline / Loading...');
   const [lastUpdate, setLastUpdate] = useState<string>('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
+  const [isExportPreviewOpen, setIsExportPreviewOpen] = useState<boolean>(false);
 
   // Firebase Auth and Sync state
   const [user, setUser] = useState<{ uid: string } | null>(null);
@@ -862,7 +864,7 @@ export default function App() {
 
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button
-                    onClick={() => exportExcel(appData)}
+                    onClick={() => setIsExportPreviewOpen(true)}
                     className="flex-1 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-xs rounded-xl cursor-pointer"
                   >
                     📦 Export Full Database Backup (Excel)
@@ -878,6 +880,18 @@ export default function App() {
             </div>
           )}
         </main>
+
+        {/* Export Preview Modal */}
+        <ExportPreviewModal
+          isOpen={isExportPreviewOpen}
+          onClose={() => setIsExportPreviewOpen(false)}
+          onConfirm={() => {
+            exportExcel(appData);
+            setIsExportPreviewOpen(false);
+            showToast('Full Excel database compiled and downloaded successfully!', 'success');
+          }}
+          appData={appData}
+        />
 
         {/* Modal Overlay Render */}
         {modalType && (
