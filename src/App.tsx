@@ -1,0 +1,958 @@
+import React, { useState, useEffect } from 'react';
+import Header from './components/Header';
+import Overview from './components/Overview';
+import LiveRates from './components/LiveRates';
+import QuickActions from './components/QuickActions';
+import DataForms from './components/DataForms';
+import ListsAndTables from './components/ListsAndTables';
+import AnalyticsSection from './components/AnalyticsSection';
+import Tabs from './components/Tabs';
+import Toast from './components/Toast';
+import { AppData, Company, Camp, Customer, Visit, Feedback, Complaint, CompetitorIntel, SocialAd, MarketingPlan, Settings } from './types';
+import { generateFullReport, exportPDF, exportExcel, CORRIDORS, SOCIAL_PLATFORMS } from './utils/exportUtils';
+import { 
+  initFirebase, 
+  authenticateAnonymously, 
+  loadUserDataFromCloud, 
+  saveDocumentToCloud, 
+  deleteDocumentFromCloud, 
+  saveSettingsToCloud, 
+  migrateLocalDataToCloud 
+} from './lib/firebase';
+
+const LOCAL_STORAGE_KEY = 'aljadeed_marketing_agent_v3';
+
+const initialData: AppData = {
+  companies: [],
+  camps: [],
+  customers: [],
+  visits: [],
+  feedback: [],
+  complaints: [],
+  competitors: [],
+  social: [],
+  plans: [],
+  settings: {
+    agentName: '',
+    managerWhatsApp: '',
+    managerEmail: '',
+  },
+  rates: {},
+};
+
+export default function App() {
+  const [appData, setAppData] = useState<AppData>(initialData);
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [modalType, setModalType] = useState<string | null>(null);
+  const [isFetchingRates, setIsFetchingRates] = useState<boolean>(false);
+  const [rateSource, setRateSource] = useState<string>('Offline / Loading...');
+  const [lastUpdate, setLastUpdate] = useState<string>('');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
+
+  // Firebase Auth and Sync state
+  const [user, setUser] = useState<{ uid: string } | null>(null);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'loading' | 'synced' | 'error'>('idle');
+
+  // Newsletter state
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
+
+  // Settings inputs
+  const [settingsForm, setSettingsForm] = useState({
+    agentName: '',
+    managerWhatsApp: '',
+    managerEmail: '',
+  });
+
+  // Load Initial Data & Sync with Firebase Cloud
+  useEffect(() => {
+    async function startFirebaseSync() {
+      try {
+        setIsSyncing(true);
+        setSyncStatus('loading');
+        
+        // 1. Initialize Firebase
+        await initFirebase();
+        
+        // 2. Sign in Anonymously
+        const currentUser = await authenticateAnonymously();
+        setUser(currentUser);
+
+        // 3. Load from LocalStorage (migration source / cache)
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        let localDataParsed: AppData | null = null;
+        if (saved) {
+          try {
+            localDataParsed = JSON.parse(saved);
+          } catch (e) {
+            console.error('Error parsing local storage data:', e);
+          }
+        }
+
+        // 4. Load Cloud Data
+        const cloudData = await loadUserDataFromCloud(currentUser.uid);
+        
+        // 5. Detect and execute Migration
+        const hasLocalRecords = localDataParsed && (
+          (localDataParsed.companies?.length || 0) > 0 ||
+          (localDataParsed.camps?.length || 0) > 0 ||
+          (localDataParsed.customers?.length || 0) > 0 ||
+          (localDataParsed.visits?.length || 0) > 0 ||
+          (localDataParsed.feedback?.length || 0) > 0 ||
+          (localDataParsed.complaints?.length || 0) > 0 ||
+          (localDataParsed.competitors?.length || 0) > 0 ||
+          (localDataParsed.social?.length || 0) > 0 ||
+          (localDataParsed.plans?.length || 0) > 0
+        );
+
+        const hasCloudRecords = cloudData && (
+          (cloudData.companies?.length || 0) > 0 ||
+          (cloudData.camps?.length || 0) > 0 ||
+          (cloudData.customers?.length || 0) > 0 ||
+          (cloudData.visits?.length || 0) > 0 ||
+          (cloudData.feedback?.length || 0) > 0 ||
+          (cloudData.complaints?.length || 0) > 0 ||
+          (cloudData.competitors?.length || 0) > 0 ||
+          (cloudData.social?.length || 0) > 0 ||
+          (cloudData.plans?.length || 0) > 0
+        );
+
+        if (hasLocalRecords && !hasCloudRecords && localDataParsed) {
+          showToast('Syncing offline data to safe Firebase cloud database...', 'info');
+          await migrateLocalDataToCloud(localDataParsed, currentUser.uid);
+          const updatedCloudData = await loadUserDataFromCloud(currentUser.uid);
+          
+          const merged: AppData = {
+            companies: (updatedCloudData.companies as Company[]) || [],
+            camps: (updatedCloudData.camps as Camp[]) || [],
+            customers: (updatedCloudData.customers as Customer[]) || [],
+            visits: (updatedCloudData.visits as Visit[]) || [],
+            feedback: (updatedCloudData.feedback as Feedback[]) || [],
+            complaints: (updatedCloudData.complaints as Complaint[]) || [],
+            competitors: (updatedCloudData.competitors as CompetitorIntel[]) || [],
+            social: (updatedCloudData.social as SocialAd[]) || [],
+            plans: (updatedCloudData.plans as MarketingPlan[]) || [],
+            settings: (updatedCloudData.settings as Settings) || { agentName: '', managerWhatsApp: '', managerEmail: '' },
+            rates: localDataParsed.rates || {},
+          };
+          setAppData(merged);
+          setSettingsForm({
+            agentName: merged.settings.agentName || '',
+            managerWhatsApp: merged.settings.managerWhatsApp || '',
+            managerEmail: merged.settings.managerEmail || '',
+          });
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));
+          showToast('Migration completed successfully! Firebase cloud active.', 'success');
+        } else {
+          // Normal flow: pull from cloud
+          const merged: AppData = {
+            companies: (cloudData.companies as Company[]) || [],
+            camps: (cloudData.camps as Camp[]) || [],
+            customers: (cloudData.customers as Customer[]) || [],
+            visits: (cloudData.visits as Visit[]) || [],
+            feedback: (cloudData.feedback as Feedback[]) || [],
+            complaints: (cloudData.complaints as Complaint[]) || [],
+            competitors: (cloudData.competitors as CompetitorIntel[]) || [],
+            social: (cloudData.social as SocialAd[]) || [],
+            plans: (cloudData.plans as MarketingPlan[]) || [],
+            settings: (cloudData.settings as Settings) || { agentName: '', managerWhatsApp: '', managerEmail: '' },
+            rates: (localDataParsed && localDataParsed.rates) || {},
+          };
+          setAppData(merged);
+          setSettingsForm({
+            agentName: merged.settings.agentName || '',
+            managerWhatsApp: merged.settings.managerWhatsApp || '',
+            managerEmail: merged.settings.managerEmail || '',
+          });
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));
+          if (hasCloudRecords) {
+            showToast('Securely loaded from Firebase Cloud storage', 'success');
+          }
+        }
+        setSyncStatus('synced');
+      } catch (error) {
+        console.error('Firebase sync failed, falling back to local database:', error);
+        setSyncStatus('error');
+        showToast('Running in offline-fallback mode', 'warning');
+        
+        // Fallback
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            const validated: AppData = {
+              companies: parsed.companies || [],
+              camps: parsed.camps || [],
+              customers: parsed.customers || [],
+              visits: parsed.visits || [],
+              feedback: parsed.feedback || [],
+              complaints: parsed.complaints || [],
+              competitors: parsed.competitors || [],
+              social: parsed.social || [],
+              plans: parsed.plans || [],
+              settings: parsed.settings || { agentName: '', managerWhatsApp: '', managerEmail: '' },
+              rates: parsed.rates || {},
+            };
+            setAppData(validated);
+            setSettingsForm({
+              agentName: validated.settings.agentName || '',
+              managerWhatsApp: validated.settings.managerWhatsApp || '',
+              managerEmail: validated.settings.managerEmail || '',
+            });
+          } catch (e) {
+            console.error('Failed to load local storage cache fallback', e);
+          }
+        }
+      } finally {
+        setIsSyncing(false);
+      }
+    }
+
+    startFirebaseSync();
+    updateTime();
+  }, []);
+
+  // Sync with Local Storage on Data Change
+  const saveToLocalStorage = (newData: AppData) => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData));
+      setAppData(newData);
+      updateTime();
+    } catch (e) {
+      console.error('Error saving data', e);
+    }
+  };
+
+  const updateTime = () => {
+    const now = new Date();
+    setLastUpdate(now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+  };
+
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    setToast({ message, type });
+  };
+
+  // Fetch Live Rates
+  const fetchRates = async () => {
+    setIsFetchingRates(true);
+    try {
+      const response = await fetch('https://open.er-api.com/v6/latest/OMR');
+      if (!response.ok) throw new Error('Network error');
+      const data = await response.json();
+
+      if (data.result === 'success') {
+        const newRates: Record<string, number> = {};
+        const ratesObj = data.rates || data.conversion_rates || {};
+        CORRIDORS.forEach((c) => {
+          if (ratesObj[c.code]) {
+            newRates[c.id] = ratesObj[c.code];
+          }
+        });
+        const updatedData = {
+          ...appData,
+          rates: {
+            ...newRates,
+            lastFetch: new Date().toISOString(),
+          },
+        };
+        saveToLocalStorage(updatedData);
+        setRateSource(`Live API: Refreshed ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`);
+        showToast('Rates feed updated live from OMR exchange indices', 'success');
+      }
+    } catch (error) {
+      console.error('Rates fetch error:', error);
+      setRateSource('Offline cache used. Reconnecting...');
+      showToast('Offline mode: rate feed loaded from secure local cache', 'warning');
+    } finally {
+      setIsFetchingRates(false);
+    }
+  };
+
+  // Fetch rates on mount once data is verified
+  useEffect(() => {
+    fetchRates();
+    const interval = setInterval(fetchRates, 10 * 60 * 1000); // 10 mins
+    return () => clearInterval(interval);
+  }, []);
+
+  // Save Modal Record Callback
+  const handleSaveModalData = async (formData: any) => {
+    if (!modalType) return;
+
+    const id = Date.now();
+    const date = new Date().toLocaleDateString();
+    const updated = { ...appData };
+    let collectionName = '';
+    let itemToSave: any = null;
+
+    switch (modalType) {
+      case 'company':
+        const newCompany: Company = { id, date, ...formData };
+        updated.companies = [...updated.companies, newCompany];
+        collectionName = 'companies';
+        itemToSave = newCompany;
+        showToast(`Corporate partner "${newCompany.name}" successfully recorded`, 'success');
+        break;
+      case 'camp':
+        const newCamp: Camp = { id, date, ...formData };
+        updated.camps = [...updated.camps, newCamp];
+        collectionName = 'camps';
+        itemToSave = newCamp;
+        showToast(`Labor Camp target "${newCamp.name}" listed successfully`, 'success');
+        break;
+      case 'customer':
+        const newCustomer: Customer = { id, date, ...formData };
+        updated.customers = [...updated.customers, newCustomer];
+        collectionName = 'customers';
+        itemToSave = newCustomer;
+        showToast(`Customer lead "${newCustomer.name}" added to register`, 'success');
+        break;
+      case 'visit':
+        const newVisit: Visit = { id, date, time: new Date().toLocaleTimeString('en-GB'), ...formData };
+        updated.visits = [newVisit, ...updated.visits];
+        collectionName = 'visits';
+        itemToSave = newVisit;
+        showToast(`Field visit at "${newVisit.place}" logged in operations feed`, 'success');
+        break;
+      case 'feedback':
+        const newFeedback: Feedback = { id, date, ...formData };
+        updated.feedback = [newFeedback, ...updated.feedback];
+        collectionName = 'feedback';
+        itemToSave = newFeedback;
+        showToast('Client feedback recorded securely', 'success');
+        break;
+      case 'complaint':
+        const newComplaint: Complaint = { id, date, ...formData };
+        updated.complaints = [newComplaint, ...updated.complaints];
+        collectionName = 'complaints';
+        itemToSave = newComplaint;
+        showToast(`Complaint filed for customer "${newComplaint.customer}"`, 'error');
+        break;
+      case 'competitor':
+        const newCompetitor: CompetitorIntel = { id, date, ...formData };
+        updated.competitors = [newCompetitor, ...updated.competitors];
+        collectionName = 'competitors';
+        itemToSave = newCompetitor;
+        showToast('Competitor market intelligence recorded', 'warning');
+        break;
+      case 'social':
+        const newAd: SocialAd = { id, date, ...formData };
+        updated.social = [newAd, ...updated.social];
+        collectionName = 'social';
+        itemToSave = newAd;
+        showToast(`Social ad campaign "${newAd.title}" formulated`, 'success');
+        break;
+      case 'plan':
+        const newPlan: MarketingPlan = { id, date, ...formData };
+        updated.plans = [newPlan, ...updated.plans];
+        collectionName = 'plans';
+        itemToSave = newPlan;
+        showToast(`Strategic plan "${newPlan.title}" added to active roadmap`, 'success');
+        break;
+      default:
+        break;
+    }
+
+    saveToLocalStorage(updated);
+    setModalType(null);
+
+    // Save to Firebase Cloud in background
+    if (user && collectionName && itemToSave) {
+      try {
+        setSyncStatus('loading');
+        await saveDocumentToCloud(collectionName, itemToSave, user.uid);
+        setSyncStatus('synced');
+      } catch (error) {
+        console.error('Error saving document to Firebase Cloud:', error);
+        setSyncStatus('error');
+        showToast('Saved locally. Cloud upload pending reconnection.', 'warning');
+      }
+    }
+  };
+
+  // Delete Callback
+  const handleDeleteEntry = async (id: number) => {
+    const updated = { ...appData };
+    
+    // Scan lists and determine collection
+    let collectionName = '';
+    if (updated.companies.some((x) => x.id === id)) collectionName = 'companies';
+    else if (updated.camps.some((x) => x.id === id)) collectionName = 'camps';
+    else if (updated.customers.some((x) => x.id === id)) collectionName = 'customers';
+    else if (updated.visits.some((x) => x.id === id)) collectionName = 'visits';
+    else if (updated.feedback.some((x) => x.id === id)) collectionName = 'feedback';
+    else if (updated.complaints.some((x) => x.id === id)) collectionName = 'complaints';
+    else if (updated.competitors.some((x) => x.id === id)) collectionName = 'competitors';
+    else if (updated.social.some((x) => x.id === id)) collectionName = 'social';
+    else if (updated.plans.some((x) => x.id === id)) collectionName = 'plans';
+
+    updated.companies = updated.companies.filter((x) => x.id !== id);
+    updated.camps = updated.camps.filter((x) => x.id !== id);
+    updated.customers = updated.customers.filter((x) => x.id !== id);
+    updated.visits = updated.visits.filter((x) => x.id !== id);
+    updated.feedback = updated.feedback.filter((x) => x.id !== id);
+    updated.complaints = updated.complaints.filter((x) => x.id !== id);
+    updated.competitors = updated.competitors.filter((x) => x.id !== id);
+    updated.social = updated.social.filter((x) => x.id !== id);
+    updated.plans = updated.plans.filter((x) => x.id !== id);
+
+    saveToLocalStorage(updated);
+    showToast('Entry permanently deleted from database', 'warning');
+
+    if (user && collectionName) {
+      try {
+        setSyncStatus('loading');
+        await deleteDocumentFromCloud(collectionName, id);
+        setSyncStatus('synced');
+      } catch (error) {
+        console.error('Error deleting document from Firebase Cloud:', error);
+        setSyncStatus('error');
+      }
+    }
+  };
+
+  // Save Settings
+  const handleSaveSettings = async () => {
+    if (!settingsForm.agentName.trim() || !settingsForm.managerWhatsApp.trim() || !settingsForm.managerEmail.trim()) {
+      showToast('Please fulfill all required configurations in settings', 'error');
+      return;
+    }
+    const cleanWhatsApp = settingsForm.managerWhatsApp.replace(/[^0-9]/g, '');
+    const updated = {
+      ...appData,
+      settings: {
+        agentName: settingsForm.agentName.trim(),
+        managerWhatsApp: cleanWhatsApp,
+        managerEmail: settingsForm.managerEmail.trim(),
+      },
+    };
+    saveToLocalStorage(updated);
+    showToast('Agent dashboard configuration saved successfully', 'success');
+
+    if (user) {
+      try {
+        setSyncStatus('loading');
+        await saveSettingsToCloud(updated.settings, user.uid);
+        setSyncStatus('synced');
+      } catch (error) {
+        console.error('Error saving settings to Firebase Cloud:', error);
+        setSyncStatus('error');
+      }
+    }
+  };
+
+  // Clear Database
+  const handleClearDatabase = async () => {
+    if (window.confirm('🚨 Are you absolutely sure you want to purge the entire database? This is irreversible.')) {
+      const confirmText = window.prompt('Type "DELETE" to confirm data destruction:');
+      if (confirmText === 'DELETE') {
+        const oldData = { ...appData };
+        saveToLocalStorage(initialData);
+        setSettingsForm({ agentName: '', managerWhatsApp: '', managerEmail: '' });
+        showToast('All local logs and configurations have been securely wiped', 'error');
+
+        if (user) {
+          try {
+            setSyncStatus('loading');
+            const collections = [
+              { key: 'companies', name: 'companies' },
+              { key: 'camps', name: 'camps' },
+              { key: 'customers', name: 'customers' },
+              { key: 'visits', name: 'visits' },
+              { key: 'feedback', name: 'feedback' },
+              { key: 'complaints', name: 'complaints' },
+              { key: 'competitors', name: 'competitors' },
+              { key: 'social', name: 'social' },
+              { key: 'plans', name: 'plans' }
+            ];
+            for (const col of collections) {
+              const list = (oldData as any)[col.key] || [];
+              for (const item of list) {
+                await deleteDocumentFromCloud(col.name, item.id);
+              }
+            }
+            await deleteDocumentFromCloud('settings', user.uid);
+            setSyncStatus('synced');
+            showToast('All Firebase Cloud records purged successfully', 'success');
+          } catch (error) {
+            console.error('Error clearing Firebase Cloud database:', error);
+            setSyncStatus('error');
+          }
+        }
+      } else {
+        showToast('Database purge aborted', 'info');
+      }
+    }
+  };
+
+  // WhatsApp Report Send
+  const handleSendWhatsApp = () => {
+    const phone = appData.settings.managerWhatsApp;
+    if (!phone) {
+      showToast('Configuration error: Specify manager phone in settings first', 'error');
+      setActiveTab('settings');
+      return;
+    }
+    const reportText = generateFullReport(appData);
+    const encoded = encodeURIComponent(reportText);
+    window.open(`https://wa.me/${phone}?text=${encoded}`, '_blank');
+    showToast('Redirecting to WhatsApp with full operations report...', 'success');
+  };
+
+  // Email Report Send
+  const handleSendEmail = () => {
+    const email = appData.settings.managerEmail;
+    if (!email) {
+      showToast('Configuration error: Specify manager email in settings first', 'error');
+      setActiveTab('settings');
+      return;
+    }
+    const reportText = generateFullReport(appData);
+    const subject = encodeURIComponent(`Al Jadeed Marketing Intel Report - ${new Date().toLocaleDateString()}`);
+    const body = encodeURIComponent(reportText);
+    window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+    showToast('Redirecting to default mail client...', 'success');
+  };
+
+  // Handle newsletter subscription
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newsletterEmail.trim()) {
+      setNewsletterSubscribed(true);
+      setNewsletterEmail('');
+      setTimeout(() => setNewsletterSubscribed(false), 5000);
+    }
+  };
+
+  const getActiveTabLabel = () => {
+    const labelMap: Record<string, string> = {
+      dashboard: 'Dashboard Home',
+      analytics: 'Operations Analytics & Intel',
+      companies: 'Registered Companies',
+      camps: 'Labor Camps Target List',
+      customers: 'Leads & Customers Register',
+      visits: 'Logged Field Visits',
+      feedback: 'Client Reviews & Feedback',
+      complaints: 'Customer Disputes & Complaints',
+      competitors: 'Competitor Strategies Tracker',
+      social: 'Social Ad Campaigns',
+      plans: 'Active Marketing Plans',
+      settings: 'Dashboard Configurations',
+    };
+    return labelMap[activeTab] || 'Al Jadeed Workspace';
+  };
+
+  return (
+    <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50 font-sans text-slate-800 pb-16 lg:pb-0">
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
+      {/* Tabs / Sidebar navigation */}
+      <Tabs
+        activeTab={activeTab}
+        onTabChange={(tab) => setActiveTab(tab)}
+        badges={{
+          companies: appData.companies.length,
+          camps: appData.camps.length,
+          customers: appData.customers.length,
+          visits: appData.visits.length,
+        }}
+      />
+
+      {/* Main Container */}
+      <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
+        {/* Header Block */}
+        <Header
+          lastUpdate={lastUpdate}
+          isOnline={rateSource.includes('Live')}
+          rateSource={rateSource}
+          syncStatus={syncStatus}
+        />
+
+        {/* Dynamic Workspace Container */}
+        <main className="flex-1 p-4 sm:p-6 max-w-5xl w-full mx-auto space-y-6">
+          {/* Welcome Alert banner if settings not set */}
+          {!appData.settings.agentName && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-indigo-600 p-4 rounded-r-xl shadow-sm">
+              <div className="flex">
+                <div className="flex-shrink-0 text-xl">ℹ️</div>
+                <div className="ml-3">
+                  <h3 className="text-xs font-bold text-indigo-900 uppercase tracking-wider">
+                    Agent Profile Incomplete
+                  </h3>
+                  <div className="mt-1 text-xs text-slate-600 leading-relaxed">
+                    Set your Agent Credentials, Manager WhatsApp, and Email under the{' '}
+                    <button
+                      onClick={() => setActiveTab('settings')}
+                      className="font-bold text-indigo-700 underline hover:text-indigo-800 cursor-pointer"
+                    >
+                      Settings tab
+                    </button>{' '}
+                    to activate WhatsApp report relays and customized PDF report generation.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Render Active View */}
+          {activeTab === 'dashboard' && (
+            <div className="space-y-6 animate-fade-in">
+              {/* Overview Counts */}
+              <Overview
+                appData={appData}
+                onNavigate={(tab) => setActiveTab(tab)}
+              />
+
+              {/* Exchange Feed */}
+              <LiveRates
+                rates={appData.rates}
+                rateSource={rateSource}
+                isFetching={isFetchingRates}
+                onRefresh={fetchRates}
+              />
+
+              {/* Quick Log Triggers */}
+              <QuickActions
+                onOpenModal={(type) => setModalType(type)}
+                onExportAll={() => exportExcel(appData)}
+              />
+
+              {/* Report Relays & Exports Block */}
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">
+                  📤 Report Compilation &amp; Export Center
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <button
+                    onClick={handleSendWhatsApp}
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition-colors active:scale-95"
+                  >
+                    💬 WhatsApp Relay
+                  </button>
+                  <button
+                    onClick={handleSendEmail}
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition-colors active:scale-95"
+                  >
+                    📧 Email Relay
+                  </button>
+                  <button
+                    onClick={() => exportPDF(appData)}
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition-colors active:scale-95"
+                  >
+                    📄 Export PDF Docket
+                  </button>
+                </div>
+              </div>
+
+              {/* Recent Field Activities Feed */}
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">
+                  🕒 Recent Operations Feed
+                </h3>
+                <div className="space-y-2.5">
+                  {[
+                    ...appData.companies.map((c) => ({ icon: '🏢', title: `Company added: ${c.name}`, date: c.date })),
+                    ...appData.camps.map((c) => ({ icon: '🏕️', title: `Camp added: ${c.name}`, date: c.date })),
+                    ...appData.visits.slice(0, 3).map((v) => ({ icon: '📍', title: `Visit: ${v.place} (${v.type.toUpperCase()})`, date: `${v.date} ${v.time}` })),
+                    ...appData.feedback.slice(0, 3).map((f) => ({ icon: '💬', title: `Feedback from ${f.customer || 'Anonymous'}`, date: f.date })),
+                    ...appData.complaints.slice(0, 3).map((c) => ({ icon: '⚠️', title: `Complaint logged for ${c.customer}`, date: c.date })),
+                    ...appData.competitors.slice(0, 3).map((c) => ({ icon: '🏪', title: `Competitor Intel: ${c.name}`, date: c.date })),
+                  ]
+                    .sort((a, b) => b.date.localeCompare(a.date))
+                    .slice(0, 6)
+                    .map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl">{item.icon}</span>
+                          <span className="text-xs font-bold text-slate-700">{item.title}</span>
+                        </div>
+                        <span className="text-[10px] font-bold font-mono text-slate-400">
+                          {item.date}
+                        </span>
+                      </div>
+                    ))}
+
+                  {appData.companies.length === 0 && appData.camps.length === 0 && (
+                    <div className="text-center py-6 text-xs text-slate-400 font-medium">
+                      No logs registered in database yet. Use "Quick Actions" to register entries!
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Analytics View */}
+          {activeTab === 'analytics' && (
+            <div className="animate-fade-in">
+              <AnalyticsSection appData={appData} />
+            </div>
+          )}
+
+          {/* List views */}
+          {activeTab !== 'dashboard' && activeTab !== 'analytics' && activeTab !== 'settings' && (
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
+              <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider font-display">
+                    {getActiveTabLabel()}
+                  </h2>
+                  <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                    Records and intelligence relating to Al Jadeed field ops
+                  </p>
+                </div>
+                <span className="bg-indigo-50 text-indigo-700 text-xs font-extrabold px-2.5 py-1 rounded-lg border border-indigo-100">
+                  Total: {appData[activeTab as keyof AppData] ? (appData[activeTab as keyof AppData] as any[]).length : 0}
+                </span>
+              </div>
+
+              <ListsAndTables
+                type={activeTab as any}
+                data={appData[activeTab as keyof AppData] as any[]}
+                onDelete={handleDeleteEntry}
+                onOpenModal={(type) => setModalType(type)}
+              />
+            </div>
+          )}
+
+          {/* Settings Tab */}
+          {activeTab === 'settings' && (
+            <div className="space-y-6">
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
+                <div className="border-b border-slate-100 pb-3">
+                  <h2 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider font-display">
+                    ⚙️ Dashboard Configuration
+                  </h2>
+                  <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                    Personalize your operations relay numbers and reporting signatures
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      Your Full Agent Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Farhan Al Balushi"
+                      value={settingsForm.agentName}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, agentName: e.target.value })}
+                      className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      Manager WhatsApp (Including Country Code) <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 96898765432"
+                      value={settingsForm.managerWhatsApp}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, managerWhatsApp: e.target.value })}
+                      className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none"
+                    />
+                    <small className="text-[10px] text-slate-400 font-semibold mt-1 block">
+                      Include country code (e.g. 968 for Oman) without + or preceding zeros.
+                    </small>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      Manager Email <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="e.g. ops.manager@aljadeed.com"
+                      value={settingsForm.managerEmail}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, managerEmail: e.target.value })}
+                      className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleSaveSettings}
+                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition-colors"
+                  >
+                    💾 Save configurations
+                  </button>
+                </div>
+              </div>
+
+              {/* Data wipe */}
+              <div className="bg-rose-50/50 rounded-2xl p-5 border border-rose-100 space-y-4">
+                <div>
+                  <h4 className="text-xs font-extrabold text-rose-800 uppercase tracking-wider">
+                    ⚠️ Sensitive System Commands
+                  </h4>
+                  <p className="text-[11px] text-rose-600/80 font-semibold mt-0.5">
+                    Actions taken here will purge data permanently. Export backup sheets first.
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => exportExcel(appData)}
+                    className="flex-1 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-xs rounded-xl cursor-pointer"
+                  >
+                    📦 Export Full Database Backup (Excel)
+                  </button>
+                  <button
+                    onClick={handleClearDatabase}
+                    className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition-colors"
+                  >
+                    🗑️ Wipe Local Database
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+
+        {/* Modal Overlay Render */}
+        {modalType && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl p-5 sm:p-6 w-full max-w-lg shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto animate-zoom-in">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider font-display">
+                  {modalType === 'company' && '🏢 Add Company Account'}
+                  {modalType === 'camp' && '🏕️ Add Labor Camp'}
+                  {modalType === 'customer' && '👤 Enroll Customer Lead'}
+                  {modalType === 'visit' && '📍 Log Field Visit'}
+                  {modalType === 'feedback' && '💬 Record Customer Feedback'}
+                  {modalType === 'complaint' && '⚠️ File Customer Dispute'}
+                  {modalType === 'competitor' && '🏪 Record Competitor Intel'}
+                  {modalType === 'social' && '📱 Launch Social Campaign'}
+                  {modalType === 'plan' && '📋 Formulate Marketing Plan'}
+                </h3>
+                <button
+                  onClick={() => setModalType(null)}
+                  className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg text-sm cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <DataForms
+                type={modalType}
+                onSave={handleSaveModalData}
+                onClose={() => setModalType(null)}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Cinematic Footer Section */}
+        <footer className="relative w-full overflow-hidden bg-slate-950 text-slate-300 mt-12 border-t border-slate-800">
+          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-10">
+            <div className="absolute top-0 left-1/4 w-72 h-72 rounded-full bg-blue-500 filter blur-3xl animate-pulse" />
+            <div className="absolute bottom-0 right-1/4 w-72 h-72 rounded-full bg-indigo-500 filter blur-3xl animate-pulse delay-1000" />
+          </div>
+
+          <div className="relative z-10 max-w-5xl mx-auto px-4 py-10 sm:py-12 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Brand descriptor */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 text-xl bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl shadow-lg text-white">
+                    🏦
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-white tracking-wide font-display">
+                      Al Jadeed Exchange
+                    </h2>
+                    <p className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold">
+                      Trust · Remittance · Integrity
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed font-medium">
+                  Established in 1985, Al Jadeed Exchange stands as Muscat's premier exchange corridor.
+                  Empowering labor camps, SMEs, and retail customers with transparent, ultra-fast transfers.
+                </p>
+              </div>
+
+              {/* Contacts / Info */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                  Contact Headquarters
+                </h3>
+                <div className="space-y-2 text-xs text-slate-400 font-medium">
+                  <p className="flex items-center gap-2">
+                    <span>📍</span> Ruwi Main Commercial District, Muscat, Oman
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <span>📞</span> +968 2478 5432
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <span>✉️</span> compliance@aljadeedexchange.om
+                  </p>
+                </div>
+              </div>
+
+              {/* Newsletter subscribe */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                  Exchange Bulletins
+                </h3>
+                <p className="text-xs text-slate-400 font-medium">
+                  Stay updated with live remittance incentives and major corridor rate updates.
+                </p>
+                {newsletterSubscribed ? (
+                  <div className="text-emerald-400 text-xs font-bold bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-xl animate-fade-in flex items-center gap-1.5">
+                    <span>✅</span> Bulletin subscription confirmed successfully!
+                  </div>
+                ) : (
+                  <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
+                    <input
+                      required
+                      type="email"
+                      placeholder="Agent or partner email"
+                      value={newsletterEmail}
+                      onChange={(e) => setNewsletterEmail(e.target.value)}
+                      className="flex-1 bg-slate-900 border border-slate-800 text-white rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-500"
+                    />
+                    <button
+                      type="submit"
+                      className="px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-md transition-colors cursor-pointer"
+                    >
+                      Subscribe
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Bar */}
+            <div className="pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500 font-semibold">
+              <div>
+                © {new Date().getFullYear()} Al Jadeed Exchange. All Rights Reserved. Made with{' '}
+                <span className="text-rose-500 animate-pulse">❤️</span> in Muscat, Oman.
+              </div>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg border border-slate-800 transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  Scroll To Top ↑
+                </button>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
+}

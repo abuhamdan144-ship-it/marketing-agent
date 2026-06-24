@@ -1,0 +1,130 @@
+{
+  "collections": {
+    "companies": {
+      "schema": {
+        "id": "string",
+        "name": "string",
+        "contact": "string",
+        "phone": "string",
+        "address": "string",
+        "boss_name": "string",
+        "boss_phone": "string",
+        "notes": "string",
+        "date": "string",
+        "userId": "string"
+      },
+      "indexes": []
+    },
+    "camps": {
+      "schema": {
+        "id": "string",
+        "name": "string",
+        "location": "string",
+        "company": "string",
+        "boss_name": "string",
+        "boss_phone": "string",
+        "workers": "number",
+        "notes": "string",
+        "date": "string",
+        "userId": "string"
+      },
+      "indexes": []
+    },
+    "customers": {
+      "schema": {
+        "id": "string",
+        "name": "string",
+        "phone": "string",
+        "location": "string",
+        "type": "string",
+        "notes": "string",
+        "date": "string",
+        "userId": "string"
+      },
+      "indexes": []
+    },
+    "visits": {
+      "schema": {
+        "id": "string",
+        "place": "string",
+        "type": "string",
+        "people": "number",
+        "notes": "string",
+        "date": "string",
+        "time": "string",
+        "userId": "string"
+      },
+      "indexes": []
+    },
+    "feedback": {
+      "schema": {
+        "id": "string",
+        "customer": "string",
+        "type": "string",
+        "rating": "number",
+        "feedback": "string",
+        "date": "string",
+        "userId": "string"
+      },
+      "indexes": []
+    },
+    "complaints": {
+      "schema": {
+        "id": "string",
+        "customer": "string",
+        "category": "string",
+        "status": "string",
+        "description": "string",
+        "date": "string",
+        "userId": "string"
+      },
+      "indexes": []
+    },
+    "competitors": {
+      "schema": {
+        "id": "string",
+        "name": "string",
+        "strategy": "string",
+        "impact": "string",
+        "notes": "string",
+        "date": "string",
+        "userId": "string"
+      },
+      "indexes": []
+    },
+    "social": {
+      "schema": {
+        "id": "string",
+        "platform": "string",
+        "title": "string",
+        "budget": "string",
+        "status": "string",
+        "notes": "string",
+        "date": "string",
+        "userId": "string"
+      },
+      "indexes": []
+    },
+    "plans": {
+      "schema": {
+        "id": "string",
+        "title": "string",
+        "details": "string",
+        "budget": "string",
+        "status": "string",
+        "date": "string",
+        "userId": "string"
+      },
+      "indexes": []
+    },
+    "settings": {
+      "schema": {
+        "userId": "string",
+        "agentName": "string",
+        "managerWhatsApp": "string",
+        "managerEmail": "string"
+      },
+      "indexes": []
+    }
+  }
+}

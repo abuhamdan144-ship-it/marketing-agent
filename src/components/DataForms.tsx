@@ -1,0 +1,923 @@
+import React, { useState } from 'react';
+
+interface DataFormsProps {
+  type: string;
+  onSave: (data: any) => void;
+  onClose: () => void;
+}
+
+export default function DataForms({ type, onSave, onClose }: DataFormsProps) {
+  // Form States
+  const [companyForm, setCompanyForm] = useState({
+    name: '',
+    contact: '',
+    phone: '',
+    address: '',
+    boss_name: '',
+    boss_phone: '',
+    notes: '',
+  });
+
+  const [campForm, setCampForm] = useState({
+    name: '',
+    location: '',
+    company: '',
+    boss_name: '',
+    boss_phone: '',
+    workers: '',
+    notes: '',
+  });
+
+  const [customerForm, setCustomerForm] = useState({
+    name: '',
+    phone: '',
+    location: '',
+    type: 'Individual',
+    notes: '',
+  });
+
+  const [visitForm, setVisitForm] = useState({
+    place: '',
+    type: 'shop',
+    people: '0',
+    notes: '',
+  });
+
+  const [feedbackForm, setFeedbackForm] = useState({
+    customer: '',
+    type: 'Positive',
+    rating: '5',
+    feedback: '',
+  });
+
+  const [complaintForm, setComplaintForm] = useState({
+    customer: '',
+    category: 'Service',
+    status: 'Open',
+    description: '',
+  });
+
+  const [competitorForm, setCompetitorForm] = useState({
+    name: '',
+    strategy: '',
+    impact: 'Medium',
+    notes: '',
+  });
+
+  const [socialForm, setSocialForm] = useState({
+    platform: 'facebook',
+    title: '',
+    budget: '',
+    status: 'Active',
+    notes: '',
+  });
+
+  const [planForm, setPlanForm] = useState({
+    title: '',
+    details: '',
+    budget: '',
+    status: 'Active',
+  });
+
+  const handleCompanySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!companyForm.name.trim()) return;
+    onSave(companyForm);
+  };
+
+  const handleCampSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!campForm.name.trim() || !campForm.location.trim() || !campForm.boss_name.trim() || !campForm.boss_phone.trim()) return;
+    onSave({
+      ...campForm,
+      workers: parseInt(campForm.workers) || 0,
+    });
+  };
+
+  const handleCustomerSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customerForm.name.trim()) return;
+    onSave(customerForm);
+  };
+
+  const handleVisitSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!visitForm.place.trim()) return;
+    onSave({
+      ...visitForm,
+      people: parseInt(visitForm.people) || 0,
+    });
+  };
+
+  const handleFeedbackSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!feedbackForm.feedback.trim()) return;
+    onSave({
+      ...feedbackForm,
+      rating: parseInt(feedbackForm.rating) || 5,
+    });
+  };
+
+  const handleComplaintSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!complaintForm.customer.trim() || !complaintForm.description.trim()) return;
+    onSave(complaintForm);
+  };
+
+  const handleCompetitorSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!competitorForm.name.trim() || !competitorForm.strategy.trim()) return;
+    onSave(competitorForm);
+  };
+
+  const handleSocialSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!socialForm.title.trim()) return;
+    onSave(socialForm);
+  };
+
+  const handlePlanSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!planForm.title.trim() || !planForm.details.trim()) return;
+    onSave(planForm);
+  };
+
+  switch (type) {
+    case 'company':
+      return (
+        <form onSubmit={handleCompanySubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Company Name <span className="text-rose-500">*</span>
+            </label>
+            <input
+              required
+              type="text"
+              placeholder="e.g. Muscat Trading LLC"
+              value={companyForm.name}
+              onChange={(e) => setCompanyForm({ ...companyForm, name: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Contact Person
+              </label>
+              <input
+                type="text"
+                placeholder="Manager / HR"
+                value={companyForm.contact}
+                onChange={(e) => setCompanyForm({ ...companyForm, contact: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Phone Number
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 968xxxx"
+                value={companyForm.phone}
+                onChange={(e) => setCompanyForm({ ...companyForm, phone: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Address / Location
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Ruwi, Muscat"
+              value={companyForm.address}
+              onChange={(e) => setCompanyForm({ ...companyForm, address: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3 p-3 bg-indigo-50/50 rounded-xl border border-indigo-100">
+            <div>
+              <label className="block text-xs font-bold text-indigo-700 uppercase tracking-wider mb-1">
+                Camp Boss Name
+              </label>
+              <input
+                type="text"
+                placeholder="Name"
+                value={companyForm.boss_name}
+                onChange={(e) => setCompanyForm({ ...companyForm, boss_name: e.target.value })}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-indigo-700 uppercase tracking-wider mb-1">
+                Camp Boss Phone
+              </label>
+              <input
+                type="text"
+                placeholder="Phone"
+                value={companyForm.boss_phone}
+                onChange={(e) => setCompanyForm({ ...companyForm, boss_phone: e.target.value })}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Additional Notes
+            </label>
+            <textarea
+              placeholder="Record promotions, employee count, or negotiation points..."
+              value={companyForm.notes}
+              onChange={(e) => setCompanyForm({ ...companyForm, notes: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-20 resize-none"
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm cursor-pointer hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-950 to-indigo-900 hover:from-blue-900 hover:to-indigo-800 text-white font-bold text-sm shadow-md cursor-pointer transition-colors"
+            >
+              Save Company
+            </button>
+          </div>
+        </form>
+      );
+
+    case 'camp':
+      return (
+        <form onSubmit={handleCampSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Camp Name <span className="text-rose-500">*</span>
+              </label>
+              <input
+                required
+                type="text"
+                placeholder="e.g. Ghala Camp A"
+                value={campForm.name}
+                onChange={(e) => setCampForm({ ...campForm, name: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Location / Area <span className="text-rose-500">*</span>
+              </label>
+              <input
+                required
+                type="text"
+                placeholder="e.g. Ghala Industrial"
+                value={campForm.location}
+                onChange={(e) => setCampForm({ ...campForm, location: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Associated Company
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Al Hashar LLC"
+                value={campForm.company}
+                onChange={(e) => setCampForm({ ...campForm, company: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Workers Count
+              </label>
+              <input
+                type="number"
+                placeholder="e.g. 250"
+                value={campForm.workers}
+                onChange={(e) => setCampForm({ ...campForm, workers: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 p-3 bg-amber-50/50 rounded-xl border border-amber-100">
+            <div>
+              <label className="block text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">
+                Camp Boss Name <span className="text-rose-500">*</span>
+              </label>
+              <input
+                required
+                type="text"
+                placeholder="Camp Boss"
+                value={campForm.boss_name}
+                onChange={(e) => setCampForm({ ...campForm, boss_name: e.target.value })}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">
+                Boss Phone <span className="text-rose-500">*</span>
+              </label>
+              <input
+                required
+                type="text"
+                placeholder="968xxxx"
+                value={campForm.boss_phone}
+                onChange={(e) => setCampForm({ ...campForm, boss_phone: e.target.value })}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Camp Notes / Highlights
+            </label>
+            <textarea
+              placeholder="e.g. Majority Bangladeshi/Indian workers. Best remittance timing: Friday afternoon."
+              value={campForm.notes}
+              onChange={(e) => setCampForm({ ...campForm, notes: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-20 resize-none"
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm cursor-pointer hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-950 to-indigo-900 hover:from-blue-900 hover:to-indigo-800 text-white font-bold text-sm shadow-md cursor-pointer transition-colors"
+            >
+              Save Labor Camp
+            </button>
+          </div>
+        </form>
+      );
+
+    case 'customer':
+      return (
+        <form onSubmit={handleCustomerSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Customer Name <span className="text-rose-500">*</span>
+            </label>
+            <input
+              required
+              type="text"
+              placeholder="Full Name"
+              value={customerForm.name}
+              onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Phone Number
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 968xxxx"
+                value={customerForm.phone}
+                onChange={(e) => setCustomerForm({ ...customerForm, phone: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Location
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Seeb, Muscat"
+                value={customerForm.location}
+                onChange={(e) => setCustomerForm({ ...customerForm, location: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Segment Type
+            </label>
+            <select
+              value={customerForm.type}
+              onChange={(e) => setCustomerForm({ ...customerForm, type: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="Individual">Individual Client</option>
+              <option value="Business">Business Owner</option>
+              <option value="Wholesale">Wholesale Remitter</option>
+              <option value="Retail">Retail Walk-in</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Remarks
+            </label>
+            <textarea
+              placeholder="e.g. Regularly remits 300 OMR monthly to India"
+              value={customerForm.notes}
+              onChange={(e) => setCustomerForm({ ...customerForm, notes: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-20 resize-none"
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm cursor-pointer hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-950 to-indigo-900 hover:from-blue-900 hover:to-indigo-800 text-white font-bold text-sm shadow-md cursor-pointer transition-colors"
+            >
+              Save Customer
+            </button>
+          </div>
+        </form>
+      );
+
+    case 'visit':
+      return (
+        <form onSubmit={handleVisitSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Location / Place Visited <span className="text-rose-500">*</span>
+            </label>
+            <input
+              required
+              type="text"
+              placeholder="e.g. Galfar Labor Camp Seeb"
+              value={visitForm.place}
+              onChange={(e) => setVisitForm({ ...visitForm, place: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Type of Spot
+              </label>
+              <select
+                value={visitForm.type}
+                onChange={(e) => setVisitForm({ ...visitForm, type: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+                <option value="shop">🛒 Retail / Shop</option>
+                <option value="camp">🏕️ Labor Camp</option>
+                <option value="crowd">👥 Public / Crowd Spot</option>
+                <option value="company">🏢 Corporate Office</option>
+                <option value="other">📍 Other Location</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Est. Crowd Size
+              </label>
+              <input
+                type="number"
+                placeholder="e.g. 50"
+                value={visitForm.people}
+                onChange={(e) => setVisitForm({ ...visitForm, people: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Field Observations
+            </label>
+            <textarea
+              placeholder="e.g. Distributed 100 flyers. Great interest in BDT high exchange rate promotions."
+              value={visitForm.notes}
+              onChange={(e) => setVisitForm({ ...visitForm, notes: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-20 resize-none"
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm cursor-pointer hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-950 to-indigo-900 hover:from-blue-900 hover:to-indigo-800 text-white font-bold text-sm shadow-md cursor-pointer transition-colors"
+            >
+              Log Visit
+            </button>
+          </div>
+        </form>
+      );
+
+    case 'feedback':
+      return (
+        <form onSubmit={handleFeedbackSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Customer Name / Account
+              </label>
+              <input
+                type="text"
+                placeholder="Anonymous / Named"
+                value={feedbackForm.customer}
+                onChange={(e) => setFeedbackForm({ ...feedbackForm, customer: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Rating (1 to 5 Stars)
+              </label>
+              <select
+                value={feedbackForm.rating}
+                onChange={(e) => setFeedbackForm({ ...feedbackForm, rating: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+                <option value="5">⭐⭐⭐⭐⭐ Excellent (5)</option>
+                <option value="4">⭐⭐⭐⭐ Good (4)</option>
+                <option value="3">⭐⭐⭐ Neutral (3)</option>
+                <option value="2">⭐⭐ Fair (2)</option>
+                <option value="1">⭐ Poor (1)</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              General Vibe
+            </label>
+            <select
+              value={feedbackForm.type}
+              onChange={(e) => setFeedbackForm({ ...feedbackForm, type: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="Positive">👍 Highly Satisfied / Positive</option>
+              <option value="Neutral">😐 Indifferent / Neutral</option>
+              <option value="Negative">👎 Unsatisfied / Negative</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Detailed Comments <span className="text-rose-500">*</span>
+            </label>
+            <textarea
+              required
+              placeholder="e.g. Customer extremely pleased with app speed but suggested lowering bank transfer transaction fee."
+              value={feedbackForm.feedback}
+              onChange={(e) => setFeedbackForm({ ...feedbackForm, feedback: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-24 resize-none"
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm cursor-pointer hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-950 to-indigo-900 hover:from-blue-900 hover:to-indigo-800 text-white font-bold text-sm shadow-md cursor-pointer transition-colors"
+            >
+              Save Feedback
+            </button>
+          </div>
+        </form>
+      );
+
+    case 'complaint':
+      return (
+        <form onSubmit={handleComplaintSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Customer / Account Name <span className="text-rose-500">*</span>
+            </label>
+            <input
+              required
+              type="text"
+              placeholder="Customer Name"
+              value={complaintForm.customer}
+              onChange={(e) => setComplaintForm({ ...complaintForm, customer: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Category
+              </label>
+              <select
+                value={complaintForm.category}
+                onChange={(e) => setComplaintForm({ ...complaintForm, category: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+                <option value="Service">App / Digital Service</option>
+                <option value="Product">Remittance Transit Error</option>
+                <option value="Pricing">Exchange Rate Difference</option>
+                <option value="Staff">Branch Staff Conduct</option>
+                <option value="Other">Other Issues</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Resolution Status
+              </label>
+              <select
+                value={complaintForm.status}
+                onChange={(e) => setComplaintForm({ ...complaintForm, status: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+                <option value="Open">🔴 Open / Urgent</option>
+                <option value="In Progress">🟡 Processing</option>
+                <option value="Resolved">🟢 Settled / Resolved</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Description of Complaint <span className="text-rose-500">*</span>
+            </label>
+            <textarea
+              required
+              placeholder="Provide a highly explicit explanation of the incident..."
+              value={complaintForm.description}
+              onChange={(e) => setComplaintForm({ ...complaintForm, description: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-24 resize-none"
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm cursor-pointer hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-md cursor-pointer transition-colors"
+            >
+              File Complaint
+            </button>
+          </div>
+        </form>
+      );
+
+    case 'competitor':
+      return (
+        <form onSubmit={handleCompetitorSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Competitor Name <span className="text-rose-500">*</span>
+            </label>
+            <input
+              required
+              type="text"
+              placeholder="e.g. Western Union / LuLu Exchange"
+              value={competitorForm.name}
+              onChange={(e) => setCompetitorForm({ ...competitorForm, name: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Observed Strategy / Promotion <span className="text-rose-500">*</span>
+            </label>
+            <input
+              required
+              type="text"
+              placeholder="e.g. Zero-fee remittance weekend promotion for PKR corridor"
+              value={competitorForm.strategy}
+              onChange={(e) => setCompetitorForm({ ...competitorForm, strategy: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Our Threat Level / Impact
+            </label>
+            <select
+              value={competitorForm.impact}
+              onChange={(e) => setCompetitorForm({ ...competitorForm, impact: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="High">🔥 Extremely High Threat</option>
+              <option value="Medium">⚠️ Moderate Impact</option>
+              <option value="Low">💡 Low / Informational</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Notes
+            </label>
+            <textarea
+              placeholder="Detail actions we should take to counter..."
+              value={competitorForm.notes}
+              onChange={(e) => setCompetitorForm({ ...competitorForm, notes: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-20 resize-none"
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm cursor-pointer hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-950 to-indigo-900 hover:from-blue-900 hover:to-indigo-800 text-white font-bold text-sm shadow-md cursor-pointer transition-colors"
+            >
+              Save Intel
+            </button>
+          </div>
+        </form>
+      );
+
+    case 'social':
+      return (
+        <form onSubmit={handleSocialSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Platform <span className="text-rose-500">*</span>
+              </label>
+              <select
+                value={socialForm.platform}
+                onChange={(e) => setSocialForm({ ...socialForm, platform: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+                <option value="facebook">📘 Facebook</option>
+                <option value="instagram">📸 Instagram</option>
+                <option value="tiktok">🎵 TikTok</option>
+                <option value="youtube">▶️ YouTube</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Campaign Status
+              </label>
+              <select
+                value={socialForm.status}
+                onChange={(e) => setSocialForm({ ...socialForm, status: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+                <option value="Active">🟢 Active</option>
+                <option value="Pending">🟡 Scheduled</option>
+                <option value="Completed">⚪ Completed</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Campaign Ad Title <span className="text-rose-500">*</span>
+            </label>
+            <input
+              required
+              type="text"
+              placeholder="e.g. Eid Al Fitr Remittance Mega Prize Campaign"
+              value={socialForm.title}
+              onChange={(e) => setSocialForm({ ...socialForm, title: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Ad Budget (OMR)
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. 350 OMR"
+              value={socialForm.budget}
+              onChange={(e) => setSocialForm({ ...socialForm, budget: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Audience / Target Corridor Details
+            </label>
+            <textarea
+              placeholder="Targeting South Asian labor expats in Ghala / Seeb area, age group 25-50."
+              value={socialForm.notes}
+              onChange={(e) => setSocialForm({ ...socialForm, notes: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-20 resize-none"
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm cursor-pointer hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-950 to-indigo-900 hover:from-blue-900 hover:to-indigo-800 text-white font-bold text-sm shadow-md cursor-pointer transition-colors"
+            >
+              Create Campaign
+            </button>
+          </div>
+        </form>
+      );
+
+    case 'plan':
+      return (
+        <form onSubmit={handlePlanSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Plan Title <span className="text-rose-500">*</span>
+            </label>
+            <input
+              required
+              type="text"
+              placeholder="e.g. Q3 Labor Camps Outreach Initiative"
+              value={planForm.title}
+              onChange={(e) => setPlanForm({ ...planForm, title: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Estimated Budget
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 1,500 OMR"
+                value={planForm.budget}
+                onChange={(e) => setPlanForm({ ...planForm, budget: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Initial Status
+              </label>
+              <select
+                value={planForm.status}
+                onChange={(e) => setPlanForm({ ...planForm, status: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+                <option value="Active">🟢 Active / Implementing</option>
+                <option value="Pending">🟡 Under Consideration</option>
+                <option value="On Hold">⏸️ Suspended / On Hold</option>
+                <option value="Completed">⚪ Archived / Completed</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Detailed Deliverables &amp; Objectives <span className="text-rose-500">*</span>
+            </label>
+            <textarea
+              required
+              placeholder="Describe tasks, locations, agents involved, and expected remittance volume goals..."
+              value={planForm.details}
+              onChange={(e) => setPlanForm({ ...planForm, details: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-32"
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm cursor-pointer hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-bold text-sm shadow-md cursor-pointer transition-colors"
+            >
+              Formulate Plan
+            </button>
+          </div>
+        </form>
+      );
+
+    default:
+      return null;
+  }
+}
