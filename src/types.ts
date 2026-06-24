@@ -92,6 +92,7 @@ export interface Settings {
   agentName: string;
   managerWhatsApp: string;
   managerEmail: string;
+  monthlyVisitGoal?: number;
 }
 
 export interface ExchangeRates {

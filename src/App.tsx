@@ -6,6 +6,7 @@ import QuickActions from './components/QuickActions';
 import DataForms from './components/DataForms';
 import ListsAndTables from './components/ListsAndTables';
 import AnalyticsSection from './components/AnalyticsSection';
+import GoalTracker from './components/GoalTracker';
 import Tabs from './components/Tabs';
 import Toast from './components/Toast';
 import { AppData, Company, Camp, Customer, Visit, Feedback, Complaint, CompetitorIntel, SocialAd, MarketingPlan, Settings } from './types';
@@ -36,6 +37,7 @@ const initialData: AppData = {
     agentName: '',
     managerWhatsApp: '',
     managerEmail: '',
+    monthlyVisitGoal: 15,
   },
   rates: {},
 };
@@ -63,6 +65,7 @@ export default function App() {
     agentName: '',
     managerWhatsApp: '',
     managerEmail: '',
+    monthlyVisitGoal: 15,
   });
 
   // Load Initial Data & Sync with Firebase Cloud
@@ -133,7 +136,7 @@ export default function App() {
             competitors: (updatedCloudData.competitors as CompetitorIntel[]) || [],
             social: (updatedCloudData.social as SocialAd[]) || [],
             plans: (updatedCloudData.plans as MarketingPlan[]) || [],
-            settings: (updatedCloudData.settings as Settings) || { agentName: '', managerWhatsApp: '', managerEmail: '' },
+            settings: (updatedCloudData.settings as Settings) || { agentName: '', managerWhatsApp: '', managerEmail: '', monthlyVisitGoal: 15 },
             rates: localDataParsed.rates || {},
           };
           setAppData(merged);
@@ -141,6 +144,7 @@ export default function App() {
             agentName: merged.settings.agentName || '',
             managerWhatsApp: merged.settings.managerWhatsApp || '',
             managerEmail: merged.settings.managerEmail || '',
+            monthlyVisitGoal: merged.settings.monthlyVisitGoal || 15,
           });
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));
           showToast('Migration completed successfully! Firebase cloud active.', 'success');
@@ -156,7 +160,7 @@ export default function App() {
             competitors: (cloudData.competitors as CompetitorIntel[]) || [],
             social: (cloudData.social as SocialAd[]) || [],
             plans: (cloudData.plans as MarketingPlan[]) || [],
-            settings: (cloudData.settings as Settings) || { agentName: '', managerWhatsApp: '', managerEmail: '' },
+            settings: (cloudData.settings as Settings) || { agentName: '', managerWhatsApp: '', managerEmail: '', monthlyVisitGoal: 15 },
             rates: (localDataParsed && localDataParsed.rates) || {},
           };
           setAppData(merged);
@@ -164,6 +168,7 @@ export default function App() {
             agentName: merged.settings.agentName || '',
             managerWhatsApp: merged.settings.managerWhatsApp || '',
             managerEmail: merged.settings.managerEmail || '',
+            monthlyVisitGoal: merged.settings.monthlyVisitGoal || 15,
           });
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));
           if (hasCloudRecords) {
@@ -191,7 +196,7 @@ export default function App() {
               competitors: parsed.competitors || [],
               social: parsed.social || [],
               plans: parsed.plans || [],
-              settings: parsed.settings || { agentName: '', managerWhatsApp: '', managerEmail: '' },
+              settings: parsed.settings || { agentName: '', managerWhatsApp: '', managerEmail: '', monthlyVisitGoal: 15 },
               rates: parsed.rates || {},
             };
             setAppData(validated);
@@ -199,6 +204,7 @@ export default function App() {
               agentName: validated.settings.agentName || '',
               managerWhatsApp: validated.settings.managerWhatsApp || '',
               managerEmail: validated.settings.managerEmail || '',
+              monthlyVisitGoal: validated.settings.monthlyVisitGoal || 15,
             });
           } catch (e) {
             console.error('Failed to load local storage cache fallback', e);
@@ -425,10 +431,39 @@ export default function App() {
         agentName: settingsForm.agentName.trim(),
         managerWhatsApp: cleanWhatsApp,
         managerEmail: settingsForm.managerEmail.trim(),
+        monthlyVisitGoal: Number(settingsForm.monthlyVisitGoal) || 15,
       },
     };
     saveToLocalStorage(updated);
     showToast('Agent dashboard configuration saved successfully', 'success');
+
+    if (user) {
+      try {
+        setSyncStatus('loading');
+        await saveSettingsToCloud(updated.settings, user.uid);
+        setSyncStatus('synced');
+      } catch (error) {
+        console.error('Error saving settings to Firebase Cloud:', error);
+        setSyncStatus('error');
+      }
+    }
+  };
+
+  // Update Monthly Goal target from GoalTracker
+  const handleUpdateMonthlyGoal = async (newGoal: number) => {
+    const updated = {
+      ...appData,
+      settings: {
+        ...appData.settings,
+        monthlyVisitGoal: newGoal,
+      },
+    };
+    saveToLocalStorage(updated);
+    setSettingsForm((prev) => ({
+      ...prev,
+      monthlyVisitGoal: newGoal,
+    }));
+    showToast(`Monthly campaign target goal updated to ${newGoal}`, 'success');
 
     if (user) {
       try {
@@ -449,7 +484,7 @@ export default function App() {
       if (confirmText === 'DELETE') {
         const oldData = { ...appData };
         saveToLocalStorage(initialData);
-        setSettingsForm({ agentName: '', managerWhatsApp: '', managerEmail: '' });
+        setSettingsForm({ agentName: '', managerWhatsApp: '', managerEmail: '', monthlyVisitGoal: 15 });
         showToast('All local logs and configurations have been securely wiped', 'error');
 
         if (user) {
@@ -609,6 +644,12 @@ export default function App() {
               <Overview
                 appData={appData}
                 onNavigate={(tab) => setActiveTab(tab)}
+              />
+
+              {/* Monthly Campaign/Visit Target Progress Tracker */}
+              <GoalTracker
+                appData={appData}
+                onUpdateGoal={handleUpdateMonthlyGoal}
               />
 
               {/* Exchange Feed */}
@@ -780,6 +821,23 @@ export default function App() {
                       onChange={(e) => setSettingsForm({ ...settingsForm, managerEmail: e.target.value })}
                       className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      Monthly Campaign / Visit Goal <span className="text-indigo-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="e.g. 15"
+                      value={settingsForm.monthlyVisitGoal}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, monthlyVisitGoal: Number(e.target.value) || 15 })}
+                      className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none"
+                    />
+                    <small className="text-[10px] text-slate-400 font-semibold mt-1 block">
+                      Define the target count of field visits and deployments to achieve per month.
+                    </small>
                   </div>
 
                   <button

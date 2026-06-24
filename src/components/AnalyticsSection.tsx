@@ -15,7 +15,19 @@ import {
   Cell 
 } from 'recharts';
 import { AppData, Visit, CompetitorIntel } from '../types';
-import { TrendingUp, Users, MapPin, ShieldAlert, Sparkles, Calendar, BarChart3, Info } from 'lucide-react';
+import { 
+  TrendingUp, 
+  TrendingDown,
+  ArrowUpRight,
+  ArrowDownRight,
+  Users, 
+  MapPin, 
+  ShieldAlert, 
+  Sparkles, 
+  Calendar, 
+  BarChart3, 
+  Info 
+} from 'lucide-react';
 
 interface AnalyticsSectionProps {
   appData: AppData;
@@ -195,6 +207,89 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
 
   const isDemoMode = visitChartData.isDemo || competitorChartData.isDemo;
 
+  // 3. Monthly Goal Target calculations
+  const monthlyGoalMetrics = useMemo(() => {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1;
+    const monthPrefix = `${currentYear}-${currentMonth.toString().padStart(2, '0')}`;
+    
+    const targetGoal = appData.settings?.monthlyVisitGoal || 15;
+    const currentMonthVisits = appData.visits.filter(v => v.date && v.date.startsWith(monthPrefix));
+    const count = currentMonthVisits.length;
+    const percentage = Math.min(100, Math.round((count / targetGoal) * 100));
+    
+    return {
+      targetGoal,
+      count,
+      percentage,
+      remaining: Math.max(0, targetGoal - count),
+    };
+  }, [appData.visits, appData.settings]);
+
+  // 4. Period-over-Period (PoP) Growth Calculations for Customer Visits & Audience Reach
+  const popMetrics = useMemo(() => {
+    const data = visitChartData.data;
+    if (data.length < 1) {
+      return {
+        hasTwoPeriods: false,
+        currentPeriodName: 'Current Period',
+        prevPeriodName: 'Previous Period',
+        currentVisits: 0,
+        prevVisits: 0,
+        visitsGrowth: 0,
+        currentPeople: 0,
+        prevPeople: 0,
+        peopleGrowth: 0,
+        totalVisits: 0,
+        totalPeople: 0,
+      };
+    }
+
+    const totalVisits = data.reduce((sum, item) => sum + item.visits, 0);
+    const totalPeople = data.reduce((sum, item) => sum + item.people, 0);
+
+    if (data.length < 2) {
+      const current = data[0];
+      return {
+        hasTwoPeriods: false,
+        currentPeriodName: current.month,
+        prevPeriodName: 'Previous',
+        currentVisits: current.visits,
+        prevVisits: 0,
+        visitsGrowth: 100,
+        currentPeople: current.people,
+        prevPeople: 0,
+        peopleGrowth: 100,
+        totalVisits,
+        totalPeople,
+      };
+    }
+
+    const current = data[data.length - 1];
+    const previous = data[data.length - 2];
+
+    const visitsDiff = current.visits - previous.visits;
+    const visitsGrowth = previous.visits > 0 ? (visitsDiff / previous.visits) * 100 : current.visits > 0 ? 100 : 0;
+
+    const peopleDiff = current.people - previous.people;
+    const peopleGrowth = previous.people > 0 ? (peopleDiff / previous.people) * 100 : current.people > 0 ? 100 : 0;
+
+    return {
+      hasTwoPeriods: true,
+      currentPeriodName: current.month,
+      prevPeriodName: previous.month,
+      currentVisits: current.visits,
+      prevVisits: previous.visits,
+      visitsGrowth,
+      currentPeople: current.people,
+      prevPeople: previous.people,
+      peopleGrowth,
+      totalVisits,
+      totalPeople,
+    };
+  }, [visitChartData]);
+
   return (
     <div className="space-y-6">
       {/* Title & Badge */}
@@ -215,6 +310,173 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
             Showing Interactive Sample Data
           </span>
         )}
+      </div>
+
+      {/* Period-over-Period Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Card 1: Visit Growth */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500" />
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-sans">
+              Deployment Frequency PoP
+            </span>
+            <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
+              <Calendar className="w-4 h-4" />
+            </div>
+          </div>
+          
+          <div className="mt-4">
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold text-slate-800 font-display">
+                {popMetrics.currentVisits}
+              </span>
+              <span className="text-xs font-semibold text-slate-400 font-sans">
+                deployments ({popMetrics.currentPeriodName})
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-2 mt-2">
+              <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                popMetrics.visitsGrowth >= 0 
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
+                  : 'bg-rose-50 text-rose-700 border border-rose-100'
+              }`}>
+                {popMetrics.visitsGrowth >= 0 ? (
+                  <>
+                    <TrendingUp className="w-3 h-3" />
+                    +{popMetrics.visitsGrowth.toFixed(1)}%
+                  </>
+                ) : (
+                  <>
+                    <TrendingDown className="w-3 h-3" />
+                    {popMetrics.visitsGrowth.toFixed(1)}%
+                  </>
+                )}
+              </span>
+              <span className="text-[10px] font-medium text-slate-400 font-sans">
+                vs. {popMetrics.prevVisits} in {popMetrics.prevPeriodName}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: Reach Growth */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500" />
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-sans">
+              Audience Reach PoP
+            </span>
+            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
+              <Users className="w-4 h-4" />
+            </div>
+          </div>
+          
+          <div className="mt-4">
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold text-slate-800 font-display">
+                {popMetrics.currentPeople.toLocaleString()}
+              </span>
+              <span className="text-xs font-semibold text-slate-400 font-sans">
+                contacts ({popMetrics.currentPeriodName})
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-2 mt-2">
+              <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                popMetrics.peopleGrowth >= 0 
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
+                  : 'bg-rose-50 text-rose-700 border border-rose-100'
+              }`}>
+                {popMetrics.peopleGrowth >= 0 ? (
+                  <>
+                    <TrendingUp className="w-3 h-3" />
+                    +{popMetrics.peopleGrowth.toFixed(1)}%
+                  </>
+                ) : (
+                  <>
+                    <TrendingDown className="w-3 h-3" />
+                    {popMetrics.peopleGrowth.toFixed(1)}%
+                  </>
+                )}
+              </span>
+              <span className="text-[10px] font-medium text-slate-400 font-sans">
+                vs. {popMetrics.prevPeople.toLocaleString()} in {popMetrics.prevPeriodName}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Monthly Visit Target Goal Progress */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-600" />
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-sans">
+              Monthly Visit Goal
+            </span>
+            <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
+              <BarChart3 className="w-4 h-4" />
+            </div>
+          </div>
+          
+          <div className="mt-4">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-2xl font-extrabold text-slate-800 font-display">
+                {monthlyGoalMetrics.count} <span className="text-xs text-slate-400 font-medium font-sans">/ {monthlyGoalMetrics.targetGoal} visits</span>
+              </span>
+              <span className="text-xs font-bold text-indigo-600 font-sans">
+                {monthlyGoalMetrics.percentage}%
+              </span>
+            </div>
+            
+            {/* Custom progress bar */}
+            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mt-3">
+              <div 
+                style={{ width: `${monthlyGoalMetrics.percentage}%` }}
+                className={`h-full rounded-full transition-all duration-500 ${
+                  monthlyGoalMetrics.percentage >= 100 ? 'bg-emerald-500' : 'bg-indigo-600'
+                }`}
+              />
+            </div>
+            
+            <p className="text-[9px] font-bold text-slate-400 mt-2.5 font-sans flex justify-between">
+              {monthlyGoalMetrics.remaining > 0 ? (
+                <span>🎯 {monthlyGoalMetrics.remaining} more needed to reach goal</span>
+              ) : (
+                <span className="text-emerald-600 font-extrabold">🎉 Target Achieved!</span>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* Card 4: Overall Lifetime Metrics */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-violet-500" />
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-sans">
+              Lifetime Program Reach
+            </span>
+            <div className="p-2 rounded-xl bg-violet-50 text-violet-600">
+              <ArrowUpRight className="w-4 h-4" />
+            </div>
+          </div>
+          
+          <div className="mt-4">
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold text-slate-800 font-display">
+                {popMetrics.totalPeople.toLocaleString()}
+              </span>
+              <span className="text-xs font-semibold text-slate-400 font-sans">
+                lifetime contacts
+              </span>
+            </div>
+            
+            <p className="text-[10px] font-medium text-slate-400 mt-2 font-sans">
+              Aggregated across <strong className="text-slate-600 font-extrabold">{popMetrics.totalVisits}</strong> total operations logged to date.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Bento Grid Charts */}
