@@ -64,7 +64,7 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
         </nav>
         <div className="mt-auto border-t border-slate-800 pt-4 px-2">
           <div className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">
-            Al Jadeed Agent v3.5
+            Agent Notebook v3.5
           </div>
           <div className="text-[9px] text-slate-600 font-medium mt-1">
             Build with React, TS &amp; Tailwind

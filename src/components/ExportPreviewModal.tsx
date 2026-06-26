@@ -158,7 +158,7 @@ export default function ExportPreviewModal({ isOpen, onClose, onConfirm, appData
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-start gap-2.5">
             <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div className="text-[11px] text-amber-800 leading-relaxed font-medium">
-              <strong>Workbook Structure Info:</strong> The generated <code>Al_Jadeed_Field_Report.xlsx</code> workbook compiles each collection below into a separate dedicated worksheet tab. Cell values, currencies, dates, and coordinator coordinates will be auto-formatted.
+              <strong>Workbook Structure Info:</strong> The generated <code>Marketing_Agent_Database.xlsx</code> workbook compiles each collection below into a separate dedicated worksheet tab. Cell values, currencies, dates, and coordinator coordinates will be auto-formatted.
             </div>
           </div>
 

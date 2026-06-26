@@ -577,7 +577,7 @@ export default function App() {
       plans: 'Active Marketing Plans',
       settings: 'Dashboard Configurations',
     };
-    return labelMap[activeTab] || 'Al Jadeed Workspace';
+    return labelMap[activeTab] || 'Marketing Agent Notebook';
   };
 
   return (
@@ -943,7 +943,7 @@ export default function App() {
                   </div>
                   <div>
                     <h2 className="text-sm font-bold text-white tracking-wide font-display">
-                      Al Jadeed Exchange
+                      Marketing Agent Notebook
                     </h2>
                     <p className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold">
                       Trust · Remittance · Integrity

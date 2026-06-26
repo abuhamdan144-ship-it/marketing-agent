@@ -1,6 +1,6 @@
 {
-  "name": "Al Jadeed Marketing Agent Dashboard",
-  "description": "Complete marketing intelligence and operations tracker for Al Jadeed Exchange, tracking camps, companies, customers, visits, feedback, competitor strategies, social ads, and marketing plans with live currency exchange rate integration.",
+  "name": "Marketing Agent Notebook",
+  "description": "Complete marketing intelligence and operations tracker notebook, tracking camps, companies, customers, visits, feedback, competitor strategies, social ads, and marketing plans with live currency exchange rate integration.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

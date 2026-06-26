@@ -160,7 +160,7 @@ export function generateFullReport(appData: AppData): string {
   });
 
   report += '\n' + '='.repeat(40) + '\n';
-  report += `📊 Generated via Al Jadeed Agent App at ${new Date().toLocaleString()}`;
+  report += `📊 Generated via Marketing Agent Notebook at ${new Date().toLocaleString()}`;
 
   return report;
 }
@@ -172,7 +172,7 @@ export function exportPDF(appData: AppData): void {
     // Title Block
     doc.setFontSize(22);
     doc.setTextColor(26, 60, 110);
-    doc.text('🏦 Al Jadeed Exchange - Marketing Agent Intelligence Report', 14, 20);
+    doc.text('🏦 Marketing Agent Notebook - Intelligence Report', 14, 20);
 
     doc.setFontSize(10);
     doc.setTextColor(100);
@@ -319,13 +319,13 @@ export function exportPDF(appData: AppData): void {
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       doc.text(
-        `Al Jadeed Exchange © ${new Date().getFullYear()} · Page ${i} of ${pageCount} · Muscat, Oman`,
+        `Marketing Agent Notebook © ${new Date().getFullYear()} · Page ${i} of ${pageCount}`,
         14,
         doc.internal.pageSize.height - 8
       );
     }
 
-    doc.save(`AlJadeed_Marketing_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
+    doc.save(`Marketing_Agent_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
   } catch (error) {
     console.error('PDF generation error:', error);
   }
@@ -472,7 +472,7 @@ export function exportExcel(appData: AppData): void {
 
     // 10. Summary Sheet
     const summaryRows = [
-      { 'Metrics KPI': 'Al Jadeed Marketing Intelligence Agent Export', 'Value': '' },
+      { 'Metrics KPI': 'Marketing Agent Notebook Intelligence Export', 'Value': '' },
       { 'Metrics KPI': 'Export Date & Time', 'Value': new Date().toLocaleString() },
       { 'Metrics KPI': 'Agent Name', 'Value': appData.settings.agentName || 'Agent' },
       { 'Metrics KPI': 'Total Enrolled Companies', 'Value': appData.companies.length },
@@ -497,7 +497,7 @@ export function exportExcel(appData: AppData): void {
     const wsRates = XLSX.utils.json_to_sheet(rateRows);
     XLSX.utils.book_append_sheet(wb, wsRates, 'Exchange Rates');
 
-    XLSX.writeFile(wb, `AlJadeed_Full_Marketing_Database_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(wb, `Marketing_Agent_Database_${new Date().toISOString().slice(0, 10)}.xlsx`);
   } catch (error) {
     console.error('Excel generation error:', error);
   }

@@ -48,7 +48,7 @@ export default function Header({ lastUpdate, isOnline, rateSource, syncStatus = 
         </div>
         <div>
           <h1 className="text-base font-bold tracking-tight font-display sm:text-lg">
-            Al Jadeed · Marketing Agent
+            Marketing Agent Notebook
           </h1>
           <p className="text-[10px] text-blue-200/80 font-medium flex items-center gap-2">
             Complete Operations &amp; Intelligence Dashboard

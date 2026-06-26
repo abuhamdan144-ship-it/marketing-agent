@@ -3,6 +3,7 @@ import {
   ResponsiveContainer, 
   AreaChart, 
   Area, 
+  Line,
   BarChart, 
   Bar, 
   XAxis, 
@@ -75,9 +76,10 @@ const CustomVisitTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const visitsPld = payload.find((p: any) => p.dataKey === 'visits');
     const peoplePld = payload.find((p: any) => p.dataKey === 'people');
+    const projectionPld = payload.find((p: any) => p.dataKey === 'projection');
 
     return (
-      <div className="bg-slate-900 border border-slate-800 text-slate-100 p-3 rounded-xl shadow-xl space-y-2 min-w-[200px] text-xs font-sans">
+      <div className="bg-slate-900 border border-slate-800 text-slate-100 p-3 rounded-xl shadow-xl space-y-2 min-w-[210px] text-xs font-sans">
         <div className="border-b border-slate-800 pb-1.5 mb-1 flex justify-between items-center">
           <span className="text-[10px] font-bold text-slate-400 font-mono uppercase tracking-wider">
             Operational Month
@@ -87,7 +89,7 @@ const CustomVisitTooltip = ({ active, payload, label }: any) => {
           </span>
         </div>
         <div className="space-y-2 pt-0.5">
-          {visitsPld && (
+          {visitsPld && visitsPld.value !== undefined && visitsPld.value !== null && (
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-1.5 font-medium text-slate-300">
                 <span className="w-2 h-2 rounded-full inline-block bg-[#6366f1]" />
@@ -98,7 +100,7 @@ const CustomVisitTooltip = ({ active, payload, label }: any) => {
               </span>
             </div>
           )}
-          {peoplePld && (
+          {peoplePld && peoplePld.value !== undefined && peoplePld.value !== null && (
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-1.5 font-medium text-slate-300">
                 <span className="w-2 h-2 rounded-full inline-block bg-[#10b981]" />
@@ -109,7 +111,23 @@ const CustomVisitTooltip = ({ active, payload, label }: any) => {
               </span>
             </div>
           )}
+          {projectionPld && projectionPld.value !== undefined && (
+            <div className="flex items-center justify-between gap-4 border-t border-slate-800/40 pt-1.5 mt-1">
+              <div className="flex items-center gap-1.5 font-medium text-slate-300">
+                <span className="w-2 h-1 bg-[#f43f5e] inline-block rounded-sm" />
+                SLR Trend Projection
+              </div>
+              <span className="font-extrabold text-rose-400 text-right">
+                {Math.round(Number(projectionPld.value))} visits
+              </span>
+            </div>
+          )}
         </div>
+        {label?.toLowerCase().includes('forecast') && (
+          <div className="border-t border-slate-800/80 pt-1.5 mt-1 text-[9px] text-rose-300 font-semibold flex items-center gap-1">
+            🔮 Forecasted trend using Simple Linear Regression.
+          </div>
+        )}
         {visitsPld && Number(visitsPld.value) >= 30 && (
           <div className="border-t border-slate-800/80 pt-1.5 mt-1 text-[9px] text-indigo-300 font-semibold flex items-center gap-1">
             🚀 Period of high labor camp campaign intensity.
@@ -166,34 +184,103 @@ const CustomCompetitorTooltip = ({ active, payload }: any) => {
 export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
   // 1. Prepare Visit Growth Data
   const visitChartData = useMemo(() => {
+    let sourceData: Array<{ month: string; visits: number; people: number; rawKey?: string }> = [];
+    let isDemo = false;
+
     if (!appData.visits || appData.visits.length === 0) {
-      return { data: DEFAULT_VISIT_DATA, isDemo: true };
+      sourceData = DEFAULT_VISIT_DATA.map(d => ({ ...d }));
+      isDemo = true;
+    } else {
+      // Group visits by Year-Month
+      const monthlyGroups: Record<string, { visits: number; people: number }> = {};
+      
+      appData.visits.forEach((v) => {
+        if (!v.date) return;
+        const monthKey = v.date.substring(0, 7); // "YYYY-MM"
+        if (!monthlyGroups[monthKey]) {
+          monthlyGroups[monthKey] = { visits: 0, people: 0 };
+        }
+        monthlyGroups[monthKey].visits += 1;
+        monthlyGroups[monthKey].people += Number(v.people) || 0;
+      });
+
+      // Sort chronologically
+      const sortedKeys = Object.keys(monthlyGroups).sort();
+      
+      sourceData = sortedKeys.map((key) => ({
+        month: formatMonthYear(key),
+        visits: monthlyGroups[key].visits,
+        people: monthlyGroups[key].people,
+        rawKey: key,
+      }));
     }
 
-    // Group visits by Year-Month
-    const monthlyGroups: Record<string, { visits: number; people: number }> = {};
-    
-    appData.visits.forEach((v) => {
-      if (!v.date) return;
-      const monthKey = v.date.substring(0, 7); // "YYYY-MM"
-      if (!monthlyGroups[monthKey]) {
-        monthlyGroups[monthKey] = { visits: 0, people: 0 };
+    // Calculate linear regression on sourceData
+    const n = sourceData.length;
+    let slope = 0;
+    let intercept = 0;
+    if (n >= 1) {
+      let sumX = 0;
+      let sumY = 0;
+      let sumXY = 0;
+      let sumXX = 0;
+      for (let i = 0; i < n; i++) {
+        sumX += i;
+        sumY += sourceData[i].visits;
+        sumXY += i * sourceData[i].visits;
+        sumXX += i * i;
       }
-      monthlyGroups[monthKey].visits += 1;
-      monthlyGroups[monthKey].people += Number(v.people) || 0;
-    });
+      const denominator = n * sumXX - sumX * sumX;
+      if (denominator === 0) {
+        slope = 0;
+        intercept = sumY / n;
+      } else {
+        slope = (n * sumXY - sumX * sumY) / denominator;
+        intercept = (sumY - slope * sumX) / n;
+      }
+    }
 
-    // Sort chronologically
-    const sortedKeys = Object.keys(monthlyGroups).sort();
-    
-    // If we only have 1 or 2 months of real data, pad it slightly for trend aesthetic, or just render
-    const formattedList = sortedKeys.map((key) => ({
-      month: formatMonthYear(key),
-      visits: monthlyGroups[key].visits,
-      people: monthlyGroups[key].people,
+    // Map existing data to include projection values
+    const dataWithProjection = sourceData.map((d, index) => ({
+      ...d,
+      projection: Number((slope * index + intercept).toFixed(1))
     }));
 
-    return { data: formattedList, isDemo: false };
+    // Generate next month's forecast point
+    let nextMonthLabel = 'Forecast';
+    if (isDemo) {
+      nextMonthLabel = "Jul '26 (Forecast)";
+    } else if (sourceData.length > 0) {
+      const lastItem = sourceData[sourceData.length - 1];
+      if (lastItem.rawKey) {
+        const parts = lastItem.rawKey.split('-');
+        let year = parseInt(parts[0], 10);
+        let month = parseInt(parts[1], 10);
+        month += 1;
+        if (month > 12) {
+          month = 1;
+          year += 1;
+        }
+        const nextKey = `${year}-${month.toString().padStart(2, '0')}`;
+        nextMonthLabel = `${formatMonthYear(nextKey)} (Forecast)`;
+      }
+    }
+
+    const forecastedVisits = Math.max(0, slope * n + intercept);
+
+    // Append forecasted item with undefined visits/people so area curves terminate
+    dataWithProjection.push({
+      month: nextMonthLabel,
+      visits: undefined as any,
+      people: undefined as any,
+      projection: Number(forecastedVisits.toFixed(1))
+    });
+
+    return { 
+      data: dataWithProjection, 
+      isDemo, 
+      forecastValue: Math.round(forecastedVisits) 
+    };
   }, [appData.visits]);
 
   // 2. Prepare Competitor Intel Data
@@ -392,7 +479,7 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
             Operations Intelligence &amp; Analytics
           </h2>
           <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-            Statistical breakdown of Al Jadeed outreach performance and competitive market landscape
+            Statistical breakdown of agent outreach performance and competitive market landscape
           </p>
         </div>
         
@@ -588,7 +675,7 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
             </div>
             
             <p className="text-xs text-slate-400 font-medium mb-6">
-              Monthly overview of registered field campaigns and the total prospective customer reach achieved.
+              Monthly overview of registered field campaigns and customer reach. Includes a <strong>Simple Linear Regression (SLR)</strong> trend projection forecasting next month's output at <strong className="text-rose-500 font-bold">{visitChartData.forecastValue} campaigns</strong>.
             </p>
           </div>
 
@@ -639,6 +726,17 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
                   strokeWidth={2.5}
                   fillOpacity={1} 
                   fill="url(#colorVisits)" 
+                />
+                <Line
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="projection"
+                  name="Trend Projection (SLR)"
+                  stroke="#f43f5e"
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  dot={{ r: 3.5, stroke: '#f43f5e', strokeWidth: 1.5, fill: '#fff' }}
+                  activeDot={{ r: 5 }}
                 />
                 <Area 
                   yAxisId="right"
