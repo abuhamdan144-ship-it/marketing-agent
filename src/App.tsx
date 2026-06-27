@@ -52,6 +52,7 @@ export default function App() {
   const [lastUpdate, setLastUpdate] = useState<string>('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
   const [isExportPreviewOpen, setIsExportPreviewOpen] = useState<boolean>(false);
+  const [isGoalTrackerHidden, setIsGoalTrackerHidden] = useState<boolean>(true);
 
   // Firebase Auth and Sync state
   const [user, setUser] = useState<{ uid: string } | null>(null);
@@ -649,10 +650,34 @@ export default function App() {
               />
 
               {/* Monthly Campaign/Visit Target Progress Tracker */}
-              <GoalTracker
-                appData={appData}
-                onUpdateGoal={handleUpdateMonthlyGoal}
-              />
+              {!isGoalTrackerHidden ? (
+                <GoalTracker
+                  appData={appData}
+                  onUpdateGoal={handleUpdateMonthlyGoal}
+                  onHide={() => {
+                    setIsGoalTrackerHidden(true);
+                    showToast('Goal Tracker hidden. You can restore it anytime!', 'info');
+                  }}
+                />
+              ) : (
+                <div className="bg-white rounded-2xl p-4 border border-slate-100 flex items-center justify-between shadow-sm animate-fade-in">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🎯</span>
+                    <span className="text-xs text-slate-500 font-medium leading-normal">
+                      Remittance Drive Target Tracker is hidden. You can keep operations focused or bring it back at any time.
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsGoalTrackerHidden(false);
+                      showToast('Goal Tracker restored!', 'success');
+                    }}
+                    className="text-[11px] font-extrabold text-indigo-600 bg-indigo-50 hover:bg-indigo-100/80 px-3 py-1.5 rounded-xl border border-indigo-100 transition-colors cursor-pointer shrink-0"
+                  >
+                    Restore Tracker
+                  </button>
+                </div>
+              )}
 
               {/* Exchange Feed */}
               <LiveRates

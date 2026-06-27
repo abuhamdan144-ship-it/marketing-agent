@@ -1,13 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { AppData, Settings } from '../types';
-import { Target, TrendingUp, Edit2, CheckCircle2, Award, ArrowUpRight, Flame } from 'lucide-react';
+import { Target, TrendingUp, Edit2, CheckCircle2, Award, ArrowUpRight, Flame, X } from 'lucide-react';
 
 interface GoalTrackerProps {
   appData: AppData;
   onUpdateGoal: (newGoal: number) => void;
+  onHide?: () => void;
 }
 
-export default function GoalTracker({ appData, onUpdateGoal }: GoalTrackerProps) {
+export default function GoalTracker({ appData, onUpdateGoal, onHide }: GoalTrackerProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [goalInput, setGoalInput] = useState(appData.settings.monthlyVisitGoal || 15);
 
@@ -106,16 +107,28 @@ export default function GoalTracker({ appData, onUpdateGoal }: GoalTrackerProps)
               </button>
             </form>
           ) : (
-            <button
-              onClick={() => {
-                setGoalInput(targetGoal);
-                setIsEditing(true);
-              }}
-              className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-300 bg-white/5 hover:bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/5 cursor-pointer transition-all"
-            >
-              <Edit2 className="w-3 h-3 text-indigo-400" />
-              Adjust Target Goal ({targetGoal})
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => {
+                  setGoalInput(targetGoal);
+                  setIsEditing(true);
+                }}
+                className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-300 bg-white/5 hover:bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/5 cursor-pointer transition-all"
+              >
+                <Edit2 className="w-3 h-3 text-indigo-400" />
+                Adjust Target Goal ({targetGoal})
+              </button>
+              {onHide && (
+                <button
+                  type="button"
+                  onClick={onHide}
+                  title="Hide Goal Tracker"
+                  className="p-1.5 bg-white/5 hover:bg-rose-500/25 hover:text-rose-400 text-slate-400 rounded-lg border border-white/5 cursor-pointer transition-all flex items-center justify-center"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
