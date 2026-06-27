@@ -99,85 +99,136 @@ export default function App() {
         // 4. Load Cloud Data
         const cloudData = await loadUserDataFromCloud(currentUser.uid);
         
-        // 5. Detect and execute Migration
-        const hasLocalRecords = localDataParsed && (
-          (localDataParsed.companies?.length || 0) > 0 ||
-          (localDataParsed.camps?.length || 0) > 0 ||
-          (localDataParsed.customers?.length || 0) > 0 ||
-          (localDataParsed.visits?.length || 0) > 0 ||
-          (localDataParsed.feedback?.length || 0) > 0 ||
-          (localDataParsed.complaints?.length || 0) > 0 ||
-          (localDataParsed.competitors?.length || 0) > 0 ||
-          (localDataParsed.social?.length || 0) > 0 ||
-          (localDataParsed.plans?.length || 0) > 0
-        );
-
-        const hasCloudRecords = cloudData && (
-          (cloudData.companies?.length || 0) > 0 ||
-          (cloudData.camps?.length || 0) > 0 ||
-          (cloudData.customers?.length || 0) > 0 ||
-          (cloudData.visits?.length || 0) > 0 ||
-          (cloudData.feedback?.length || 0) > 0 ||
-          (cloudData.complaints?.length || 0) > 0 ||
-          (cloudData.competitors?.length || 0) > 0 ||
-          (cloudData.social?.length || 0) > 0 ||
-          (cloudData.plans?.length || 0) > 0
-        );
-
-        if (hasLocalRecords && !hasCloudRecords && localDataParsed) {
-          showToast('Syncing offline data to safe Firebase cloud database...', 'info');
-          await migrateLocalDataToCloud(localDataParsed, currentUser.uid);
-          const updatedCloudData = await loadUserDataFromCloud(currentUser.uid);
-          
-          const merged: AppData = {
-            companies: (updatedCloudData.companies as Company[]) || [],
-            camps: (updatedCloudData.camps as Camp[]) || [],
-            customers: (updatedCloudData.customers as Customer[]) || [],
-            visits: (updatedCloudData.visits as Visit[]) || [],
-            feedback: (updatedCloudData.feedback as Feedback[]) || [],
-            complaints: (updatedCloudData.complaints as Complaint[]) || [],
-            competitors: (updatedCloudData.competitors as CompetitorIntel[]) || [],
-            social: (updatedCloudData.social as SocialAd[]) || [],
-            plans: (updatedCloudData.plans as MarketingPlan[]) || [],
-            settings: (updatedCloudData.settings as Settings) || { agentName: '', managerWhatsApp: '', managerEmail: '', monthlyVisitGoal: 15 },
-            rates: localDataParsed.rates || {},
-          };
-          setAppData(merged);
-          setSettingsForm({
-            agentName: merged.settings.agentName || '',
-            managerWhatsApp: merged.settings.managerWhatsApp || '',
-            managerEmail: merged.settings.managerEmail || '',
-            monthlyVisitGoal: merged.settings.monthlyVisitGoal || 15,
-          });
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));
-          showToast('Migration completed successfully! Firebase cloud active.', 'success');
-        } else {
-          // Normal flow: pull from cloud
-          const merged: AppData = {
-            companies: (cloudData.companies as Company[]) || [],
-            camps: (cloudData.camps as Camp[]) || [],
-            customers: (cloudData.customers as Customer[]) || [],
-            visits: (cloudData.visits as Visit[]) || [],
-            feedback: (cloudData.feedback as Feedback[]) || [],
-            complaints: (cloudData.complaints as Complaint[]) || [],
-            competitors: (cloudData.competitors as CompetitorIntel[]) || [],
-            social: (cloudData.social as SocialAd[]) || [],
-            plans: (cloudData.plans as MarketingPlan[]) || [],
-            settings: (cloudData.settings as Settings) || { agentName: '', managerWhatsApp: '', managerEmail: '', monthlyVisitGoal: 15 },
-            rates: (localDataParsed && localDataParsed.rates) || {},
-          };
-          setAppData(merged);
-          setSettingsForm({
-            agentName: merged.settings.agentName || '',
-            managerWhatsApp: merged.settings.managerWhatsApp || '',
-            managerEmail: merged.settings.managerEmail || '',
-            monthlyVisitGoal: merged.settings.monthlyVisitGoal || 15,
-          });
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));
-          if (hasCloudRecords) {
-            showToast('Securely loaded from Firebase Cloud storage', 'success');
+        // 5. Detect offline deletions queue
+        const deletedIdsSaved = localStorage.getItem('aljadeed_deleted_ids');
+        let deletedIds: number[] = [];
+        if (deletedIdsSaved) {
+          try {
+            deletedIds = JSON.parse(deletedIdsSaved);
+          } catch (e) {
+            console.error('Error parsing deleted ids:', e);
           }
         }
+
+        // 6. Support offline reconciliation and merging
+        let hasNewOfflineAdditions = false;
+        let hasOfflineDeletions = false;
+
+        const collectionKeys = [
+          { key: 'companies', name: 'companies' },
+          { key: 'camps', name: 'camps' },
+          { key: 'customers', name: 'customers' },
+          { key: 'visits', name: 'visits' },
+          { key: 'feedback', name: 'feedback' },
+          { key: 'complaints', name: 'complaints' },
+          { key: 'competitors', name: 'competitors' },
+          { key: 'social', name: 'social' },
+          { key: 'plans', name: 'plans' }
+        ];
+
+        if (localDataParsed) {
+          // Process deletes that occurred while offline
+          for (const col of collectionKeys) {
+            const cloudItems = (cloudData as any)[col.key] || [];
+            const itemsToDelete = cloudItems.filter((cloudItem: any) => deletedIds.includes(cloudItem.id));
+            if (itemsToDelete.length > 0) {
+              hasOfflineDeletions = true;
+              for (const itemToDelete of itemsToDelete) {
+                try {
+                  await deleteDocumentFromCloud(col.name, itemToDelete.id);
+                } catch (err) {
+                  console.error(`Error deleting item ${itemToDelete.id} from cloud:`, err);
+                }
+              }
+            }
+          }
+
+          // Process additions that occurred while offline
+          for (const col of collectionKeys) {
+            const localItems = (localDataParsed as any)[col.key] || [];
+            const cloudItems = (cloudData as any)[col.key] || [];
+            
+            const unsyncedItems = localItems.filter((localItem: any) => 
+              !cloudItems.some((cloudItem: any) => cloudItem.id === localItem.id) &&
+              !deletedIds.includes(localItem.id)
+            );
+
+            if (unsyncedItems.length > 0) {
+              hasNewOfflineAdditions = true;
+              for (const unsyncedItem of unsyncedItems) {
+                try {
+                  await saveDocumentToCloud(col.name, unsyncedItem, currentUser.uid);
+                } catch (err) {
+                  console.error(`Error syncing unsynced item ${unsyncedItem.id} to cloud:`, err);
+                }
+              }
+            }
+          }
+
+          // Merge and sync settings if updated offline
+          const hasLocalSettings = localDataParsed.settings && (
+            (localDataParsed.settings.agentName || '').trim() !== '' ||
+            (localDataParsed.settings.managerWhatsApp || '').trim() !== '' ||
+            (localDataParsed.settings.managerEmail || '').trim() !== ''
+          );
+          
+          const cloudSettingsEmpty = !cloudData.settings || (
+            (cloudData.settings.agentName || '').trim() === '' &&
+            (cloudData.settings.managerWhatsApp || '').trim() === '' &&
+            (cloudData.settings.managerEmail || '').trim() === ''
+          );
+
+          if (hasLocalSettings && cloudSettingsEmpty) {
+            try {
+              await saveSettingsToCloud(localDataParsed.settings, currentUser.uid);
+            } catch (err) {
+              console.error('Error syncing offline settings to cloud:', err);
+            }
+          }
+        }
+
+        // Clean up pending deleted IDs from storage if we reached this point (connected)
+        localStorage.removeItem('aljadeed_deleted_ids');
+
+        // Fetch final fully synced data from cloud
+        const syncedCloudData = (hasNewOfflineAdditions || hasOfflineDeletions) 
+          ? await loadUserDataFromCloud(currentUser.uid)
+          : cloudData;
+
+        // Normal flow: pull from fully reconciled cloud data
+        const merged: AppData = {
+          companies: (syncedCloudData.companies as Company[]) || [],
+          camps: (syncedCloudData.camps as Camp[]) || [],
+          customers: (syncedCloudData.customers as Customer[]) || [],
+          visits: (syncedCloudData.visits as Visit[]) || [],
+          feedback: (syncedCloudData.feedback as Feedback[]) || [],
+          complaints: (syncedCloudData.complaints as Complaint[]) || [],
+          competitors: (syncedCloudData.competitors as CompetitorIntel[]) || [],
+          social: (syncedCloudData.social as SocialAd[]) || [],
+          plans: (syncedCloudData.plans as MarketingPlan[]) || [],
+          settings: (syncedCloudData.settings as Settings) || (localDataParsed?.settings) || { agentName: '', managerWhatsApp: '', managerEmail: '', monthlyVisitGoal: 15 },
+          rates: (localDataParsed && localDataParsed.rates) || {},
+        };
+        setAppData(merged);
+        setSettingsForm({
+          agentName: merged.settings.agentName || '',
+          managerWhatsApp: merged.settings.managerWhatsApp || '',
+          managerEmail: merged.settings.managerEmail || '',
+          monthlyVisitGoal: merged.settings.monthlyVisitGoal || 15,
+        });
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));
+
+        if (hasNewOfflineAdditions || hasOfflineDeletions) {
+          showToast('Successfully synchronized offline changes with Firebase Cloud database', 'success');
+        } else if (
+          merged.companies.length > 0 ||
+          merged.camps.length > 0 ||
+          merged.customers.length > 0 ||
+          merged.visits.length > 0
+        ) {
+          showToast('Securely synchronized with Firebase Cloud database', 'success');
+        }
+
         setSyncStatus('synced');
       } catch (error) {
         console.error('Firebase sync failed, falling back to local database:', error);
@@ -406,6 +457,21 @@ export default function App() {
     updated.social = updated.social.filter((x) => x.id !== id);
     updated.plans = updated.plans.filter((x) => x.id !== id);
 
+    // Record deletion ID offline queue to ensure it doesn't reappear on sync / page refresh
+    try {
+      const deletedIdsSaved = localStorage.getItem('aljadeed_deleted_ids');
+      let deletedIds: number[] = [];
+      if (deletedIdsSaved) {
+        deletedIds = JSON.parse(deletedIdsSaved);
+      }
+      if (!deletedIds.includes(id)) {
+        deletedIds.push(id);
+        localStorage.setItem('aljadeed_deleted_ids', JSON.stringify(deletedIds));
+      }
+    } catch (e) {
+      console.error('Error recording deleted id offline:', e);
+    }
+
     saveToLocalStorage(updated);
     showToast('Entry permanently deleted from database', 'warning');
 
@@ -413,6 +479,17 @@ export default function App() {
       try {
         setSyncStatus('loading');
         await deleteDocumentFromCloud(collectionName, id);
+        
+        // Remove from offline deletion queue upon successful cloud deletion
+        try {
+          const deletedIdsSaved = localStorage.getItem('aljadeed_deleted_ids');
+          if (deletedIdsSaved) {
+            let deletedIds: number[] = JSON.parse(deletedIdsSaved);
+            deletedIds = deletedIds.filter((x) => x !== id);
+            localStorage.setItem('aljadeed_deleted_ids', JSON.stringify(deletedIds));
+          }
+        } catch (e) {}
+        
         setSyncStatus('synced');
       } catch (error) {
         console.error('Error deleting document from Firebase Cloud:', error);

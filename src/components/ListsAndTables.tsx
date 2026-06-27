@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Company, Camp, Customer, Visit, Feedback, Complaint, CompetitorIntel, SocialAd, MarketingPlan } from '../types';
 import { SOCIAL_PLATFORMS } from '../utils/exportUtils';
+import { Calendar } from 'lucide-react';
 
 interface ListsAndTablesProps {
   type: 'companies' | 'camps' | 'customers' | 'visits' | 'feedback' | 'complaints' | 'competitors' | 'social' | 'plans';
@@ -11,60 +12,110 @@ interface ListsAndTablesProps {
 
 export default function ListsAndTables({ type, data, onDelete, onOpenModal }: ListsAndTablesProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
 
-  // Filter Data
-  const filteredData = data.filter((item) => {
+  // Filter and Sort Data using useMemo for performance
+  const processedData = useMemo(() => {
     const term = searchTerm.toLowerCase();
-    if (type === 'companies') {
-      const c = item as Company;
-      return (
-        c.name.toLowerCase().includes(term) ||
-        (c.contact || '').toLowerCase().includes(term) ||
-        (c.boss_name || '').toLowerCase().includes(term)
-      );
-    }
-    if (type === 'camps') {
-      const c = item as Camp;
-      return (
-        c.name.toLowerCase().includes(term) ||
-        c.location.toLowerCase().includes(term) ||
-        c.boss_name.toLowerCase().includes(term)
-      );
-    }
-    if (type === 'customers') {
-      const c = item as Customer;
-      return (
-        c.name.toLowerCase().includes(term) ||
-        (c.phone || '').toLowerCase().includes(term) ||
-        (c.location || '').toLowerCase().includes(term)
-      );
-    }
-    if (type === 'visits') {
-      const v = item as Visit;
-      return v.place.toLowerCase().includes(term) || v.type.toLowerCase().includes(term) || (v.notes || '').toLowerCase().includes(term);
-    }
-    if (type === 'feedback') {
-      const f = item as Feedback;
-      return (f.customer || '').toLowerCase().includes(term) || f.feedback.toLowerCase().includes(term);
-    }
-    if (type === 'complaints') {
-      const c = item as Complaint;
-      return c.customer.toLowerCase().includes(term) || c.category.toLowerCase().includes(term) || c.description.toLowerCase().includes(term);
-    }
-    if (type === 'competitors') {
-      const c = item as CompetitorIntel;
-      return c.name.toLowerCase().includes(term) || c.strategy.toLowerCase().includes(term);
-    }
-    if (type === 'social') {
-      const s = item as SocialAd;
-      return s.title.toLowerCase().includes(term) || s.platform.toLowerCase().includes(term);
-    }
-    if (type === 'plans') {
-      const p = item as MarketingPlan;
-      return p.title.toLowerCase().includes(term) || p.details.toLowerCase().includes(term);
-    }
-    return true;
-  });
+    
+    // First, filter data by search term
+    const filtered = data.filter((item) => {
+      if (type === 'companies') {
+        const c = item as Company;
+        return (
+          c.name.toLowerCase().includes(term) ||
+          (c.contact || '').toLowerCase().includes(term) ||
+          (c.boss_name || '').toLowerCase().includes(term)
+        );
+      }
+      if (type === 'camps') {
+        const c = item as Camp;
+        return (
+          c.name.toLowerCase().includes(term) ||
+          c.location.toLowerCase().includes(term) ||
+          c.boss_name.toLowerCase().includes(term)
+        );
+      }
+      if (type === 'customers') {
+        const c = item as Customer;
+        return (
+          c.name.toLowerCase().includes(term) ||
+          (c.phone || '').toLowerCase().includes(term) ||
+          (c.location || '').toLowerCase().includes(term)
+        );
+      }
+      if (type === 'visits') {
+        const v = item as Visit;
+        return v.place.toLowerCase().includes(term) || v.type.toLowerCase().includes(term) || (v.notes || '').toLowerCase().includes(term);
+      }
+      if (type === 'feedback') {
+        const f = item as Feedback;
+        return (f.customer || '').toLowerCase().includes(term) || f.feedback.toLowerCase().includes(term);
+      }
+      if (type === 'complaints') {
+        const c = item as Complaint;
+        return c.customer.toLowerCase().includes(term) || c.category.toLowerCase().includes(term) || c.description.toLowerCase().includes(term);
+      }
+      if (type === 'competitors') {
+        const c = item as CompetitorIntel;
+        return c.name.toLowerCase().includes(term) || c.strategy.toLowerCase().includes(term);
+      }
+      if (type === 'social') {
+        const s = item as SocialAd;
+        return s.title.toLowerCase().includes(term) || s.platform.toLowerCase().includes(term);
+      }
+      if (type === 'plans') {
+        const p = item as MarketingPlan;
+        return p.title.toLowerCase().includes(term) || p.details.toLowerCase().includes(term);
+      }
+      return true;
+    });
+
+    // Helper to safely parse localized or standard date strings to timestamp
+    const parseDateString = (dateStr?: string): number => {
+      if (!dateStr) return 0;
+      const parsed = Date.parse(dateStr);
+      if (!isNaN(parsed)) return parsed;
+
+      // Split typical locale formats: DD/MM/YYYY or MM/DD/YYYY
+      const parts = dateStr.split(/[\/\-\.]/);
+      if (parts.length === 3) {
+        let day = parseInt(parts[0], 10);
+        let month = parseInt(parts[1], 10);
+        let year = parseInt(parts[2], 10);
+
+        // Standard year check (if year is first element, e.g., YYYY/MM/DD)
+        if (parts[0].length === 4) {
+          year = parseInt(parts[0], 10);
+          month = parseInt(parts[1], 10);
+          day = parseInt(parts[2], 10);
+        }
+
+        if (month > 12) {
+          const temp = month;
+          month = day;
+          day = temp;
+        }
+
+        if (year > 1000 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+          return new Date(year, month - 1, day).getTime();
+        }
+      }
+      return 0;
+    };
+
+    // Sort filtered data based on date and id (creation timestamp fallback)
+    return [...filtered].sort((a, b) => {
+      const timeA = parseDateString(a.date);
+      const timeB = parseDateString(b.date);
+
+      if (timeA !== timeB) {
+        return sortOrder === 'newest' ? timeB - timeA : timeA - timeB;
+      }
+      // Fallback to id (Date.now() creation timestamp)
+      return sortOrder === 'newest' ? b.id - a.id : a.id - b.id;
+    });
+  }, [data, type, searchTerm, sortOrder]);
 
   const handleEmptyState = (title: string, btnLabel: string, modalType: string) => (
     <div className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50/50">
@@ -84,21 +135,53 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
 
   return (
     <div className="space-y-4">
-      {/* Search Bar & Add Button */}
+      {/* Search Bar, Sorting & Add Button */}
       {data.length > 0 && (
-        <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-          <div className="relative w-full sm:max-w-xs">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-sm">
-              🔍
-            </span>
-            <input
-              type="text"
-              placeholder="Filter list records..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
-            />
+        <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
+            {/* Search Input */}
+            <div className="relative w-full sm:w-64">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-xs">
+                🔍
+              </span>
+              <input
+                type="text"
+                placeholder="Filter list records..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-8 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white placeholder-slate-400"
+              />
+            </div>
+
+            {/* Sort Toggle Buttons */}
+            <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/60 w-full sm:w-auto shadow-inner">
+              <button
+                type="button"
+                onClick={() => setSortOrder('newest')}
+                className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+                  sortOrder === 'newest'
+                    ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/10'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                <Calendar className="w-3 h-3 text-indigo-500" />
+                Newest First
+              </button>
+              <button
+                type="button"
+                onClick={() => setSortOrder('oldest')}
+                className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+                  sortOrder === 'oldest'
+                    ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/10'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                <Calendar className="w-3 h-3 text-indigo-500 rotate-180 transform" />
+                Oldest First
+              </button>
+            </div>
           </div>
+
           <button
             onClick={() => {
               const mapping: { [key: string]: string } = {
@@ -114,7 +197,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
               };
               onOpenModal(mapping[type]);
             }}
-            className="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+            className="w-full md:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
           >
             ➕ Register New Entry
           </button>
@@ -122,7 +205,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
       )}
 
       {/* Render based on Type */}
-      {filteredData.length === 0 ? (
+      {processedData.length === 0 ? (
         data.length === 0 ? (
           type === 'companies'
             ? handleEmptyState('No registered companies yet', 'Add Corporate Partner', 'company')
@@ -150,7 +233,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
         <div className="space-y-3">
           {/* 1. Companies view */}
           {type === 'companies' &&
-            filteredData.map((item, idx) => {
+            processedData.map((item, idx) => {
               const c = item as Company;
               return (
                 <div
@@ -217,7 +300,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
 
           {/* 2. Camps view */}
           {type === 'camps' &&
-            filteredData.map((item, idx) => {
+            processedData.map((item, idx) => {
               const c = item as Camp;
               return (
                 <div
@@ -290,7 +373,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-600">
-                  {filteredData.map((item, idx) => {
+                  {processedData.map((item, idx) => {
                     const c = item as Customer;
                     return (
                       <tr key={c.id} className="hover:bg-slate-50/50">
@@ -336,7 +419,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-600">
-                  {filteredData.map((item, idx) => {
+                  {processedData.map((item, idx) => {
                     const v = item as Visit;
                     return (
                       <tr key={v.id} className="hover:bg-slate-50/50">
@@ -384,7 +467,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-600">
-                  {filteredData.map((item, idx) => {
+                  {processedData.map((item, idx) => {
                     const f = item as Feedback;
                     const ratingStars = '⭐'.repeat(f.rating);
                     return (
@@ -445,7 +528,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-600">
-                  {filteredData.map((item, idx) => {
+                  {processedData.map((item, idx) => {
                     const c = item as Complaint;
                     return (
                       <tr key={c.id} className="hover:bg-slate-50/50">
@@ -503,7 +586,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-600">
-                  {filteredData.map((item, idx) => {
+                  {processedData.map((item, idx) => {
                     const c = item as CompetitorIntel;
                     return (
                       <tr key={c.id} className="hover:bg-slate-50/50">
@@ -547,7 +630,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
           {/* 8. Social Ads view */}
           {type === 'social' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {filteredData.map((item, idx) => {
+              {processedData.map((item, idx) => {
                 const s = item as SocialAd;
                 const platformInfo = SOCIAL_PLATFORMS[s.platform as keyof typeof SOCIAL_PLATFORMS];
                 return (
@@ -600,7 +683,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
 
           {/* 9. Marketing Plans view */}
           {type === 'plans' &&
-            filteredData.map((item, idx) => {
+            processedData.map((item, idx) => {
               const p = item as MarketingPlan;
               return (
                 <div
