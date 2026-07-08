@@ -88,6 +88,31 @@ export default function App() {
     return localStorage.getItem('aljadeed_forced_offline') === 'true';
   });
 
+  // Network connection state & dynamic detection
+  const [isNetworkOnline, setIsNetworkOnline] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    return navigator.onLine;
+  });
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsNetworkOnline(true);
+      showToast('Network connection detected. Syncing with databases...', 'success');
+    };
+    const handleOffline = () => {
+      setIsNetworkOnline(false);
+      showToast('Network connection lost. Running in offline fallback mode.', 'warning');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const handleToggleForcedOffline = () => {
     const nextVal = !isForcedOffline;
     setIsForcedOffline(nextVal);
@@ -123,9 +148,9 @@ export default function App() {
   // Load Initial Data & Sync with Firebase Cloud
   useEffect(() => {
     async function startFirebaseSync() {
-      if (isForcedOffline) {
+      if (isForcedOffline || !isNetworkOnline) {
         setSyncStatus('error');
-        setRateSource('Offline cache (Forced Mode)');
+        setRateSource(isForcedOffline ? 'Offline cache (Forced Mode)' : 'Offline cache (No Network Connection)');
         setIsSyncing(false);
         // Immediately load from localStorage
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -365,7 +390,7 @@ export default function App() {
 
     startFirebaseSync();
     updateTime();
-  }, [isForcedOffline]);
+  }, [isForcedOffline, isNetworkOnline]);
 
   // Sync with Local Storage on Data Change
   const saveToLocalStorage = (newData: AppData) => {
@@ -389,8 +414,8 @@ export default function App() {
 
   // Fetch Live Rates
   const fetchRates = async () => {
-    if (isForcedOffline) {
-      setRateSource('Offline cache (Forced Mode)');
+    if (isForcedOffline || !isNetworkOnline) {
+      setRateSource(isForcedOffline ? 'Offline cache (Forced Mode)' : 'Offline cache (No Network Connection)');
       setIsFetchingRates(false);
       return;
     }
@@ -433,7 +458,7 @@ export default function App() {
     fetchRates();
     const interval = setInterval(fetchRates, 10 * 60 * 1000); // 10 mins
     return () => clearInterval(interval);
-  }, [isForcedOffline]);
+  }, [isForcedOffline, isNetworkOnline]);
 
   // Save Modal Record Callback
   const handleSaveModalData = async (formData: any) => {
@@ -807,7 +832,7 @@ export default function App() {
         {/* Header Block */}
         <Header
           lastUpdate={lastUpdate}
-          isOnline={!isForcedOffline && rateSource.includes('Live')}
+          isOnline={isNetworkOnline && !isForcedOffline}
           rateSource={rateSource}
           syncStatus={syncStatus}
           isForcedOffline={isForcedOffline}
@@ -1085,6 +1110,7 @@ export default function App() {
                   showToast={showToast}
                   isForcedOffline={isForcedOffline}
                   onToggleForcedOffline={handleToggleForcedOffline}
+                  isNetworkOnline={isNetworkOnline}
                   onRestoreComplete={(restored) => {
                     setAppData(restored);
                     saveToLocalStorage(restored);

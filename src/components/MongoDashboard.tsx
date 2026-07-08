@@ -19,6 +19,7 @@ interface MongoDashboardProps {
   showToast: (msg: string, type: 'success' | 'error' | 'warning' | 'info') => void;
   isForcedOffline: boolean;
   onToggleForcedOffline: () => void;
+  isNetworkOnline?: boolean;
 }
 
 export default function MongoDashboard({ 
@@ -27,7 +28,8 @@ export default function MongoDashboard({
   onRestoreComplete, 
   showToast,
   isForcedOffline,
-  onToggleForcedOffline
+  onToggleForcedOffline,
+  isNetworkOnline = true
 }: MongoDashboardProps) {
   const [status, setStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [dbInfo, setDbInfo] = useState<{ database?: string; message?: string; error?: string }>({});
@@ -38,6 +40,11 @@ export default function MongoDashboard({
     if (isForcedOffline) {
       setStatus('error');
       setDbInfo({ error: 'Manual Offline Fallback mode is enabled.' });
+      return;
+    }
+    if (!isNetworkOnline) {
+      setStatus('error');
+      setDbInfo({ error: 'Internet offline. Check your network connection.' });
       return;
     }
     setStatus('checking');
@@ -58,7 +65,7 @@ export default function MongoDashboard({
 
   useEffect(() => {
     checkConnection();
-  }, [isForcedOffline]);
+  }, [isForcedOffline, isNetworkOnline]);
 
   const handleBackup = async () => {
     if (status !== 'connected') {
