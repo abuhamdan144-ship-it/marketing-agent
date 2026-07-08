@@ -21,6 +21,8 @@ import {
   saveSettingsToCloud, 
   migrateLocalDataToCloud 
 } from './lib/firebase';
+import MongoDashboard from './components/MongoDashboard';
+import { syncItemToMongo, deleteItemFromMongo } from './lib/mongodb';
 
 const LOCAL_STORAGE_KEY = 'aljadeed_marketing_agent_v3';
 
@@ -43,8 +45,34 @@ const initialData: AppData = {
   rates: {},
 };
 
+const loadInitialLocalData = (): AppData => {
+  if (typeof window === 'undefined') return initialData;
+  const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      return {
+        companies: parsed.companies || [],
+        camps: parsed.camps || [],
+        customers: parsed.customers || [],
+        visits: parsed.visits || [],
+        feedback: parsed.feedback || [],
+        complaints: parsed.complaints || [],
+        competitors: parsed.competitors || [],
+        social: parsed.social || [],
+        plans: parsed.plans || [],
+        settings: parsed.settings || { agentName: '', managerWhatsApp: '', managerEmail: '', monthlyVisitGoal: 15 },
+        rates: parsed.rates || {},
+      };
+    } catch (e) {
+      console.error('Error parsing initial local storage data:', e);
+    }
+  }
+  return initialData;
+};
+
 export default function App() {
-  const [appData, setAppData] = useState<AppData>(initialData);
+  const [appData, setAppData] = useState<AppData>(loadInitialLocalData);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [modalType, setModalType] = useState<string | null>(null);
   const [isFetchingRates, setIsFetchingRates] = useState<boolean>(false);
@@ -64,11 +92,14 @@ export default function App() {
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
 
   // Settings inputs
-  const [settingsForm, setSettingsForm] = useState({
-    agentName: '',
-    managerWhatsApp: '',
-    managerEmail: '',
-    monthlyVisitGoal: 15,
+  const [settingsForm, setSettingsForm] = useState(() => {
+    const local = loadInitialLocalData();
+    return {
+      agentName: local.settings?.agentName || '',
+      managerWhatsApp: local.settings?.managerWhatsApp || '',
+      managerEmail: local.settings?.managerEmail || '',
+      monthlyVisitGoal: local.settings?.monthlyVisitGoal || 15,
+    };
   });
 
   // Load Initial Data & Sync with Firebase Cloud
@@ -135,9 +166,12 @@ export default function App() {
               hasOfflineDeletions = true;
               for (const itemToDelete of itemsToDelete) {
                 try {
-                  await deleteDocumentFromCloud(col.name, itemToDelete.id);
+                  await Promise.all([
+                    deleteDocumentFromCloud(col.name, itemToDelete.id),
+                    deleteItemFromMongo(col.name, itemToDelete.id, currentUser.uid)
+                  ]);
                 } catch (err) {
-                  console.error(`Error deleting item ${itemToDelete.id} from cloud:`, err);
+                  console.error(`Error deleting item ${itemToDelete.id} from cloud/MongoDB:`, err);
                 }
               }
             }
@@ -157,9 +191,12 @@ export default function App() {
               hasNewOfflineAdditions = true;
               for (const unsyncedItem of unsyncedItems) {
                 try {
-                  await saveDocumentToCloud(col.name, unsyncedItem, currentUser.uid);
+                  await Promise.all([
+                    saveDocumentToCloud(col.name, unsyncedItem, currentUser.uid),
+                    syncItemToMongo(col.name, unsyncedItem, currentUser.uid)
+                  ]);
                 } catch (err) {
-                  console.error(`Error syncing unsynced item ${unsyncedItem.id} to cloud:`, err);
+                  console.error(`Error syncing unsynced item ${unsyncedItem.id} to cloud/MongoDB:`, err);
                 }
               }
             }
@@ -180,9 +217,12 @@ export default function App() {
 
           if (hasLocalSettings && cloudSettingsEmpty) {
             try {
-              await saveSettingsToCloud(localDataParsed.settings, currentUser.uid);
+              await Promise.all([
+                saveSettingsToCloud(localDataParsed.settings, currentUser.uid),
+                syncItemToMongo('settings', { id: 'settings', ...localDataParsed.settings }, currentUser.uid)
+              ]);
             } catch (err) {
-              console.error('Error syncing offline settings to cloud:', err);
+              console.error('Error syncing offline settings to cloud/MongoDB:', err);
             }
           }
         }
@@ -219,14 +259,14 @@ export default function App() {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));
 
         if (hasNewOfflineAdditions || hasOfflineDeletions) {
-          showToast('Successfully synchronized offline changes with Firebase Cloud database', 'success');
+          showToast('Successfully synchronized offline changes with Firebase & MongoDB cloud databases', 'success');
         } else if (
           merged.companies.length > 0 ||
           merged.camps.length > 0 ||
           merged.customers.length > 0 ||
           merged.visits.length > 0
         ) {
-          showToast('Securely synchronized with Firebase Cloud database', 'success');
+          showToast('Securely synchronized with Firebase & MongoDB cloud databases', 'success');
         }
 
         setSyncStatus('synced');
@@ -417,14 +457,18 @@ export default function App() {
     saveToLocalStorage(updated);
     setModalType(null);
 
-    // Save to Firebase Cloud in background
+    // Save to Firebase Cloud and MongoDB in background
     if (user && collectionName && itemToSave) {
       try {
         setSyncStatus('loading');
-        await saveDocumentToCloud(collectionName, itemToSave, user.uid);
+        // Dual-write to Firebase Cloud and MongoDB
+        await Promise.all([
+          saveDocumentToCloud(collectionName, itemToSave, user.uid),
+          syncItemToMongo(collectionName, itemToSave, user.uid)
+        ]);
         setSyncStatus('synced');
       } catch (error) {
-        console.error('Error saving document to Firebase Cloud:', error);
+        console.error('Error saving document to Cloud/MongoDB:', error);
         setSyncStatus('error');
         showToast('Saved locally. Cloud upload pending reconnection.', 'warning');
       }
@@ -478,7 +522,11 @@ export default function App() {
     if (user && collectionName) {
       try {
         setSyncStatus('loading');
-        await deleteDocumentFromCloud(collectionName, id);
+        // Dual-delete from Firebase and MongoDB
+        await Promise.all([
+          deleteDocumentFromCloud(collectionName, id),
+          deleteItemFromMongo(collectionName, id, user.uid)
+        ]);
         
         // Remove from offline deletion queue upon successful cloud deletion
         try {
@@ -492,7 +540,7 @@ export default function App() {
         
         setSyncStatus('synced');
       } catch (error) {
-        console.error('Error deleting document from Firebase Cloud:', error);
+        console.error('Error deleting document from Cloud/MongoDB:', error);
         setSyncStatus('error');
       }
     }
@@ -520,10 +568,13 @@ export default function App() {
     if (user) {
       try {
         setSyncStatus('loading');
-        await saveSettingsToCloud(updated.settings, user.uid);
+        await Promise.all([
+          saveSettingsToCloud(updated.settings, user.uid),
+          syncItemToMongo('settings', { id: 'settings', ...updated.settings }, user.uid)
+        ]);
         setSyncStatus('synced');
       } catch (error) {
-        console.error('Error saving settings to Firebase Cloud:', error);
+        console.error('Error saving settings to Cloud/MongoDB:', error);
         setSyncStatus('error');
       }
     }
@@ -548,10 +599,13 @@ export default function App() {
     if (user) {
       try {
         setSyncStatus('loading');
-        await saveSettingsToCloud(updated.settings, user.uid);
+        await Promise.all([
+          saveSettingsToCloud(updated.settings, user.uid),
+          syncItemToMongo('settings', { id: 'settings', ...updated.settings }, user.uid)
+        ]);
         setSyncStatus('synced');
       } catch (error) {
-        console.error('Error saving settings to Firebase Cloud:', error);
+        console.error('Error saving settings to Cloud/MongoDB:', error);
         setSyncStatus('error');
       }
     }
@@ -762,6 +816,7 @@ export default function App() {
                 rateSource={rateSource}
                 isFetching={isFetchingRates}
                 onRefresh={fetchRates}
+                isOnline={rateSource.includes('Live')}
               />
 
               {/* Quick Log Triggers */}
@@ -952,6 +1007,25 @@ export default function App() {
                   </button>
                 </div>
               </div>
+
+              {/* MongoDB Cloud Backup Dashboard */}
+              {user && (
+                <MongoDashboard
+                  appData={appData}
+                  userId={user.uid}
+                  showToast={showToast}
+                  onRestoreComplete={(restored) => {
+                    setAppData(restored);
+                    saveToLocalStorage(restored);
+                    setSettingsForm({
+                      agentName: restored.settings?.agentName || '',
+                      managerWhatsApp: restored.settings?.managerWhatsApp || '',
+                      managerEmail: restored.settings?.managerEmail || '',
+                      monthlyVisitGoal: restored.settings?.monthlyVisitGoal || 15,
+                    });
+                  }}
+                />
+              )}
 
               {/* Data wipe */}
               <div className="bg-rose-50/50 rounded-2xl p-5 border border-rose-100 space-y-4">

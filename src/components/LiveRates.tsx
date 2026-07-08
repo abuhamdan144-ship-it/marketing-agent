@@ -7,9 +7,10 @@ interface LiveRatesProps {
   rateSource: string;
   isFetching: boolean;
   onRefresh: () => void;
+  isOnline?: boolean;
 }
 
-export default function LiveRates({ rates, rateSource, isFetching, onRefresh }: LiveRatesProps) {
+export default function LiveRates({ rates, rateSource, isFetching, onRefresh, isOnline = true }: LiveRatesProps) {
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300">
       <div className="flex items-center justify-between mb-4">
@@ -31,11 +32,19 @@ export default function LiveRates({ rates, rateSource, isFetching, onRefresh }: 
         </button>
       </div>
 
-      <div className="flex items-center gap-2.5 px-3 py-2 bg-emerald-50/50 rounded-xl border border-emerald-100 mb-4 text-xs font-medium text-emerald-800">
-        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
-        <span className="font-semibold text-emerald-700">Rates Feed:</span>
-        <span className="font-mono text-[11px] flex-1 text-slate-600">{rateSource}</span>
-      </div>
+      {isOnline ? (
+        <div className="flex items-center gap-2.5 px-3 py-2 bg-emerald-50/50 rounded-xl border border-emerald-100 mb-4 text-xs font-medium text-emerald-800">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+          <span className="font-semibold text-emerald-700">Rates Feed:</span>
+          <span className="font-mono text-[11px] flex-1 text-slate-600">{rateSource}</span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2.5 px-3 py-2 bg-amber-50/50 rounded-xl border border-amber-100 mb-4 text-xs font-medium text-amber-800">
+          <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0 animate-pulse" />
+          <span className="font-semibold text-amber-700">Rates Feed:</span>
+          <span className="font-mono text-[11px] flex-1 text-slate-600">{rateSource}</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 xs:grid-cols-4 sm:grid-cols-4 gap-3">
         {CORRIDORS.map((c) => {
