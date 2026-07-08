@@ -314,17 +314,48 @@ export default function App() {
           ? await loadUserDataFromCloud(currentUser.uid)
           : cloudData;
 
+        // Robust merge function to prevent data loss on page load/refresh
+        const mergeCollection = <T extends { id: number }>(
+          cloudItems: T[] | undefined,
+          localItems: T[] | undefined
+        ): T[] => {
+          const itemsMap = new Map<number, T>();
+          
+          // 1. First, insert all cloud-synced items
+          if (cloudItems) {
+            cloudItems.forEach((item) => {
+              if (item && item.id) {
+                itemsMap.set(Number(item.id), item);
+              }
+            });
+          }
+          
+          // 2. Then, preserve local items that are NOT in the cloud and were NOT explicitly deleted
+          if (localItems) {
+            localItems.forEach((item) => {
+              if (item && item.id) {
+                const idNum = Number(item.id);
+                if (!itemsMap.has(idNum) && !deletedIds.includes(idNum)) {
+                  itemsMap.set(idNum, item);
+                }
+              }
+            });
+          }
+          
+          return Array.from(itemsMap.values());
+        };
+
         // Normal flow: pull from fully reconciled cloud data
         const merged: AppData = {
-          companies: (syncedCloudData.companies as Company[]) || [],
-          camps: (syncedCloudData.camps as Camp[]) || [],
-          customers: (syncedCloudData.customers as Customer[]) || [],
-          visits: (syncedCloudData.visits as Visit[]) || [],
-          feedback: (syncedCloudData.feedback as Feedback[]) || [],
-          complaints: (syncedCloudData.complaints as Complaint[]) || [],
-          competitors: (syncedCloudData.competitors as CompetitorIntel[]) || [],
-          social: (syncedCloudData.social as SocialAd[]) || [],
-          plans: (syncedCloudData.plans as MarketingPlan[]) || [],
+          companies: mergeCollection(syncedCloudData.companies as Company[], localDataParsed?.companies),
+          camps: mergeCollection(syncedCloudData.camps as Camp[], localDataParsed?.camps),
+          customers: mergeCollection(syncedCloudData.customers as Customer[], localDataParsed?.customers),
+          visits: mergeCollection(syncedCloudData.visits as Visit[], localDataParsed?.visits),
+          feedback: mergeCollection(syncedCloudData.feedback as Feedback[], localDataParsed?.feedback),
+          complaints: mergeCollection(syncedCloudData.complaints as Complaint[], localDataParsed?.complaints),
+          competitors: mergeCollection(syncedCloudData.competitors as CompetitorIntel[], localDataParsed?.competitors),
+          social: mergeCollection(syncedCloudData.social as SocialAd[], localDataParsed?.social),
+          plans: mergeCollection(syncedCloudData.plans as MarketingPlan[], localDataParsed?.plans),
           settings: (syncedCloudData.settings as Settings) || (localDataParsed?.settings) || { agentName: '', managerWhatsApp: '', managerEmail: '', monthlyVisitGoal: 15 },
           rates: (localDataParsed && localDataParsed.rates) || {},
         };
