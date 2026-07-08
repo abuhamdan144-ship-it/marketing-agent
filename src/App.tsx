@@ -82,6 +82,24 @@ export default function App() {
   const [isExportPreviewOpen, setIsExportPreviewOpen] = useState<boolean>(false);
   const [isGoalTrackerHidden, setIsGoalTrackerHidden] = useState<boolean>(true);
 
+  // Forced Offline Mode State
+  const [isForcedOffline, setIsForcedOffline] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('aljadeed_forced_offline') === 'true';
+  });
+
+  const handleToggleForcedOffline = () => {
+    const nextVal = !isForcedOffline;
+    setIsForcedOffline(nextVal);
+    localStorage.setItem('aljadeed_forced_offline', String(nextVal));
+    showToast(
+      nextVal 
+        ? 'Forced Offline Mode enabled. Syncing paused.' 
+        : 'Online Mode restored. Reconnecting to cloud databases...',
+      nextVal ? 'warning' : 'success'
+    );
+  };
+
   // Firebase Auth and Sync state
   const [user, setUser] = useState<{ uid: string } | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -105,6 +123,42 @@ export default function App() {
   // Load Initial Data & Sync with Firebase Cloud
   useEffect(() => {
     async function startFirebaseSync() {
+      if (isForcedOffline) {
+        setSyncStatus('error');
+        setRateSource('Offline cache (Forced Mode)');
+        setIsSyncing(false);
+        // Immediately load from localStorage
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            const validated: AppData = {
+              companies: parsed.companies || [],
+              camps: parsed.camps || [],
+              customers: parsed.customers || [],
+              visits: parsed.visits || [],
+              feedback: parsed.feedback || [],
+              complaints: parsed.complaints || [],
+              competitors: parsed.competitors || [],
+              social: parsed.social || [],
+              plans: parsed.plans || [],
+              settings: parsed.settings || { agentName: '', managerWhatsApp: '', managerEmail: '', monthlyVisitGoal: 15 },
+              rates: parsed.rates || {},
+            };
+            setAppData(validated);
+            setSettingsForm({
+              agentName: validated.settings.agentName || '',
+              managerWhatsApp: validated.settings.managerWhatsApp || '',
+              managerEmail: validated.settings.managerEmail || '',
+              monthlyVisitGoal: validated.settings.monthlyVisitGoal || 15,
+            });
+          } catch (e) {
+            console.error('Error parsing local storage data:', e);
+          }
+        }
+        return;
+      }
+
       try {
         setIsSyncing(true);
         setSyncStatus('loading');
@@ -311,7 +365,7 @@ export default function App() {
 
     startFirebaseSync();
     updateTime();
-  }, []);
+  }, [isForcedOffline]);
 
   // Sync with Local Storage on Data Change
   const saveToLocalStorage = (newData: AppData) => {
@@ -335,6 +389,11 @@ export default function App() {
 
   // Fetch Live Rates
   const fetchRates = async () => {
+    if (isForcedOffline) {
+      setRateSource('Offline cache (Forced Mode)');
+      setIsFetchingRates(false);
+      return;
+    }
     setIsFetchingRates(true);
     try {
       const response = await fetch('https://open.er-api.com/v6/latest/OMR');
@@ -374,7 +433,7 @@ export default function App() {
     fetchRates();
     const interval = setInterval(fetchRates, 10 * 60 * 1000); // 10 mins
     return () => clearInterval(interval);
-  }, []);
+  }, [isForcedOffline]);
 
   // Save Modal Record Callback
   const handleSaveModalData = async (formData: any) => {
@@ -458,7 +517,7 @@ export default function App() {
     setModalType(null);
 
     // Save to Firebase Cloud and MongoDB in background
-    if (user && collectionName && itemToSave) {
+    if (!isForcedOffline && user && collectionName && itemToSave) {
       try {
         setSyncStatus('loading');
         // Dual-write to Firebase Cloud and MongoDB
@@ -472,6 +531,8 @@ export default function App() {
         setSyncStatus('error');
         showToast('Saved locally. Cloud upload pending reconnection.', 'warning');
       }
+    } else if (isForcedOffline) {
+      showToast('Saved to local storage cache (Offline Mode Active)', 'info');
     }
   };
 
@@ -519,7 +580,7 @@ export default function App() {
     saveToLocalStorage(updated);
     showToast('Entry permanently deleted from database', 'warning');
 
-    if (user && collectionName) {
+    if (!isForcedOffline && user && collectionName) {
       try {
         setSyncStatus('loading');
         // Dual-delete from Firebase and MongoDB
@@ -543,6 +604,8 @@ export default function App() {
         console.error('Error deleting document from Cloud/MongoDB:', error);
         setSyncStatus('error');
       }
+    } else if (isForcedOffline) {
+      showToast('Deleted from local storage cache (Offline Mode Active)', 'info');
     }
   };
 
@@ -565,7 +628,7 @@ export default function App() {
     saveToLocalStorage(updated);
     showToast('Agent dashboard configuration saved successfully', 'success');
 
-    if (user) {
+    if (!isForcedOffline && user) {
       try {
         setSyncStatus('loading');
         await Promise.all([
@@ -577,6 +640,8 @@ export default function App() {
         console.error('Error saving settings to Cloud/MongoDB:', error);
         setSyncStatus('error');
       }
+    } else if (isForcedOffline) {
+      showToast('Configuration stored in local cache (Offline Mode Active)', 'info');
     }
   };
 
@@ -596,7 +661,7 @@ export default function App() {
     }));
     showToast(`Monthly campaign target goal updated to ${newGoal}`, 'success');
 
-    if (user) {
+    if (!isForcedOffline && user) {
       try {
         setSyncStatus('loading');
         await Promise.all([
@@ -608,6 +673,8 @@ export default function App() {
         console.error('Error saving settings to Cloud/MongoDB:', error);
         setSyncStatus('error');
       }
+    } else if (isForcedOffline) {
+      showToast('Goal updated in local cache (Offline Mode Active)', 'info');
     }
   };
 
@@ -740,9 +807,11 @@ export default function App() {
         {/* Header Block */}
         <Header
           lastUpdate={lastUpdate}
-          isOnline={rateSource.includes('Live')}
+          isOnline={!isForcedOffline && rateSource.includes('Live')}
           rateSource={rateSource}
           syncStatus={syncStatus}
+          isForcedOffline={isForcedOffline}
+          onToggleForcedOffline={handleToggleForcedOffline}
         />
 
         {/* Dynamic Workspace Container */}
@@ -1014,6 +1083,8 @@ export default function App() {
                   appData={appData}
                   userId={user.uid}
                   showToast={showToast}
+                  isForcedOffline={isForcedOffline}
+                  onToggleForcedOffline={handleToggleForcedOffline}
                   onRestoreComplete={(restored) => {
                     setAppData(restored);
                     saveToLocalStorage(restored);

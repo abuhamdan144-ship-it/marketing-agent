@@ -17,15 +17,29 @@ interface MongoDashboardProps {
   userId: string;
   onRestoreComplete: (restored: AppData) => void;
   showToast: (msg: string, type: 'success' | 'error' | 'warning' | 'info') => void;
+  isForcedOffline: boolean;
+  onToggleForcedOffline: () => void;
 }
 
-export default function MongoDashboard({ appData, userId, onRestoreComplete, showToast }: MongoDashboardProps) {
+export default function MongoDashboard({ 
+  appData, 
+  userId, 
+  onRestoreComplete, 
+  showToast,
+  isForcedOffline,
+  onToggleForcedOffline
+}: MongoDashboardProps) {
   const [status, setStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [dbInfo, setDbInfo] = useState<{ database?: string; message?: string; error?: string }>({});
   const [isSyncing, setIsSyncing] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
 
   const checkConnection = async () => {
+    if (isForcedOffline) {
+      setStatus('error');
+      setDbInfo({ error: 'Manual Offline Fallback mode is enabled.' });
+      return;
+    }
     setStatus('checking');
     try {
       const res = await testMongoConnection();
@@ -44,7 +58,7 @@ export default function MongoDashboard({ appData, userId, onRestoreComplete, sho
 
   useEffect(() => {
     checkConnection();
-  }, []);
+  }, [isForcedOffline]);
 
   const handleBackup = async () => {
     if (status !== 'connected') {
@@ -138,6 +152,7 @@ export default function MongoDashboard({ appData, userId, onRestoreComplete, sho
         {/* Mongo Connection Status */}
         <div className="col-span-1 md:col-span-2 flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
           <div className={`p-2 rounded-lg ${
+            isForcedOffline ? 'bg-amber-50 text-amber-500 animate-pulse' :
             status === 'checking' ? 'bg-indigo-50 text-indigo-500 animate-pulse' :
             status === 'connected' ? 'bg-emerald-50 text-emerald-500' :
             'bg-rose-50 text-rose-500'
@@ -149,27 +164,47 @@ export default function MongoDashboard({ appData, userId, onRestoreComplete, sho
               Cluster State
             </div>
             <div className="text-xs font-bold text-slate-700 truncate">
-              {status === 'checking' && 'Connecting to cluster...'}
-              {status === 'connected' && `Active - Connected (${dbInfo.database || 'buyOman'})`}
-              {status === 'error' && 'Disconnected / Offline'}
+              {isForcedOffline && 'Offline (Forced Manual Fallback)'}
+              {!isForcedOffline && status === 'checking' && 'Connecting to cluster...'}
+              {!isForcedOffline && status === 'connected' && `Active - Connected (${dbInfo.database || 'buyOman'})`}
+              {!isForcedOffline && status === 'error' && 'Disconnected / Offline'}
             </div>
-            {status === 'error' && (
-              <span className="text-[10px] text-rose-500 font-semibold truncate block">
-                {dbInfo.error || 'Invalid credentials or host unreachable.'}
+            {(isForcedOffline || status === 'error') && (
+              <span className="text-[10px] text-amber-600 font-semibold truncate block">
+                {isForcedOffline ? 'Manual Offline Fallback is active.' : (dbInfo.error || 'Invalid credentials or host unreachable.')}
               </span>
             )}
           </div>
         </div>
 
         {/* Sync Feed / Real-time info */}
-        <div className="col-span-1 flex items-center gap-2.5 p-3 bg-indigo-50/40 rounded-xl border border-indigo-100/50">
-          <Activity className="w-4 h-4 text-indigo-600 animate-pulse flex-shrink-0" />
+        <div className={`col-span-1 flex items-center gap-2.5 p-3 rounded-xl border ${
+          isForcedOffline 
+            ? 'bg-amber-50/50 border-amber-200 text-amber-800' 
+            : 'bg-indigo-50/40 border-indigo-100/50 text-indigo-800'
+        }`}>
+          <Activity className={`w-4 h-4 flex-shrink-0 ${isForcedOffline ? 'text-amber-500' : 'text-indigo-600 animate-pulse'}`} />
           <div>
-            <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider block">Real-time status</span>
-            <span className="text-[11px] font-semibold text-indigo-800">Automatic Sync is Active</span>
+            <span className={`text-[9px] font-bold uppercase tracking-wider block ${isForcedOffline ? 'text-amber-500' : 'text-indigo-400'}`}>Real-time status</span>
+            <span className="text-[11px] font-semibold">
+              {isForcedOffline ? 'Automatic Sync Paused' : 'Automatic Sync Active'}
+            </span>
           </div>
         </div>
       </div>
+
+      {isForcedOffline && (
+        <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 font-medium flex items-start gap-2.5 shadow-inner">
+          <AlertTriangle className="w-4.5 h-4.5 text-amber-600 flex-shrink-0 mt-0.5 animate-pulse" />
+          <div className="space-y-1">
+            <div className="font-bold uppercase tracking-wide text-[10px] text-amber-700">Forced Offline Mode Active</div>
+            <p className="leading-relaxed text-amber-900 font-medium">
+              You have manually enabled Offline Mode. Data will be saved locally to your device. 
+              Backups, cloud synchronization, and real-time database queries are paused until you re-enable Online mode.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Dataset status summary list */}
       <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs">
@@ -215,8 +250,21 @@ export default function MongoDashboard({ appData, userId, onRestoreComplete, sho
       {/* Interactive Actions */}
       <div className="flex flex-col sm:flex-row gap-3 pt-1">
         <button
+          onClick={onToggleForcedOffline}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 font-bold text-xs rounded-xl shadow-sm hover:shadow-md cursor-pointer transition-all ${
+            isForcedOffline 
+              ? 'bg-amber-500 hover:bg-amber-600 text-white' 
+              : 'bg-slate-700 hover:bg-slate-800 text-white'
+          }`}
+          title={isForcedOffline ? 'Turn ON Online Mode' : 'Turn ON Offline Mode'}
+        >
+          <CloudLightning className="w-4 h-4" />
+          {isForcedOffline ? 'Switch to ONLINE Mode' : 'Switch to OFFLINE Mode'}
+        </button>
+
+        <button
           onClick={handleBackup}
-          disabled={status !== 'connected' || isSyncing}
+          disabled={isForcedOffline || status !== 'connected' || isSyncing}
           className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           <Upload className="w-4 h-4" />
@@ -225,7 +273,7 @@ export default function MongoDashboard({ appData, userId, onRestoreComplete, sho
 
         <button
           onClick={handleRestore}
-          disabled={status !== 'connected' || isRestoring}
+          disabled={isForcedOffline || status !== 'connected' || isRestoring}
           className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           <Download className="w-4 h-4" />
