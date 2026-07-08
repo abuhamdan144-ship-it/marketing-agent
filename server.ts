@@ -218,6 +218,11 @@ app.get('/api/mongodb/restore/:userId', async (req, res) => {
   }
 });
 
+// Serve Firebase Configuration file to client side
+app.get('/firebase-applet-config.json', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'firebase-applet-config.json'));
+});
+
 // Vite Integration Setup
 async function startViteServer() {
   if (process.env.NODE_ENV !== 'production') {

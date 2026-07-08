@@ -3,6 +3,7 @@ import {
   getFirestore, 
   collection, 
   doc, 
+  getDoc,
   getDocs, 
   setDoc, 
   deleteDoc, 
@@ -112,9 +113,9 @@ export async function loadUserDataFromCloud(userId: string): Promise<Partial<App
   // Load settings separately as it can be a single document per user
   try {
     const settingsRef = doc(db, 'settings', userId);
-    const settingsSnap = await getDocs(query(collection(db, 'settings'), where('userId', '==', userId)));
-    if (!settingsSnap.empty) {
-      const docData = settingsSnap.docs[0].data();
+    const settingsSnap = await getDoc(settingsRef);
+    if (settingsSnap.exists()) {
+      const docData = settingsSnap.data();
       results.settings = {
         agentName: docData.agentName || '',
         managerWhatsApp: docData.managerWhatsApp || '',
