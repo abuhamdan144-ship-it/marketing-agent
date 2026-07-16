@@ -6,5 +6,7 @@
   "firestoreDatabaseId": "ai-studio-aljadeedmarketin-40edb3b6-e7fe-401d-b0d0-81a09a767412",
   "storageBucket": "al-jadeed-7c4f6.firebasestorage.app",
   "messagingSenderId": "1078020657301",
-  "measurementId": ""
+  "measurementId": "",
+  "oAuthClientId": "1078020657301-ktc9h2nepbgr09kuqqb3jq0ubja3036o.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
 }

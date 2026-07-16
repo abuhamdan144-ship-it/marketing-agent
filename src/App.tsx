@@ -21,8 +21,6 @@ import {
   saveSettingsToCloud, 
   migrateLocalDataToCloud 
 } from './lib/firebase';
-import MongoDashboard from './components/MongoDashboard';
-import { syncItemToMongo, deleteItemFromMongo } from './lib/mongodb';
 
 const LOCAL_STORAGE_KEY = 'aljadeed_marketing_agent_v3';
 
@@ -245,12 +243,9 @@ export default function App() {
               hasOfflineDeletions = true;
               for (const itemToDelete of itemsToDelete) {
                 try {
-                  await Promise.all([
-                    deleteDocumentFromCloud(col.name, itemToDelete.id),
-                    deleteItemFromMongo(col.name, itemToDelete.id, currentUser.uid)
-                  ]);
+                  await deleteDocumentFromCloud(col.name, itemToDelete.id);
                 } catch (err) {
-                  console.error(`Error deleting item ${itemToDelete.id} from cloud/MongoDB:`, err);
+                  console.error(`Error deleting item ${itemToDelete.id} from cloud:`, err);
                 }
               }
             }
@@ -270,12 +265,9 @@ export default function App() {
               hasNewOfflineAdditions = true;
               for (const unsyncedItem of unsyncedItems) {
                 try {
-                  await Promise.all([
-                    saveDocumentToCloud(col.name, unsyncedItem, currentUser.uid),
-                    syncItemToMongo(col.name, unsyncedItem, currentUser.uid)
-                  ]);
+                  await saveDocumentToCloud(col.name, unsyncedItem, currentUser.uid);
                 } catch (err) {
-                  console.error(`Error syncing unsynced item ${unsyncedItem.id} to cloud/MongoDB:`, err);
+                  console.error(`Error syncing unsynced item ${unsyncedItem.id} to cloud:`, err);
                 }
               }
             }
@@ -296,12 +288,9 @@ export default function App() {
 
           if (hasLocalSettings && cloudSettingsEmpty) {
             try {
-              await Promise.all([
-                saveSettingsToCloud(localDataParsed.settings, currentUser.uid),
-                syncItemToMongo('settings', { id: 'settings', ...localDataParsed.settings }, currentUser.uid)
-              ]);
+              await saveSettingsToCloud(localDataParsed.settings, currentUser.uid);
             } catch (err) {
-              console.error('Error syncing offline settings to cloud/MongoDB:', err);
+              console.error('Error syncing offline settings to cloud:', err);
             }
           }
         }
@@ -572,18 +561,14 @@ export default function App() {
     saveToLocalStorage(updated);
     setModalType(null);
 
-    // Save to Firebase Cloud and MongoDB in background
+    // Save to Firebase Cloud in background
     if (!isForcedOffline && user && collectionName && itemToSave) {
       try {
         setSyncStatus('loading');
-        // Dual-write to Firebase Cloud and MongoDB
-        await Promise.all([
-          saveDocumentToCloud(collectionName, itemToSave, user.uid),
-          syncItemToMongo(collectionName, itemToSave, user.uid)
-        ]);
+        await saveDocumentToCloud(collectionName, itemToSave, user.uid);
         setSyncStatus('synced');
       } catch (error) {
-        console.error('Error saving document to Cloud/MongoDB:', error);
+        console.error('Error saving document to Cloud:', error);
         setSyncStatus('error');
         showToast('Saved locally. Cloud upload pending reconnection.', 'warning');
       }
@@ -639,11 +624,7 @@ export default function App() {
     if (!isForcedOffline && user && collectionName) {
       try {
         setSyncStatus('loading');
-        // Dual-delete from Firebase and MongoDB
-        await Promise.all([
-          deleteDocumentFromCloud(collectionName, id),
-          deleteItemFromMongo(collectionName, id, user.uid)
-        ]);
+        await deleteDocumentFromCloud(collectionName, id);
         
         // Remove from offline deletion queue upon successful cloud deletion
         try {
@@ -657,7 +638,7 @@ export default function App() {
         
         setSyncStatus('synced');
       } catch (error) {
-        console.error('Error deleting document from Cloud/MongoDB:', error);
+        console.error('Error deleting document from Cloud:', error);
         setSyncStatus('error');
       }
     } else if (isForcedOffline) {
@@ -687,13 +668,10 @@ export default function App() {
     if (!isForcedOffline && user) {
       try {
         setSyncStatus('loading');
-        await Promise.all([
-          saveSettingsToCloud(updated.settings, user.uid),
-          syncItemToMongo('settings', { id: 'settings', ...updated.settings }, user.uid)
-        ]);
+        await saveSettingsToCloud(updated.settings, user.uid);
         setSyncStatus('synced');
       } catch (error) {
-        console.error('Error saving settings to Cloud/MongoDB:', error);
+        console.error('Error saving settings to Cloud:', error);
         setSyncStatus('error');
       }
     } else if (isForcedOffline) {
@@ -720,13 +698,10 @@ export default function App() {
     if (!isForcedOffline && user) {
       try {
         setSyncStatus('loading');
-        await Promise.all([
-          saveSettingsToCloud(updated.settings, user.uid),
-          syncItemToMongo('settings', { id: 'settings', ...updated.settings }, user.uid)
-        ]);
+        await saveSettingsToCloud(updated.settings, user.uid);
         setSyncStatus('synced');
       } catch (error) {
-        console.error('Error saving settings to Cloud/MongoDB:', error);
+        console.error('Error saving settings to Cloud:', error);
         setSyncStatus('error');
       }
     } else if (isForcedOffline) {
@@ -1132,28 +1107,6 @@ export default function App() {
                   </button>
                 </div>
               </div>
-
-              {/* MongoDB Cloud Backup Dashboard */}
-              {user && (
-                <MongoDashboard
-                  appData={appData}
-                  userId={user.uid}
-                  showToast={showToast}
-                  isForcedOffline={isForcedOffline}
-                  onToggleForcedOffline={handleToggleForcedOffline}
-                  isNetworkOnline={isNetworkOnline}
-                  onRestoreComplete={(restored) => {
-                    setAppData(restored);
-                    saveToLocalStorage(restored);
-                    setSettingsForm({
-                      agentName: restored.settings?.agentName || '',
-                      managerWhatsApp: restored.settings?.managerWhatsApp || '',
-                      managerEmail: restored.settings?.managerEmail || '',
-                      monthlyVisitGoal: restored.settings?.monthlyVisitGoal || 15,
-                    });
-                  }}
-                />
-              )}
 
               {/* Data wipe */}
               <div className="bg-rose-50/50 rounded-2xl p-5 border border-rose-100 space-y-4">
