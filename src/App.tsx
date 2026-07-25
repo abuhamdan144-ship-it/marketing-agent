@@ -597,11 +597,14 @@ export default function App() {
         if (activeUser && activeUser.uid) {
           await saveDocumentToCloud(collectionName, itemToSave, activeUser.uid);
           setSyncStatus('synced');
+          showToast(`Cloud Sync: ${collectionName} entry written to Firebase Firestore`, 'success');
+        } else {
+          showToast('Saved locally (User authentication pending)', 'warning');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error saving document to Cloud:', error);
         setSyncStatus('error');
-        showToast('Saved locally. Cloud upload pending reconnection.', 'warning');
+        showToast(`Cloud Sync Notice: ${error?.message || 'Saved locally, Firestore sync pending'}`, 'warning');
       }
     } else if (isForcedOffline) {
       showToast('Saved to local storage cache (Offline Mode Active)', 'info');

@@ -15,11 +15,12 @@ import { getAuth, signInAnonymously, onAuthStateChanged, User } from 'firebase/a
 import { AppData, Company, Camp, Customer, Visit, Feedback, Complaint, CompetitorIntel, SocialAd, MarketingPlan, Settings } from '../types';
 
 let db: any;
+let defaultDb: any;
 let auth: any;
 let isInitialized = false;
 
-export async function initFirebase(): Promise<{ db: any; auth: any }> {
-  if (isInitialized) return { db, auth };
+export async function initFirebase(): Promise<{ db: any; defaultDb: any; auth: any }> {
+  if (isInitialized) return { db, defaultDb, auth };
 
   try {
     const response = await fetch('/firebase-applet-config.json');
@@ -34,9 +35,11 @@ export async function initFirebase(): Promise<{ db: any; auth: any }> {
       ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
       : getFirestore(app);
 
+    defaultDb = getFirestore(app);
+
     auth = getAuth(app);
     isInitialized = true;
-    return { db, auth };
+    return { db, defaultDb, auth };
   } catch (error) {
     console.error('Firebase initialization error:', error);
     throw error;
@@ -196,9 +199,8 @@ export async function saveDocumentToCloud(
   item: any, 
   userId: string
 ): Promise<void> {
-  const { db } = await initFirebase();
+  const { db, defaultDb } = await initFirebase();
   const docId = String(item.id);
-  const docRef = doc(db, col, docId);
   
   const rawPayload = {
     ...item,
@@ -207,14 +209,33 @@ export async function saveDocumentToCloud(
 
   const payload = sanitizeForFirestore(rawPayload);
 
-  console.log(`[Firestore Write Attempt] Database ID: '${db._databaseId?.database || 'default'}', Collection: '${col}', Doc ID: '${docId}', User ID: '${userId}'`, payload);
+  console.log(`[Firestore Write Attempt] Target Collection: '${col}', Doc ID: '${docId}', User ID: '${userId}'`, payload);
 
+  let primaryError: any = null;
+
+  // 1. Primary write to configured database
   try {
+    const docRef = doc(db, col, docId);
     await setDoc(docRef, payload);
-    console.log(`[Firestore Write Success] Document '${docId}' successfully written to Firestore collection '${col}'!`);
+    console.log(`[Firestore Write Success] Saved document '${docId}' to collection '${col}' in database '${db._databaseId?.database || 'default'}'`);
   } catch (error) {
-    console.error(`[Firestore Write Error] Failed writing document '${docId}' to collection '${col}':`, error);
-    handleFirestoreError(error, OperationType.WRITE, `${col}/${docId}`);
+    console.error(`[Firestore Primary Write Error] Failed writing document '${docId}' to collection '${col}':`, error);
+    primaryError = error;
+  }
+
+  // 2. Secondary write to default database if distinct
+  if (defaultDb && defaultDb !== db) {
+    try {
+      const defaultDocRef = doc(defaultDb, col, docId);
+      await setDoc(defaultDocRef, payload);
+      console.log(`[Firestore Write Success] Saved document '${docId}' to collection '${col}' in (default) database`);
+    } catch (e) {
+      console.warn('[Firestore Default Write Note]:', e);
+    }
+  }
+
+  if (primaryError) {
+    handleFirestoreError(primaryError, OperationType.WRITE, `${col}/${docId}`);
   }
 }
 
@@ -223,13 +244,22 @@ export async function deleteDocumentFromCloud(
   col: string,
   id: string | number
 ): Promise<void> {
-  const { db } = await initFirebase();
+  const { db, defaultDb } = await initFirebase();
   const docRef = doc(db, col, String(id));
   try {
     await deleteDoc(docRef);
     console.log(`[Firestore Delete Success] Deleted document ${id} from collection '${col}'`);
   } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, `${col}/${String(id)}`);
+    console.warn(`Error deleting from primary db:`, error);
+  }
+
+  if (defaultDb && defaultDb !== db) {
+    try {
+      const defaultDocRef = doc(defaultDb, col, String(id));
+      await deleteDoc(defaultDocRef);
+    } catch (e) {
+      // ignore
+    }
   }
 }
 
@@ -238,17 +268,32 @@ export async function saveSettingsToCloud(
   settings: Settings,
   userId: string
 ): Promise<void> {
-  const { db } = await initFirebase();
-  const docRef = doc(db, 'settings', userId);
+  const { db, defaultDb } = await initFirebase();
   const payload = sanitizeForFirestore({
     ...settings,
     userId
   });
+  
+  let primaryErr: any = null;
   try {
+    const docRef = doc(db, 'settings', userId);
     await setDoc(docRef, payload);
     console.log(`[Firestore Write Success] Saved settings for user '${userId}'`);
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, `settings/${userId}`);
+    primaryErr = error;
+  }
+
+  if (defaultDb && defaultDb !== db) {
+    try {
+      const defaultDocRef = doc(defaultDb, 'settings', userId);
+      await setDoc(defaultDocRef, payload);
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  if (primaryErr) {
+    handleFirestoreError(primaryErr, OperationType.WRITE, `settings/${userId}`);
   }
 }
 
