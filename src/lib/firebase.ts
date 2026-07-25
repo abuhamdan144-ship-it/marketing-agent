@@ -141,6 +141,55 @@ export async function loadUserDataFromCloud(userId: string): Promise<Partial<App
   return results;
 }
 
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    isAnonymous?: boolean | null;
+  };
+}
+
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth?.currentUser?.uid || null,
+      email: auth?.currentUser?.email || null,
+      isAnonymous: auth?.currentUser?.isAnonymous || null,
+    },
+    operationType,
+    path,
+  };
+  console.error('Firestore Operation Error:', JSON.stringify(errInfo, null, 2));
+  throw new Error(JSON.stringify(errInfo));
+}
+
+export function sanitizeForFirestore<T extends Record<string, any>>(obj: T): Record<string, any> {
+  const clean: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+        clean[key] = sanitizeForFirestore(value);
+      } else {
+        clean[key] = value;
+      }
+    }
+  }
+  return clean;
+}
+
 // Save a single document to cloud
 export async function saveDocumentToCloud(
   col: string, 
@@ -151,10 +200,22 @@ export async function saveDocumentToCloud(
   const docId = String(item.id);
   const docRef = doc(db, col, docId);
   
-  await setDoc(docRef, {
+  const rawPayload = {
     ...item,
     userId
-  });
+  };
+
+  const payload = sanitizeForFirestore(rawPayload);
+
+  console.log(`[Firestore Write Attempt] Database ID: '${db._databaseId?.database || 'default'}', Collection: '${col}', Doc ID: '${docId}', User ID: '${userId}'`, payload);
+
+  try {
+    await setDoc(docRef, payload);
+    console.log(`[Firestore Write Success] Document '${docId}' successfully written to Firestore collection '${col}'!`);
+  } catch (error) {
+    console.error(`[Firestore Write Error] Failed writing document '${docId}' to collection '${col}':`, error);
+    handleFirestoreError(error, OperationType.WRITE, `${col}/${docId}`);
+  }
 }
 
 // Delete a document from cloud
@@ -164,7 +225,12 @@ export async function deleteDocumentFromCloud(
 ): Promise<void> {
   const { db } = await initFirebase();
   const docRef = doc(db, col, String(id));
-  await deleteDoc(docRef);
+  try {
+    await deleteDoc(docRef);
+    console.log(`[Firestore Delete Success] Deleted document ${id} from collection '${col}'`);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `${col}/${String(id)}`);
+  }
 }
 
 // Save user settings to cloud
@@ -174,10 +240,16 @@ export async function saveSettingsToCloud(
 ): Promise<void> {
   const { db } = await initFirebase();
   const docRef = doc(db, 'settings', userId);
-  await setDoc(docRef, {
+  const payload = sanitizeForFirestore({
     ...settings,
     userId
   });
+  try {
+    await setDoc(docRef, payload);
+    console.log(`[Firestore Write Success] Saved settings for user '${userId}'`);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, `settings/${userId}`);
+  }
 }
 
 // Perform initial migration of existing local storage data to the cloud
