@@ -84,6 +84,7 @@ export default function App() {
   const [appData, setAppData] = useState<AppData>(loadInitialLocalData);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [modalType, setModalType] = useState<string | null>(null);
+  const [editingItem, setEditingItem] = useState<any | null>(null);
   const [isFetchingRates, setIsFetchingRates] = useState<boolean>(false);
   const [rateSource, setRateSource] = useState<string>('Offline / Loading...');
   const [lastUpdate, setLastUpdate] = useState<string>('');
@@ -512,75 +513,121 @@ export default function App() {
   const handleSaveModalData = async (formData: any) => {
     if (!modalType) return;
 
-    const id = Date.now();
-    const date = new Date().toLocaleDateString();
+    const isEditing = Boolean(editingItem || formData.id);
+    const id = formData.id || editingItem?.id || Date.now();
+    const date = formData.date || editingItem?.date || new Date().toLocaleDateString();
     const updated = { ...appData };
     let collectionName = '';
     let itemToSave: any = null;
 
     switch (modalType) {
       case 'company':
-        const newCompany: Company = { id, date, ...formData };
-        updated.companies = [...updated.companies, newCompany];
+        const savedCompany: Company = { id, date, ...formData };
+        if (isEditing) {
+          updated.companies = updated.companies.map((c) => (c.id === id ? savedCompany : c));
+          showToast(`Company "${savedCompany.name}" updated successfully`, 'success');
+        } else {
+          updated.companies = [...updated.companies, savedCompany];
+          showToast(`Corporate partner "${savedCompany.name}" successfully recorded`, 'success');
+        }
         collectionName = 'companies';
-        itemToSave = newCompany;
-        showToast(`Corporate partner "${newCompany.name}" successfully recorded`, 'success');
+        itemToSave = savedCompany;
         break;
       case 'camp':
-        const newCamp: Camp = { id, date, ...formData };
-        updated.camps = [...updated.camps, newCamp];
+        const savedCamp: Camp = { id, date, ...formData };
+        if (isEditing) {
+          updated.camps = updated.camps.map((c) => (c.id === id ? savedCamp : c));
+          showToast(`Labor Camp "${savedCamp.name}" updated successfully`, 'success');
+        } else {
+          updated.camps = [...updated.camps, savedCamp];
+          showToast(`Labor Camp target "${savedCamp.name}" listed successfully`, 'success');
+        }
         collectionName = 'camps';
-        itemToSave = newCamp;
-        showToast(`Labor Camp target "${newCamp.name}" listed successfully`, 'success');
+        itemToSave = savedCamp;
         break;
       case 'customer':
-        const newCustomer: Customer = { id, date, ...formData };
-        updated.customers = [...updated.customers, newCustomer];
+        const savedCustomer: Customer = { id, date, ...formData };
+        if (isEditing) {
+          updated.customers = updated.customers.map((c) => (c.id === id ? savedCustomer : c));
+          showToast(`Customer "${savedCustomer.name}" updated successfully`, 'success');
+        } else {
+          updated.customers = [...updated.customers, savedCustomer];
+          showToast(`Customer lead "${savedCustomer.name}" added to register`, 'success');
+        }
         collectionName = 'customers';
-        itemToSave = newCustomer;
-        showToast(`Customer lead "${newCustomer.name}" added to register`, 'success');
+        itemToSave = savedCustomer;
         break;
       case 'visit':
-        const newVisit: Visit = { id, date, time: new Date().toLocaleTimeString('en-GB'), ...formData };
-        updated.visits = [newVisit, ...updated.visits];
+        const savedVisit: Visit = { id, date, time: formData.time || editingItem?.time || new Date().toLocaleTimeString('en-GB'), ...formData };
+        if (isEditing) {
+          updated.visits = updated.visits.map((v) => (v.id === id ? savedVisit : v));
+          showToast(`Field visit at "${savedVisit.place}" updated successfully`, 'success');
+        } else {
+          updated.visits = [savedVisit, ...updated.visits];
+          showToast(`Field visit at "${savedVisit.place}" logged in operations feed`, 'success');
+        }
         collectionName = 'visits';
-        itemToSave = newVisit;
-        showToast(`Field visit at "${newVisit.place}" logged in operations feed`, 'success');
+        itemToSave = savedVisit;
         break;
       case 'feedback':
-        const newFeedback: Feedback = { id, date, ...formData };
-        updated.feedback = [newFeedback, ...updated.feedback];
+        const savedFeedback: Feedback = { id, date, ...formData };
+        if (isEditing) {
+          updated.feedback = updated.feedback.map((f) => (f.id === id ? savedFeedback : f));
+          showToast('Client feedback updated successfully', 'success');
+        } else {
+          updated.feedback = [savedFeedback, ...updated.feedback];
+          showToast('Client feedback recorded securely', 'success');
+        }
         collectionName = 'feedback';
-        itemToSave = newFeedback;
-        showToast('Client feedback recorded securely', 'success');
+        itemToSave = savedFeedback;
         break;
       case 'complaint':
-        const newComplaint: Complaint = { id, date, ...formData };
-        updated.complaints = [newComplaint, ...updated.complaints];
+        const savedComplaint: Complaint = { id, date, ...formData };
+        if (isEditing) {
+          updated.complaints = updated.complaints.map((c) => (c.id === id ? savedComplaint : c));
+          showToast(`Complaint for "${savedComplaint.customer}" updated successfully`, 'success');
+        } else {
+          updated.complaints = [savedComplaint, ...updated.complaints];
+          showToast(`Complaint filed for customer "${savedComplaint.customer}"`, 'error');
+        }
         collectionName = 'complaints';
-        itemToSave = newComplaint;
-        showToast(`Complaint filed for customer "${newComplaint.customer}"`, 'error');
+        itemToSave = savedComplaint;
         break;
       case 'competitor':
-        const newCompetitor: CompetitorIntel = { id, date, ...formData };
-        updated.competitors = [newCompetitor, ...updated.competitors];
+        const savedCompetitor: CompetitorIntel = { id, date, ...formData };
+        if (isEditing) {
+          updated.competitors = updated.competitors.map((c) => (c.id === id ? savedCompetitor : c));
+          showToast(`Competitor intel for "${savedCompetitor.name}" updated successfully`, 'warning');
+        } else {
+          updated.competitors = [savedCompetitor, ...updated.competitors];
+          showToast('Competitor market intelligence recorded', 'warning');
+        }
         collectionName = 'competitors';
-        itemToSave = newCompetitor;
-        showToast('Competitor market intelligence recorded', 'warning');
+        itemToSave = savedCompetitor;
         break;
       case 'social':
-        const newAd: SocialAd = { id, date, ...formData };
-        updated.social = [newAd, ...updated.social];
+        const savedAd: SocialAd = { id, date, ...formData };
+        if (isEditing) {
+          updated.social = updated.social.map((s) => (s.id === id ? savedAd : s));
+          showToast(`Social campaign "${savedAd.title}" updated successfully`, 'success');
+        } else {
+          updated.social = [savedAd, ...updated.social];
+          showToast(`Social ad campaign "${savedAd.title}" formulated`, 'success');
+        }
         collectionName = 'social';
-        itemToSave = newAd;
-        showToast(`Social ad campaign "${newAd.title}" formulated`, 'success');
+        itemToSave = savedAd;
         break;
       case 'plan':
-        const newPlan: MarketingPlan = { id, date, ...formData };
-        updated.plans = [newPlan, ...updated.plans];
+        const savedPlan: MarketingPlan = { id, date, ...formData };
+        if (isEditing) {
+          updated.plans = updated.plans.map((p) => (p.id === id ? savedPlan : p));
+          showToast(`Strategic plan "${savedPlan.title}" updated successfully`, 'success');
+        } else {
+          updated.plans = [savedPlan, ...updated.plans];
+          showToast(`Strategic plan "${savedPlan.title}" added to active roadmap`, 'success');
+        }
         collectionName = 'plans';
-        itemToSave = newPlan;
-        showToast(`Strategic plan "${newPlan.title}" added to active roadmap`, 'success');
+        itemToSave = savedPlan;
         break;
       default:
         break;
@@ -588,6 +635,7 @@ export default function App() {
 
     saveToLocalStorage(updated);
     setModalType(null);
+    setEditingItem(null);
 
     // Save to Firebase Cloud in background
     if (!isForcedOffline && collectionName && itemToSave) {
@@ -1030,7 +1078,10 @@ export default function App() {
 
               {/* Quick Log Triggers */}
               <QuickActions
-                onOpenModal={(type) => setModalType(type)}
+                onOpenModal={(type) => {
+                  setEditingItem(null);
+                  setModalType(type);
+                }}
                 onExportAll={() => exportExcel(appData)}
               />
 
@@ -1193,7 +1244,14 @@ export default function App() {
                 type={activeTab as any}
                 data={appData[activeTab as keyof AppData] as any[]}
                 onDelete={handleDeleteEntry}
-                onOpenModal={(type) => setModalType(type)}
+                onOpenModal={(type) => {
+                  setEditingItem(null);
+                  setModalType(type);
+                }}
+                onEdit={(type, item) => {
+                  setEditingItem(item);
+                  setModalType(type);
+                }}
               />
             </div>
           )}
@@ -1328,18 +1386,21 @@ export default function App() {
             <div className="bg-white rounded-2xl p-5 sm:p-6 w-full max-w-lg shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto animate-zoom-in">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
                 <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider font-display">
-                  {modalType === 'company' && '🏢 Add Company Account'}
-                  {modalType === 'camp' && '🏕️ Add Labor Camp'}
-                  {modalType === 'customer' && '👤 Enroll Customer Lead'}
-                  {modalType === 'visit' && '📍 Log Field Visit'}
-                  {modalType === 'feedback' && '💬 Record Customer Feedback'}
-                  {modalType === 'complaint' && '⚠️ File Customer Dispute'}
-                  {modalType === 'competitor' && '🏪 Record Competitor Intel'}
-                  {modalType === 'social' && '📱 Launch Social Campaign'}
-                  {modalType === 'plan' && '📋 Formulate Marketing Plan'}
+                  {modalType === 'company' && (editingItem ? '✏️ Edit Company Account' : '🏢 Add Company Account')}
+                  {modalType === 'camp' && (editingItem ? '✏️ Edit Labor Camp Data' : '🏕️ Add Labor Camp')}
+                  {modalType === 'customer' && (editingItem ? '✏️ Edit Customer Lead' : '👤 Enroll Customer Lead')}
+                  {modalType === 'visit' && (editingItem ? '✏️ Edit Field Visit' : '📍 Log Field Visit')}
+                  {modalType === 'feedback' && (editingItem ? '✏️ Edit Customer Feedback' : '💬 Record Customer Feedback')}
+                  {modalType === 'complaint' && (editingItem ? '✏️ Edit Customer Dispute' : '⚠️ File Customer Dispute')}
+                  {modalType === 'competitor' && (editingItem ? '✏️ Edit Competitor Intel' : '🏪 Record Competitor Intel')}
+                  {modalType === 'social' && (editingItem ? '✏️ Edit Social Campaign' : '📱 Launch Social Campaign')}
+                  {modalType === 'plan' && (editingItem ? '✏️ Edit Marketing Plan' : '📋 Formulate Marketing Plan')}
                 </h3>
                 <button
-                  onClick={() => setModalType(null)}
+                  onClick={() => {
+                    setModalType(null);
+                    setEditingItem(null);
+                  }}
                   className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg text-sm cursor-pointer"
                 >
                   ✕
@@ -1348,8 +1409,12 @@ export default function App() {
 
               <DataForms
                 type={modalType}
+                initialData={editingItem}
                 onSave={handleSaveModalData}
-                onClose={() => setModalType(null)}
+                onClose={() => {
+                  setModalType(null);
+                  setEditingItem(null);
+                }}
               />
             </div>
           </div>

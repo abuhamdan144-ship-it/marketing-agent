@@ -12,39 +12,55 @@ interface DataFormsProps {
   type: string;
   onSave: (data: any) => void;
   onClose: () => void;
+  initialData?: any;
 }
 
-export default function DataForms({ type, onSave, onClose }: DataFormsProps) {
-  // Form States
+export default function DataForms({ type, onSave, onClose, initialData }: DataFormsProps) {
+  // Form States initialized with initialData if editing
   const [companyForm, setCompanyForm] = useState({
-    name: '',
-    contact: '',
-    phone: '',
-    address: '',
-    boss_name: '',
-    boss_phone: '',
-    notes: '',
+    name: initialData?.name || '',
+    contact: initialData?.contact || '',
+    phone: initialData?.phone || '',
+    address: initialData?.address || '',
+    boss_name: initialData?.boss_name || '',
+    boss_phone: initialData?.boss_phone || '',
+    notes: initialData?.notes || '',
   });
 
   const [campForm, setCampForm] = useState({
-    name: '',
-    location: '',
-    company: '',
-    boss_name: '',
-    boss_phone: '',
-    workers: '',
-    notes: '',
-    category: 'Construction',
-    salaryDate: '27',
-    region: 'Muscat',
-    landmark: '',
-    mapsLink: '',
-    latitude: undefined as number | undefined,
-    longitude: undefined as number | undefined,
+    name: initialData?.name || '',
+    location: initialData?.location || '',
+    company: initialData?.company || '',
+    boss_name: initialData?.boss_name || '',
+    boss_phone: initialData?.boss_phone || '',
+    workers: initialData?.workers !== undefined ? String(initialData.workers) : '',
+    notes: initialData?.notes || '',
+    category: initialData?.category || 'Construction',
+    salaryDate: initialData?.salaryDate !== undefined ? String(initialData.salaryDate) : '27',
+    region: initialData?.region || 'Muscat',
+    landmark: initialData?.landmark || '',
+    mapsLink: initialData?.mapsLink || '',
+    latitude: initialData?.latitude as number | undefined,
+    longitude: initialData?.longitude as number | undefined,
   });
 
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+
+  const handleGenerateMapLinkFromAddress = () => {
+    const queryParts = [campForm.location, campForm.landmark, campForm.region].filter(Boolean).map(s => s.trim()).filter(Boolean);
+    if (queryParts.length === 0) {
+      setLocationError("Please enter a location or landmark first to generate a Google Maps link.");
+      return;
+    }
+    const query = queryParts.join(", ");
+    const generatedLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+    setCampForm((prev) => ({
+      ...prev,
+      mapsLink: generatedLink,
+    }));
+    setLocationError(null);
+  };
 
   const handleShareCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -55,94 +71,115 @@ export default function DataForms({ type, onSave, onClose }: DataFormsProps) {
     setIsGettingLocation(true);
     setLocationError(null);
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        const generatedLink = `https://www.google.com/maps?q=${lat},${lng}`;
+    const onLocationSuccess = (position: GeolocationPosition) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const generatedLink = `https://www.google.com/maps?q=${lat},${lng}`;
 
-        setCampForm((prev) => ({
-          ...prev,
-          latitude: lat,
-          longitude: lng,
-          mapsLink: generatedLink,
-        }));
-        setIsGettingLocation(false);
-      },
-      (error) => {
-        console.error("Geolocation error:", error);
-        setIsGettingLocation(false);
-        setLocationError("Couldn't get your location — try again or paste a Google Maps link");
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      }
+      setCampForm((prev) => ({
+        ...prev,
+        latitude: lat,
+        longitude: lng,
+        mapsLink: generatedLink,
+        location: prev.location.trim() ? prev.location : `GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
+      }));
+      setIsGettingLocation(false);
+    };
+
+    const onLocationError = (error: GeolocationPositionError) => {
+      console.warn("High accuracy geolocation failed, trying standard accuracy...", error);
+      // Fallback: retry with standard accuracy & longer timeout
+      navigator.geolocation.getCurrentPosition(
+        onLocationSuccess,
+        (fallbackError) => {
+          console.error("Geolocation error:", fallbackError);
+          setIsGettingLocation(false);
+          let userMsg = "Could not retrieve GPS location.";
+          if (fallbackError.code === fallbackError.PERMISSION_DENIED) {
+            userMsg = "Location access was denied by browser settings. You can type the location address below and click 'Generate Map Link'.";
+          } else if (fallbackError.code === fallbackError.TIMEOUT) {
+            userMsg = "GPS location timed out. Please enter address manually or click 'Generate Map Link'.";
+          } else if (fallbackError.code === fallbackError.POSITION_UNAVAILABLE) {
+            userMsg = "GPS position unavailable. Enter the location text and click 'Generate Map Link'.";
+          }
+          setLocationError(userMsg);
+        },
+        { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
+      );
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      onLocationSuccess,
+      onLocationError,
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
     );
   };
 
   const [customerForm, setCustomerForm] = useState({
-    name: '',
-    phone: '',
-    location: '',
-    type: 'Individual',
-    notes: '',
+    name: initialData?.name || '',
+    phone: initialData?.phone || '',
+    location: initialData?.location || '',
+    type: initialData?.type || 'Individual',
+    notes: initialData?.notes || '',
   });
 
   const [visitForm, setVisitForm] = useState({
-    place: '',
-    type: 'shop',
-    people: '0',
-    notes: '',
+    place: initialData?.place || '',
+    type: initialData?.type || 'shop',
+    people: initialData?.people !== undefined ? String(initialData.people) : '0',
+    notes: initialData?.notes || '',
   });
 
   const [feedbackForm, setFeedbackForm] = useState({
-    customer: '',
-    type: 'Positive',
-    rating: '5',
-    feedback: '',
+    customer: initialData?.customer || '',
+    type: initialData?.type || 'Positive',
+    rating: initialData?.rating !== undefined ? String(initialData.rating) : '5',
+    feedback: initialData?.feedback || '',
   });
 
   const [complaintForm, setComplaintForm] = useState({
-    customer: '',
-    category: 'Service',
-    status: 'Open',
-    description: '',
+    customer: initialData?.customer || '',
+    category: initialData?.category || 'Service',
+    status: initialData?.status || 'Open',
+    description: initialData?.description || '',
   });
 
   const [competitorForm, setCompetitorForm] = useState({
-    name: '',
-    strategy: '',
-    impact: 'Medium',
-    notes: '',
+    name: initialData?.name || '',
+    strategy: initialData?.strategy || '',
+    impact: initialData?.impact || 'Medium',
+    notes: initialData?.notes || '',
   });
 
   const [socialForm, setSocialForm] = useState({
-    platform: 'facebook',
-    title: '',
-    budget: '',
-    status: 'Active',
-    notes: '',
+    platform: initialData?.platform || 'facebook',
+    title: initialData?.title || '',
+    budget: initialData?.budget !== undefined ? String(initialData.budget) : '',
+    status: initialData?.status || 'Active',
+    notes: initialData?.notes || '',
   });
 
   const [planForm, setPlanForm] = useState({
-    title: '',
-    details: '',
-    budget: '',
-    status: 'Active',
+    title: initialData?.title || '',
+    details: initialData?.details || '',
+    budget: initialData?.budget !== undefined ? String(initialData.budget) : '',
+    status: initialData?.status || 'Active',
   });
 
   const handleCompanySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!companyForm.name.trim()) return;
-    onSave(companyForm);
+    onSave({
+      ...(initialData?.id ? { id: initialData.id, date: initialData.date } : {}),
+      ...companyForm,
+    });
   };
 
   const handleCampSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!campForm.name.trim() || !campForm.location.trim() || !campForm.boss_name.trim() || !campForm.boss_phone.trim()) return;
     onSave({
+      ...(initialData?.id ? { id: initialData.id, date: initialData.date } : {}),
       ...campForm,
       workers: parseInt(campForm.workers) || 0,
       salaryDate: campForm.salaryDate ? parseInt(campForm.salaryDate, 10) : undefined,
@@ -158,13 +195,17 @@ export default function DataForms({ type, onSave, onClose }: DataFormsProps) {
   const handleCustomerSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerForm.name.trim()) return;
-    onSave(customerForm);
+    onSave({
+      ...(initialData?.id ? { id: initialData.id, date: initialData.date } : {}),
+      ...customerForm,
+    });
   };
 
   const handleVisitSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!visitForm.place.trim()) return;
     onSave({
+      ...(initialData?.id ? { id: initialData.id, date: initialData.date, time: initialData.time } : {}),
       ...visitForm,
       people: parseInt(visitForm.people) || 0,
     });
@@ -174,6 +215,7 @@ export default function DataForms({ type, onSave, onClose }: DataFormsProps) {
     e.preventDefault();
     if (!feedbackForm.feedback.trim()) return;
     onSave({
+      ...(initialData?.id ? { id: initialData.id, date: initialData.date } : {}),
       ...feedbackForm,
       rating: parseInt(feedbackForm.rating) || 5,
     });
@@ -182,25 +224,37 @@ export default function DataForms({ type, onSave, onClose }: DataFormsProps) {
   const handleComplaintSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!complaintForm.customer.trim() || !complaintForm.description.trim()) return;
-    onSave(complaintForm);
+    onSave({
+      ...(initialData?.id ? { id: initialData.id, date: initialData.date } : {}),
+      ...complaintForm,
+    });
   };
 
   const handleCompetitorSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!competitorForm.name.trim() || !competitorForm.strategy.trim()) return;
-    onSave(competitorForm);
+    if (!competitorForm.name.trim()) return;
+    onSave({
+      ...(initialData?.id ? { id: initialData.id, date: initialData.date } : {}),
+      ...competitorForm,
+    });
   };
 
   const handleSocialSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!socialForm.title.trim()) return;
-    onSave(socialForm);
+    onSave({
+      ...(initialData?.id ? { id: initialData.id, date: initialData.date } : {}),
+      ...socialForm,
+    });
   };
 
   const handlePlanSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!planForm.title.trim() || !planForm.details.trim()) return;
-    onSave(planForm);
+    if (!planForm.title.trim()) return;
+    onSave({
+      ...(initialData?.id ? { id: initialData.id, date: initialData.date } : {}),
+      ...planForm,
+    });
   };
 
   switch (type) {
@@ -506,16 +560,39 @@ export default function DataForms({ type, onSave, onClose }: DataFormsProps) {
             )}
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1">
-                Google Maps Link {campForm.latitude !== undefined ? '(Auto-generated)' : '(Manual Fallback)'}
-              </label>
-              <input
-                type="url"
-                placeholder="e.g. https://www.google.com/maps?q=23.588,58.382 or https://maps.app.goo.gl/..."
-                value={campForm.mapsLink}
-                onChange={(e) => setCampForm({ ...campForm, mapsLink: e.target.value })}
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
-              />
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[11px] font-semibold text-slate-500">
+                  Google Maps Link {campForm.latitude !== undefined ? '(Auto-generated)' : '(Manual / Auto-link)'}
+                </label>
+                {campForm.location && !campForm.mapsLink && (
+                  <button
+                    type="button"
+                    onClick={handleGenerateMapLinkFromAddress}
+                    className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 underline cursor-pointer"
+                  >
+                    Auto-generate from Address
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  placeholder="e.g. https://www.google.com/maps?q=23.588,58.382 or https://maps.app.goo.gl/..."
+                  value={campForm.mapsLink}
+                  onChange={(e) => setCampForm({ ...campForm, mapsLink: e.target.value })}
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+                />
+                {!campForm.mapsLink && (
+                  <button
+                    type="button"
+                    onClick={handleGenerateMapLinkFromAddress}
+                    className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl border border-indigo-200 shrink-0 cursor-pointer transition-colors"
+                    title="Generate Google Maps link from entered location text"
+                  >
+                    Gen Link
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

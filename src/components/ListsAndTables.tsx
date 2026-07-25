@@ -21,6 +21,7 @@ import {
   Filter,
   Navigation,
   Tag,
+  Pencil,
 } from 'lucide-react';
 
 interface ListsAndTablesProps {
@@ -28,12 +29,13 @@ interface ListsAndTablesProps {
   data: any[];
   onDelete: (id: number) => void;
   onOpenModal: (type: string) => void;
+  onEdit?: (type: string, item: any) => void;
 }
 
 const CATEGORY_OPTIONS = ['All', 'Construction', 'Oil & Gas', 'Facilities Management', 'Cleaning Services', 'Manpower Supply', 'Other'];
 const REGION_OPTIONS = ['All', 'Barka', 'Muscat', 'Sohar', 'Buraimi', 'Nizwa', 'Other'];
 
-export default function ListsAndTables({ type, data, onDelete, onOpenModal }: ListsAndTablesProps) {
+export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEdit }: ListsAndTablesProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
 
@@ -382,14 +384,26 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                   key={c.id}
                   className="bg-slate-50 hover:bg-indigo-50/10 rounded-xl p-4 border border-slate-100 hover:border-indigo-100 transition-all duration-200 relative group"
                 >
-                  <button
-                    onClick={() => onDelete(c.id)}
-                    className="absolute top-4 right-4 text-slate-300 hover:text-rose-600 text-xs font-semibold p-1 cursor-pointer transition-colors"
-                    title="Delete Entry"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
-                  </button>
-                  <div className="flex items-center gap-2">
+                  <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                    {onEdit && (
+                      <button
+                        onClick={() => onEdit('company', c)}
+                        className="px-2.5 py-1 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 rounded-lg cursor-pointer transition-colors flex items-center gap-1 shadow-xs"
+                        title="Edit Company Details"
+                      >
+                        <Pencil className="w-3 h-3 text-indigo-600" strokeWidth={2} />
+                        <span>Edit</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => onDelete(c.id)}
+                      className="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
+                      title="Delete Entry"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2 pr-24">
                     <span className="text-xs font-bold text-indigo-600 font-mono">
                       #{idx + 1}
                     </span>
@@ -415,7 +429,16 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                     {c.address && (
                       <div className="flex items-center gap-1.5 sm:col-span-2">
                         <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
-                        <span>Address: <strong className="text-slate-700">{c.address}</strong></span>
+                        <span>Address: <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.address)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1"
+                          title="Open address in Google Maps"
+                        >
+                          <span>{c.address}</span>
+                          <ExternalLink className="w-3 h-3 text-indigo-500" strokeWidth={2} />
+                        </a></span>
                       </div>
                     )}
                   </div>
@@ -453,16 +476,28 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                   key={c.id}
                   className="bg-slate-50 hover:bg-amber-50/20 rounded-2xl p-4 border border-slate-200/80 hover:border-amber-300 transition-all duration-200 relative group space-y-3"
                 >
-                  <button
-                    onClick={() => onDelete(c.id)}
-                    className="absolute top-4 right-4 text-slate-300 hover:text-rose-600 text-xs font-semibold p-1 cursor-pointer transition-colors"
-                    title="Delete Entry"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
-                  </button>
+                  <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                    {onEdit && (
+                      <button
+                        onClick={() => onEdit('camp', c)}
+                        className="px-2.5 py-1 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 rounded-lg cursor-pointer transition-colors flex items-center gap-1 shadow-xs"
+                        title="Edit Camp Details"
+                      >
+                        <Pencil className="w-3 h-3 text-indigo-600" strokeWidth={2} />
+                        <span>Edit</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => onDelete(c.id)}
+                      className="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
+                      title="Delete Entry"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+                    </button>
+                  </div>
 
                   {/* Header Row */}
-                  <div className="flex flex-wrap items-center gap-2 pr-8">
+                  <div className="flex flex-wrap items-center gap-2 pr-24">
                     <span className="text-xs font-bold text-amber-600 font-mono">
                       #{idx + 1}
                     </span>
@@ -513,8 +548,19 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                           <span>{c.location}</span>
                           <ExternalLink className="w-3 h-3 text-indigo-500" strokeWidth={2} />
                         </a>
+                      ) : c.location ? (
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.location + (c.landmark ? ', ' + c.landmark : ''))}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1"
+                          title="Search address in Google Maps"
+                        >
+                          <span>{c.location}</span>
+                          <ExternalLink className="w-3 h-3 text-indigo-500" strokeWidth={2} />
+                        </a>
                       ) : (
-                        <strong className="text-slate-800">{c.location}</strong>
+                        <strong className="text-slate-800">-</strong>
                       )}</span>
                     </div>
 
@@ -538,17 +584,17 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                     </div>
                   </div>
 
-                  {/* Google Maps Link if provided */}
-                  {c.mapsLink && (
+                  {/* Google Maps Link if provided or available */}
+                  {(c.mapsLink || c.location) && (
                     <div className="pt-0.5">
                       <a
-                        href={c.mapsLink}
+                        href={c.mapsLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.location + (c.landmark ? ', ' + c.landmark : ''))}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline bg-indigo-50/80 px-3 py-1.5 rounded-lg border border-indigo-100 transition-colors"
                       >
                         <ExternalLink className="w-3.5 h-3.5 text-indigo-600" strokeWidth={1.8} />
-                        <span>Open Map Link</span>
+                        <span>Open in Google Maps</span>
                       </a>
                     </div>
                   )}
@@ -590,7 +636,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                     <th className="py-3 px-4">Phone Number</th>
                     <th className="py-3 px-4">Location</th>
                     <th className="py-3 px-4">Segment</th>
-                    <th className="py-3 px-4 text-right">Delete</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-600">
@@ -603,19 +649,46 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                         </td>
                         <td className="py-2.5 px-4 font-bold text-slate-800">{c.name}</td>
                         <td className="py-2.5 px-4 font-mono">{c.phone || '-'}</td>
-                        <td className="py-2.5 px-4">{c.location || '-'}</td>
+                        <td className="py-2.5 px-4">
+                          {c.location ? (
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.location)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1"
+                              title="Open location in Google Maps"
+                            >
+                              <span>{c.location}</span>
+                              <ExternalLink className="w-3 h-3 text-indigo-400 shrink-0" strokeWidth={1.8} />
+                            </a>
+                          ) : (
+                            '-'
+                          )}
+                        </td>
                         <td className="py-2.5 px-4">
                           <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-semibold text-[10px]">
                             {c.type}
                           </span>
                         </td>
                         <td className="py-2.5 px-4 text-right">
-                          <button
-                            onClick={() => onDelete(c.id)}
-                            className="text-rose-600 hover:text-rose-800 font-bold cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 inline" strokeWidth={1.8} />
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            {onEdit && (
+                              <button
+                                onClick={() => onEdit('customer', c)}
+                                className="text-indigo-600 hover:text-indigo-800 font-bold p-1 cursor-pointer"
+                                title="Edit Customer"
+                              >
+                                <Pencil className="w-3.5 h-3.5" strokeWidth={1.8} />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => onDelete(c.id)}
+                              className="text-rose-600 hover:text-rose-800 font-bold p-1 cursor-pointer"
+                              title="Delete Customer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -636,7 +709,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                     <th className="py-3 px-4">Activity Category</th>
                     <th className="py-3 px-4">Est. Audience</th>
                     <th className="py-3 px-4">Key Findings</th>
-                    <th className="py-3 px-4 text-right">Delete</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-600">
@@ -647,7 +720,22 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                         <td className="py-2.5 px-4 font-mono font-bold text-rose-500">
                           {idx + 1}
                         </td>
-                        <td className="py-2.5 px-4 font-bold text-slate-800">{v.place}</td>
+                        <td className="py-2.5 px-4 font-bold text-slate-800">
+                          {v.place ? (
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.place)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1"
+                              title="Search place in Google Maps"
+                            >
+                              <span>{v.place}</span>
+                              <ExternalLink className="w-3 h-3 text-indigo-400 shrink-0" strokeWidth={1.8} />
+                            </a>
+                          ) : (
+                            '-'
+                          )}
+                        </td>
                         <td className="py-2.5 px-4">
                           <span className="px-2 py-0.5 bg-rose-50 text-rose-700 rounded-md font-bold uppercase text-[9px]">
                             {v.type}
@@ -658,12 +746,24 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                           {v.notes || '-'}
                         </td>
                         <td className="py-2.5 px-4 text-right">
-                          <button
-                            onClick={() => onDelete(v.id)}
-                            className="text-rose-600 hover:text-rose-800 font-bold cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 inline" strokeWidth={1.8} />
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            {onEdit && (
+                              <button
+                                onClick={() => onEdit('visit', v)}
+                                className="text-indigo-600 hover:text-indigo-800 font-bold p-1 cursor-pointer"
+                                title="Edit Visit"
+                              >
+                                <Pencil className="w-3.5 h-3.5" strokeWidth={1.8} />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => onDelete(v.id)}
+                              className="text-rose-600 hover:text-rose-800 font-bold p-1 cursor-pointer"
+                              title="Delete Visit"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -684,7 +784,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                     <th className="py-3 px-4">Vibe Level</th>
                     <th className="py-3 px-4">Rating Index</th>
                     <th className="py-3 px-4">Detailed Comments</th>
-                    <th className="py-3 px-4 text-right">Delete</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-600">
@@ -718,12 +818,24 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                           {f.feedback}
                         </td>
                         <td className="py-2.5 px-4 text-right">
-                          <button
-                            onClick={() => onDelete(f.id)}
-                            className="text-rose-600 hover:text-rose-800 font-bold cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 inline" strokeWidth={1.8} />
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            {onEdit && (
+                              <button
+                                onClick={() => onEdit('feedback', f)}
+                                className="text-indigo-600 hover:text-indigo-800 font-bold p-1 cursor-pointer"
+                                title="Edit Feedback"
+                              >
+                                <Pencil className="w-3.5 h-3.5" strokeWidth={1.8} />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => onDelete(f.id)}
+                              className="text-rose-600 hover:text-rose-800 font-bold p-1 cursor-pointer"
+                              title="Delete Feedback"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -744,7 +856,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                     <th className="py-3 px-4">Category</th>
                     <th className="py-3 px-4">Status</th>
                     <th className="py-3 px-4">Description</th>
-                    <th className="py-3 px-4 text-right">Delete</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-600">
@@ -776,12 +888,24 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                           {c.description}
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <button
-                            onClick={() => onDelete(c.id)}
-                            className="text-rose-600 hover:text-rose-800 font-bold cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 inline text-[var(--coral,#D64545)]" strokeWidth={1.8} />
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            {onEdit && (
+                              <button
+                                onClick={() => onEdit('complaint', c)}
+                                className="text-indigo-600 hover:text-indigo-800 font-bold p-1 cursor-pointer"
+                                title="Edit Complaint"
+                              >
+                                <Pencil className="w-3.5 h-3.5" strokeWidth={1.8} />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => onDelete(c.id)}
+                              className="text-rose-600 hover:text-rose-800 font-bold p-1 cursor-pointer"
+                              title="Delete Complaint"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-[var(--coral,#D64545)]" strokeWidth={1.8} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -802,7 +926,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                     <th className="py-3 px-4">Promotion Strategy</th>
                     <th className="py-3 px-4">Impact Threat</th>
                     <th className="py-3 px-4">Notes</th>
-                    <th className="py-3 px-4 text-right">Delete</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-600">
@@ -832,12 +956,24 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                           {c.notes || '-'}
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <button
-                            onClick={() => onDelete(c.id)}
-                            className="text-rose-600 hover:text-rose-800 font-bold cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 inline" strokeWidth={1.8} />
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            {onEdit && (
+                              <button
+                                onClick={() => onEdit('competitor', c)}
+                                className="text-indigo-600 hover:text-indigo-800 font-bold p-1 cursor-pointer"
+                                title="Edit Competitor Intel"
+                              >
+                                <Pencil className="w-3.5 h-3.5" strokeWidth={1.8} />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => onDelete(c.id)}
+                              className="text-rose-600 hover:text-rose-800 font-bold p-1 cursor-pointer"
+                              title="Delete Competitor Intel"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -858,13 +994,26 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                     key={s.id}
                     className="p-4 bg-slate-50 border border-slate-100 hover:border-slate-300 rounded-xl transition-all relative"
                   >
-                    <button
-                      onClick={() => onDelete(s.id)}
-                      className="absolute top-4 right-4 text-slate-300 hover:text-rose-600 text-xs font-semibold p-1 cursor-pointer transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
-                    </button>
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                      {onEdit && (
+                        <button
+                          onClick={() => onEdit('social', s)}
+                          className="px-2 py-0.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 rounded-lg cursor-pointer transition-colors flex items-center gap-1"
+                          title="Edit Campaign"
+                        >
+                          <Pencil className="w-3 h-3 text-indigo-600" strokeWidth={2} />
+                          <span>Edit</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => onDelete(s.id)}
+                        className="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
+                        title="Delete Campaign"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2 mb-2 pr-20">
                       <Smartphone className="w-4 h-4 text-indigo-600 shrink-0" strokeWidth={1.8} />
                       <h4 className="text-sm font-bold text-slate-800">{s.title}</h4>
                     </div>
@@ -910,13 +1059,26 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                   key={p.id}
                   className="bg-slate-50 hover:bg-emerald-50/10 rounded-xl p-4 border border-slate-100 hover:border-emerald-200 transition-all duration-200 relative group"
                 >
-                  <button
-                    onClick={() => onDelete(p.id)}
-                    className="absolute top-4 right-4 text-slate-300 hover:text-rose-600 text-xs font-semibold p-1 cursor-pointer transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
-                  </button>
-                  <div className="flex items-center gap-2">
+                  <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                    {onEdit && (
+                      <button
+                        onClick={() => onEdit('plan', p)}
+                        className="px-2 py-0.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-lg cursor-pointer transition-colors flex items-center gap-1"
+                        title="Edit Plan"
+                      >
+                        <Pencil className="w-3 h-3 text-emerald-600" strokeWidth={2} />
+                        <span>Edit</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => onDelete(p.id)}
+                      className="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
+                      title="Delete Plan"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2 pr-20">
                     <span className="text-xs font-bold text-emerald-600 font-mono">
                       #{idx + 1}
                     </span>
