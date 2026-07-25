@@ -1,6 +1,7 @@
 import React from 'react';
 import { CORRIDORS } from '../utils/exportUtils';
 import { ExchangeRates } from '../types';
+import { Globe, RefreshCw } from 'lucide-react';
 
 interface LiveRatesProps {
   rates: ExchangeRates;
@@ -15,7 +16,8 @@ export default function LiveRates({ rates, rateSource, isFetching, onRefresh, is
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-          🌐 Live Exchange Rates
+          <Globe className="w-4 h-4 text-indigo-600" />
+          <span>Live Exchange Rates</span>
           <span className="bg-indigo-50 text-indigo-700 text-[10px] px-2 py-0.5 rounded-full font-bold border border-indigo-100">
             OMR to Corridors
           </span>
@@ -28,7 +30,7 @@ export default function LiveRates({ rates, rateSource, isFetching, onRefresh, is
           }`}
           title="Refresh Exchange Rates"
         >
-          🔄
+          <RefreshCw className="w-3.5 h-3.5" />
         </button>
       </div>
 

@@ -308,6 +308,17 @@ export default function App() {
           ? await loadUserDataFromCloud(currentUser.uid)
           : cloudData;
 
+        // Re-read latest localStorage state right before merging to avoid overwriting items saved while sync was in flight
+        const latestStorageStr = localStorage.getItem(LOCAL_STORAGE_KEY);
+        let latestLocalData: AppData | null = localDataParsed;
+        if (latestStorageStr) {
+          try {
+            latestLocalData = JSON.parse(latestStorageStr);
+          } catch (e) {
+            console.error('Error parsing latest local storage:', e);
+          }
+        }
+
         // Robust merge function to prevent data loss on page load/refresh
         const mergeCollection = <T extends { id: number }>(
           cloudItems: T[] | undefined,
@@ -341,18 +352,20 @@ export default function App() {
 
         // Normal flow: pull from fully reconciled cloud data
         const merged: AppData = {
-          companies: mergeCollection(syncedCloudData.companies as Company[], localDataParsed?.companies),
-          camps: mergeCollection(syncedCloudData.camps as Camp[], localDataParsed?.camps),
-          customers: mergeCollection(syncedCloudData.customers as Customer[], localDataParsed?.customers),
-          visits: mergeCollection(syncedCloudData.visits as Visit[], localDataParsed?.visits),
-          feedback: mergeCollection(syncedCloudData.feedback as Feedback[], localDataParsed?.feedback),
-          complaints: mergeCollection(syncedCloudData.complaints as Complaint[], localDataParsed?.complaints),
-          competitors: mergeCollection(syncedCloudData.competitors as CompetitorIntel[], localDataParsed?.competitors),
-          social: mergeCollection(syncedCloudData.social as SocialAd[], localDataParsed?.social),
-          plans: mergeCollection(syncedCloudData.plans as MarketingPlan[], localDataParsed?.plans),
-          attendance: mergeCollection(syncedCloudData.attendance as AttendanceRecord[], localDataParsed?.attendance),
-          settings: (syncedCloudData.settings as Settings) || (localDataParsed?.settings) || { agentName: '', managerWhatsApp: '', managerEmail: '', monthlyVisitGoal: 15 },
-          rates: (localDataParsed && localDataParsed.rates) || {},
+          companies: mergeCollection(syncedCloudData.companies as Company[], latestLocalData?.companies),
+          camps: mergeCollection(syncedCloudData.camps as Camp[], latestLocalData?.camps),
+          customers: mergeCollection(syncedCloudData.customers as Customer[], latestLocalData?.customers),
+          visits: mergeCollection(syncedCloudData.visits as Visit[], latestLocalData?.visits),
+          feedback: mergeCollection(syncedCloudData.feedback as Feedback[], latestLocalData?.feedback),
+          complaints: mergeCollection(syncedCloudData.complaints as Complaint[], latestLocalData?.complaints),
+          competitors: mergeCollection(syncedCloudData.competitors as CompetitorIntel[], latestLocalData?.competitors),
+          social: mergeCollection(syncedCloudData.social as SocialAd[], latestLocalData?.social),
+          plans: mergeCollection(syncedCloudData.plans as MarketingPlan[], latestLocalData?.plans),
+          attendance: mergeCollection(syncedCloudData.attendance as AttendanceRecord[], latestLocalData?.attendance),
+          settings: (syncedCloudData.settings && (syncedCloudData.settings.agentName || syncedCloudData.settings.managerWhatsApp || syncedCloudData.settings.managerEmail))
+            ? (syncedCloudData.settings as Settings)
+            : (latestLocalData?.settings) || { agentName: '', managerWhatsApp: '', managerEmail: '', monthlyVisitGoal: 15 },
+          rates: (latestLocalData && latestLocalData.rates) || {},
         };
         setAppData(merged);
         setSettingsForm({
@@ -569,11 +582,14 @@ export default function App() {
     setModalType(null);
 
     // Save to Firebase Cloud in background
-    if (!isForcedOffline && user && collectionName && itemToSave) {
+    if (!isForcedOffline && collectionName && itemToSave) {
       try {
         setSyncStatus('loading');
-        await saveDocumentToCloud(collectionName, itemToSave, user.uid);
-        setSyncStatus('synced');
+        const activeUser = await getOrAuthenticateUser();
+        if (activeUser && activeUser.uid) {
+          await saveDocumentToCloud(collectionName, itemToSave, activeUser.uid);
+          setSyncStatus('synced');
+        }
       } catch (error) {
         console.error('Error saving document to Cloud:', error);
         setSyncStatus('error');
@@ -581,6 +597,49 @@ export default function App() {
       }
     } else if (isForcedOffline) {
       showToast('Saved to local storage cache (Offline Mode Active)', 'info');
+    }
+  };
+
+  // Helper to ensure authenticated user for background operations
+  const getOrAuthenticateUser = async () => {
+    if (user && user.uid) return user;
+    try {
+      const authUser = await authenticateAnonymously();
+      setUser(authUser);
+      return authUser;
+    } catch (e) {
+      console.error('Failed to authenticate user for action:', e);
+      return null;
+    }
+  };
+
+  // Update Agent Name from Header or Attendance Sheet
+  const handleUpdateAgentName = async (newName: string) => {
+    const updated = {
+      ...appData,
+      settings: {
+        ...appData.settings,
+        agentName: newName,
+      },
+    };
+    saveToLocalStorage(updated);
+    setSettingsForm((prev) => ({
+      ...prev,
+      agentName: newName,
+    }));
+
+    if (!isForcedOffline) {
+      try {
+        setSyncStatus('loading');
+        const activeUser = await getOrAuthenticateUser();
+        if (activeUser && activeUser.uid) {
+          await saveSettingsToCloud(updated.settings, activeUser.uid);
+          setSyncStatus('synced');
+        }
+      } catch (error) {
+        console.error('Error saving settings to Cloud:', error);
+        setSyncStatus('error');
+      }
     }
   };
 
@@ -595,11 +654,14 @@ export default function App() {
     }
     saveToLocalStorage(updated);
 
-    if (!isForcedOffline && user) {
+    if (!isForcedOffline) {
       try {
         setSyncStatus('loading');
-        await saveDocumentToCloud('attendance', entry, user.uid);
-        setSyncStatus('synced');
+        const activeUser = await getOrAuthenticateUser();
+        if (activeUser && activeUser.uid) {
+          await saveDocumentToCloud('attendance', entry, activeUser.uid);
+          setSyncStatus('synced');
+        }
       } catch (error) {
         console.error('Error saving attendance entry to Cloud:', error);
         setSyncStatus('error');
@@ -1042,6 +1104,7 @@ export default function App() {
               appData={appData}
               onSaveEntry={handleSaveAttendanceEntry}
               onDeleteEntry={handleDeleteEntry}
+              onUpdateAgentName={handleUpdateAgentName}
               settings={appData.settings}
               showToast={showToast}
             />

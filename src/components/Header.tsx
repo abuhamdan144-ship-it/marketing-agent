@@ -1,121 +1,85 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Building2 } from 'lucide-react';
 
 interface HeaderProps {
-  lastUpdate: string;
+  lastUpdate?: string;
   isOnline: boolean;
-  rateSource: string;
+  rateSource?: string;
   syncStatus?: 'idle' | 'loading' | 'synced' | 'error';
-  isForcedOffline: boolean;
-  onToggleForcedOffline: () => void;
+  isForcedOffline?: boolean;
+  onToggleForcedOffline?: () => void;
 }
 
 export default function Header({ 
-  lastUpdate, 
   isOnline, 
-  rateSource, 
-  syncStatus = 'idle',
-  isForcedOffline,
-  onToggleForcedOffline
 }: HeaderProps) {
-  const getSyncBadge = () => {
-    if (isForcedOffline) {
-      return (
-        <span className="inline-flex items-center gap-1 text-[9px] bg-amber-500/20 text-amber-200 px-2 py-0.5 rounded-md border border-amber-400/20">
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-          Forced Offline
-        </span>
-      );
-    }
-    switch (syncStatus) {
-      case 'loading':
-        return (
-          <span className="inline-flex items-center gap-1 text-[9px] bg-sky-500/20 text-sky-200 px-2 py-0.5 rounded-md border border-sky-400/20 animate-pulse">
-            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping" />
-            Syncing Cloud...
-          </span>
-        );
-      case 'synced':
-        return (
-          <span className="inline-flex items-center gap-1 text-[9px] bg-emerald-500/20 text-emerald-200 px-2 py-0.5 rounded-md border border-emerald-400/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            Cloud Active
-          </span>
-        );
-      case 'error':
-        return (
-          <span className="inline-flex items-center gap-1 text-[9px] bg-amber-500/20 text-amber-200 px-2 py-0.5 rounded-md border border-amber-400/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-            Offline Fallback
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 text-[9px] bg-slate-500/20 text-slate-200 px-2 py-0.5 rounded-md border border-slate-400/20">
-            Cloud Ready
-          </span>
-        );
-    }
+  const [uptimeSeconds, setUptimeSeconds] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setUptimeSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatUptime = (totalSeconds: number) => {
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
   };
 
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between bg-gradient-to-r from-blue-900 to-indigo-800 text-white px-4 py-3.5 shadow-lg border-b border-blue-800">
-      <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-11 h-11 text-2xl bg-white/15 rounded-xl backdrop-blur-md border border-white/10 shadow-inner">
-          🏦
-        </div>
-        <div>
-          <h1 className="text-base font-bold tracking-tight font-display sm:text-lg">
-            Marketing Agent Notebook
-          </h1>
-          <p className="text-[10px] text-blue-200/80 font-medium flex items-center gap-2">
-            Complete Operations &amp; Intelligence Dashboard
-            {getSyncBadge()}
-          </p>
-        </div>
-      </div>
+    <header 
+      className="sticky top-0 z-50 px-3.5 py-2.5 text-white shadow-md border-b border-white/10"
+      style={{
+        background: 'linear-gradient(135deg, var(--ink, #16213E) 0%, #1C2A4A 100%)',
+      }}
+    >
+      <div className="max-w-5xl mx-auto flex flex-col justify-between">
+        {/* Top Row: Logo, App Name, Status Pill */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center justify-center w-8 h-8 shrink-0 bg-white/10 rounded-lg border border-white/15">
+              <Building2 className="w-4 h-4 text-white" strokeWidth={1.8} />
+            </div>
+            <h1 className="text-xs sm:text-sm font-bold tracking-tight font-display text-white whitespace-nowrap truncate">
+              Marketing Agent Notebook
+            </h1>
+          </div>
 
-      <div className="flex items-center gap-4">
-        {/* Manual Offline Mode Switcher */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 transition-all border border-white/10 shadow-sm">
-          <span className="text-[9px] font-extrabold uppercase tracking-wider text-blue-100 select-none">
-            Forced Offline
-          </span>
-          <button
-            id="offline-toggle-header"
-            onClick={onToggleForcedOffline}
-            className={`relative inline-flex h-[18px] w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-              isForcedOffline ? 'bg-amber-400' : 'bg-slate-400/40'
-            }`}
-            role="switch"
-            aria-checked={isForcedOffline}
-            title={isForcedOffline ? 'Switch to Online Mode' : 'Switch to Offline Mode'}
-          >
+          {/* Single Status Pill */}
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/10 shrink-0">
             <span
-              className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                isForcedOffline ? 'translate-x-3.5' : 'translate-x-0'
+              className={`w-2 h-2 rounded-full ${
+                isOnline ? 'bg-[var(--signal,#2F9E77)]' : 'bg-[var(--ink-30,#A6ACBC)]'
               }`}
             />
-          </button>
+            <span
+              className={`text-xs font-semibold ${
+                isOnline ? 'text-[var(--signal,#2F9E77)]' : 'text-[var(--ink-30,#A6ACBC)]'
+              }`}
+            >
+              {isOnline ? 'Live' : 'Offline'}
+            </span>
+          </div>
         </div>
 
-        <div className="flex flex-col items-end text-right">
-          <div className="px-3 py-1 bg-white/10 rounded-full border border-white/10 backdrop-blur-sm shadow-sm min-w-[80px]">
-            <span className="block text-xs font-bold font-mono tracking-wider text-emerald-300">
-              {lastUpdate || 'Loading...'}
-            </span>
-            <div className="flex items-center justify-end gap-1.5 mt-0.5">
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  isForcedOffline ? 'bg-amber-400 animate-pulse' : (isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400')
-                }`}
-              />
-              <span className="text-[9px] font-semibold text-white/90">
-                {isForcedOffline ? 'Forced Offline' : (isOnline ? 'System Live' : 'Offline Mode')}
-              </span>
-            </div>
-          </div>
+        {/* Thin Divider Line */}
+        <div className="border-t border-[var(--line,#E2E5E1)]/20 my-2" />
+
+        {/* Bottom Row: Session Uptime Label & Timer */}
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-[10px] font-bold tracking-wider uppercase text-[var(--ink-30,#A6ACBC)]">
+            SESSION UPTIME
+          </span>
+          <span className="font-mono text-xs sm:text-sm font-semibold tracking-wider text-[var(--gold,#C89B3C)]">
+            {formatUptime(uptimeSeconds)}
+          </span>
         </div>
       </div>
     </header>
   );
 }
+

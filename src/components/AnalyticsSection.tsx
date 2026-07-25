@@ -27,7 +27,11 @@ import {
   Sparkles, 
   Calendar, 
   BarChart3, 
-  Info 
+  Info,
+  Target,
+  Flame,
+  Lightbulb,
+  CheckCircle2
 } from 'lucide-react';
 
 interface AnalyticsSectionProps {
@@ -621,9 +625,9 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
             
             <p className="text-[9px] font-bold text-slate-400 mt-2.5 font-sans flex justify-between">
               {monthlyGoalMetrics.remaining > 0 ? (
-                <span>🎯 {monthlyGoalMetrics.remaining} more needed to reach goal</span>
+                <span className="flex items-center gap-1"><Target className="w-3 h-3 text-indigo-500" /> {monthlyGoalMetrics.remaining} more needed to reach goal</span>
               ) : (
-                <span className="text-emerald-600 font-extrabold">🎉 Target Achieved!</span>
+                <span className="text-emerald-600 font-extrabold flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> Target Achieved!</span>
               )}
             </p>
           </div>
@@ -830,8 +834,14 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
               className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/50 hover:bg-slate-800/60 transition-colors"
             >
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-base">
-                  {insight.type === 'success' ? '📈' : insight.type === 'warning' ? '🔥' : '💡'}
+                <span className="p-1 rounded-md bg-slate-700/50 text-indigo-300">
+                  {insight.type === 'success' ? (
+                    <TrendingUp className="w-4 h-4 text-emerald-400" />
+                  ) : insight.type === 'warning' ? (
+                    <Flame className="w-4 h-4 text-amber-400" />
+                  ) : (
+                    <Lightbulb className="w-4 h-4 text-indigo-400" />
+                  )}
                 </span>
                 <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wide">
                   {insight.title}

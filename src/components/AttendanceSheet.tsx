@@ -8,6 +8,7 @@ interface AttendanceSheetProps {
   onSaveEntry: (entry: AttendanceRecord) => void;
   onDeleteEntry: (id: number) => void;
   onBulkSaveEntries?: (entries: AttendanceRecord[]) => void;
+  onUpdateAgentName?: (newName: string) => void;
   settings: Settings;
   showToast: (message: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
 }
@@ -23,6 +24,7 @@ export default function AttendanceSheet({
   onSaveEntry,
   onDeleteEntry,
   onBulkSaveEntries,
+  onUpdateAgentName,
   settings,
   showToast,
 }: AttendanceSheetProps) {
@@ -311,7 +313,7 @@ export default function AttendanceSheet({
         <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-800/50 p-4 rounded-2xl border border-slate-700/60">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-300 font-extrabold text-base">
-              👤
+              <UserCheck className="w-5 h-5 text-indigo-300" strokeWidth={1.8} />
             </div>
             <div>
               <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">
@@ -327,7 +329,13 @@ export default function AttendanceSheet({
                     placeholder="Enter Employee Name"
                   />
                   <button
-                    onClick={() => setIsEditingName(false)}
+                    onClick={() => {
+                      setIsEditingName(false);
+                      if (onUpdateAgentName && employeeName.trim()) {
+                        onUpdateAgentName(employeeName.trim());
+                      }
+                      showToast(`Employee name updated to ${employeeName}`, 'success');
+                    }}
                     className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl cursor-pointer"
                   >
                     Save
@@ -605,7 +613,9 @@ export default function AttendanceSheet({
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-slate-400 font-medium">
                     <div className="max-w-sm mx-auto space-y-2">
-                      <div className="text-2xl">📝</div>
+                      <div className="flex justify-center text-slate-300">
+                        <FileSpreadsheet className="w-8 h-8" strokeWidth={1.5} />
+                      </div>
                       <p className="text-xs font-bold text-slate-600">
                         No attendance entries registered for {MONTHS[selectedMonth]} {selectedYear}
                       </p>
@@ -626,8 +636,18 @@ export default function AttendanceSheet({
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 font-display">
-                {editingRecord ? '✏️ Edit Attendance Record' : '➕ Register Attendance Entry'}
+              <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 font-display flex items-center gap-2">
+                {editingRecord ? (
+                  <>
+                    <Edit3 className="w-4 h-4 text-indigo-600" />
+                    <span>Edit Attendance Record</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 text-indigo-600" />
+                    <span>Register Attendance Entry</span>
+                  </>
+                )}
               </h3>
               <button
                 onClick={() => setIsFormOpen(false)}
@@ -741,9 +761,10 @@ export default function AttendanceSheet({
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleTriggerPrint}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl cursor-pointer shadow-md"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl cursor-pointer shadow-md flex items-center gap-1.5"
                 >
-                  🖨️ Print / Save PDF
+                  <Printer className="w-4 h-4" strokeWidth={1.8} />
+                  <span>Print / Save PDF</span>
                 </button>
                 <button
                   onClick={() => setIsPrintModalOpen(false)}

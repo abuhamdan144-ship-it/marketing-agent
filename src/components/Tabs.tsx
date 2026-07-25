@@ -1,4 +1,19 @@
 import React from 'react';
+import {
+  Home,
+  TrendingUp,
+  ClipboardCheck,
+  Building2,
+  Tent,
+  Users,
+  MapPin,
+  MessageCircle,
+  AlertTriangle,
+  Search,
+  Smartphone,
+  ClipboardList,
+  Settings as SettingsIcon,
+} from 'lucide-react';
 
 interface TabsProps {
   activeTab: string;
@@ -14,24 +29,24 @@ interface TabsProps {
 
 export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
   const tabs = [
-    { id: 'dashboard', label: 'Home', icon: '🏠' },
-    { id: 'analytics', label: 'Analytics', icon: '📈' },
-    { id: 'attendance', label: 'Attendance Sheet', icon: '📝', badge: badges.attendance },
-    { id: 'companies', label: 'Companies', icon: '🏢', badge: badges.companies },
-    { id: 'camps', label: 'Camps', icon: '🏕️', badge: badges.camps },
-    { id: 'customers', label: 'Customers', icon: '👥' },
-    { id: 'visits', label: 'Visits', icon: '📍' },
-    { id: 'feedback', label: 'Feedback', icon: '💬' },
-    { id: 'complaints', label: 'Complaints', icon: '⚠️' },
-    { id: 'competitors', label: 'Competitors', icon: '🏪' },
-    { id: 'social', label: 'Social Ads', icon: '📱' },
-    { id: 'plans', label: 'Plans', icon: '📋' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' },
+    { id: 'dashboard', label: 'Home', icon: Home },
+    { id: 'analytics', label: 'Analytics', icon: TrendingUp },
+    { id: 'attendance', label: 'Attendance Sheet', icon: ClipboardCheck, badge: badges.attendance },
+    { id: 'companies', label: 'Companies', icon: Building2, badge: badges.companies },
+    { id: 'camps', label: 'Camps', icon: Tent, badge: badges.camps },
+    { id: 'customers', label: 'Customers', icon: Users },
+    { id: 'visits', label: 'Visits', icon: MapPin },
+    { id: 'feedback', label: 'Feedback', icon: MessageCircle },
+    { id: 'complaints', label: 'Complaints', icon: AlertTriangle, isComplaint: true },
+    { id: 'competitors', label: 'Competitors', icon: Search },
+    { id: 'social', label: 'Social Ads', icon: Smartphone },
+    { id: 'plans', label: 'Plans', icon: ClipboardList },
+    { id: 'settings', label: 'Settings', icon: SettingsIcon },
   ];
 
   return (
     <div>
-      {/* Desktop / Tablet Sidebar & Top Navigation (Flex on top, responsive grid/rail) */}
+      {/* Desktop / Tablet Sidebar & Top Navigation */}
       <div className="hidden lg:flex flex-col bg-slate-900 text-slate-300 w-64 min-h-screen p-5 border-r border-slate-800 shrink-0">
         <div className="mb-6 px-2">
           <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">
@@ -41,6 +56,7 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
         <nav className="space-y-1.5 flex-1">
           {tabs.map((t) => {
             const isActive = activeTab === t.id;
+            const Icon = t.icon;
             return (
               <button
                 key={t.id}
@@ -52,7 +68,14 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <span className="text-base">{t.icon}</span>
+                  <Icon
+                    className={`w-[18px] h-[18px] shrink-0 ${
+                      t.isComplaint && !isActive
+                        ? 'text-[var(--coral,#D64545)]'
+                        : ''
+                    }`}
+                    strokeWidth={1.8}
+                  />
                   <span>{t.label}</span>
                 </div>
                 {t.badge && t.badge > 0 ? (
@@ -74,10 +97,11 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
         </div>
       </div>
 
-      {/* Persistent Bottom/Scrolling Top Navigation for Mobile & Small Tablets */}
+      {/* Persistent Bottom Navigation for Mobile & Small Tablets */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-2 py-1.5 flex items-center justify-between gap-1 shadow-2xl shadow-indigo-950/20 z-40 overflow-x-auto select-none no-scrollbar">
         {tabs.map((t) => {
           const isActive = activeTab === t.id;
+          const Icon = t.icon;
           return (
             <button
               key={t.id}
@@ -86,7 +110,12 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
                 isActive ? 'text-indigo-600 font-extrabold scale-105' : 'text-slate-400 font-semibold'
               }`}
             >
-              <span className="text-lg leading-none">{t.icon}</span>
+              <Icon
+                className={`w-[18px] h-[18px] ${
+                  t.isComplaint && !isActive ? 'text-[var(--coral,#D64545)]' : ''
+                }`}
+                strokeWidth={1.8}
+              />
               <span className="text-[8px] tracking-tight mt-0.5 whitespace-nowrap">
                 {t.label}
               </span>
@@ -102,3 +131,4 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
     </div>
   );
 }
+

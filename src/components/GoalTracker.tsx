@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { AppData, Settings } from '../types';
-import { Target, TrendingUp, Edit2, CheckCircle2, Award, ArrowUpRight, Flame, X } from 'lucide-react';
+import { Target, TrendingUp, Edit2, CheckCircle2, Award, ArrowUpRight, Flame, X, AlertTriangle, Rocket, Sparkles } from 'lucide-react';
 
 interface GoalTrackerProps {
   appData: AppData;
@@ -186,7 +186,8 @@ export default function GoalTracker({ appData, onUpdateGoal, onHide }: GoalTrack
             )}
             {currentMonthData.status === 'behind' && (
               <span className="inline-flex items-center gap-1 text-[9px] bg-amber-500/10 text-amber-400 font-bold px-2 py-0.5 rounded-md border border-amber-500/10">
-                ⚠️ Run campaigns
+                <AlertTriangle className="w-3 h-3 text-[var(--coral,#D64545)]" />
+                Run campaigns
               </span>
             )}
           </div>
@@ -249,13 +250,13 @@ export default function GoalTracker({ appData, onUpdateGoal, onHide }: GoalTrack
           </div>
 
           {/* Quick micro-insight */}
-          <div className="text-[11px] text-slate-400 italic bg-white/5 p-2 rounded-lg border border-white/5">
+          <div className="text-[11px] text-slate-400 italic bg-white/5 p-2 rounded-lg border border-white/5 flex items-center gap-1.5">
             {currentMonthData.status === 'completed' ? (
-              <span>🌟 <strong>Exceptional outreach work, agent!</strong> You have fully achieved this month's targets. Keep logging visits to build stronger market dominance.</span>
+              <span><Sparkles className="w-3.5 h-3.5 text-emerald-400 inline mr-1" /> <strong>Exceptional outreach work, agent!</strong> You have fully achieved this month's targets. Keep logging visits to build stronger market dominance.</span>
             ) : currentMonthData.status === 'behind' ? (
-              <span>⚠️ <strong>Slightly behind pace.</strong> You have {currentMonthData.remaining} visits remaining. Focus on labor camp deployments during the upcoming pay cycle!</span>
+              <span><AlertTriangle className="w-3.5 h-3.5 text-[var(--coral,#D64545)] inline mr-1" /> <strong>Slightly behind pace.</strong> You have {currentMonthData.remaining} visits remaining. Focus on labor camp deployments during the upcoming pay cycle!</span>
             ) : (
-              <span>🚀 <strong>Solid progress!</strong> You are perfectly on track to achieve your monthly target goal of {targetGoal} visits.</span>
+              <span><Rocket className="w-3.5 h-3.5 text-indigo-400 inline mr-1" /> <strong>Solid progress!</strong> You are perfectly on track to achieve your monthly target goal of {targetGoal} visits.</span>
             )}
           </div>
 

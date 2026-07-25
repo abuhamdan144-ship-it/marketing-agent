@@ -202,8 +202,9 @@ export default function ExportPreviewModal({ isOpen, onClose, onConfirm, appData
 
         {/* Modal Footer */}
         <div className="p-5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center sm:text-left">
-            ⚡ Ready to export full package
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center sm:text-left flex items-center justify-center sm:justify-start gap-1">
+            <Database className="w-3 h-3 text-indigo-500" />
+            <span>Ready to export full package</span>
           </p>
           <div className="flex items-center gap-2.5">
             <button

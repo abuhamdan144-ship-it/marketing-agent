@@ -1,7 +1,22 @@
 import React, { useState, useMemo } from 'react';
 import { Company, Camp, Customer, Visit, Feedback, Complaint, CompetitorIntel, SocialAd, MarketingPlan } from '../types';
 import { SOCIAL_PLATFORMS } from '../utils/exportUtils';
-import { Calendar } from 'lucide-react';
+import {
+  Calendar,
+  Search,
+  Plus,
+  Trash2,
+  FolderPlus,
+  Building2,
+  Tent,
+  User,
+  Phone,
+  MapPin,
+  Users,
+  FileText,
+  Smartphone,
+  AlertTriangle,
+} from 'lucide-react';
 
 interface ListsAndTablesProps {
   type: 'companies' | 'camps' | 'customers' | 'visits' | 'feedback' | 'complaints' | 'competitors' | 'social' | 'plans';
@@ -119,16 +134,17 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
 
   const handleEmptyState = (title: string, btnLabel: string, modalType: string) => (
     <div className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50/50">
-      <span className="text-4xl mb-3">📂</span>
+      <FolderPlus className="w-10 h-10 text-slate-300 mb-3" strokeWidth={1.5} />
       <h4 className="text-sm font-bold text-slate-700">{title}</h4>
       <p className="text-xs text-slate-400 mt-1 max-w-[280px]">
         Keep operations tracked by registering entries to compile your marketing intelligence.
       </p>
       <button
         onClick={() => onOpenModal(modalType)}
-        className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer"
+        className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer flex items-center gap-1.5"
       >
-        {btnLabel}
+        <Plus className="w-3.5 h-3.5" strokeWidth={2} />
+        <span>{btnLabel}</span>
       </button>
     </div>
   );
@@ -142,7 +158,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
             {/* Search Input */}
             <div className="relative w-full sm:w-64">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-xs">
-                🔍
+                <Search className="w-3.5 h-3.5" strokeWidth={2} />
               </span>
               <input
                 type="text"
@@ -199,7 +215,8 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
             }}
             className="w-full md:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
           >
-            ➕ Register New Entry
+            <Plus className="w-3.5 h-3.5" strokeWidth={2} />
+            <span>Register New Entry</span>
           </button>
         </div>
       )}
@@ -242,36 +259,37 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                 >
                   <button
                     onClick={() => onDelete(c.id)}
-                    className="absolute top-4 right-4 text-slate-300 hover:text-rose-600 text-xs font-semibold p-1 cursor-pointer"
+                    className="absolute top-4 right-4 text-slate-300 hover:text-rose-600 text-xs font-semibold p-1 cursor-pointer transition-colors"
                     title="Delete Entry"
                   >
-                    🗑️
+                    <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
                   </button>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-indigo-600 font-mono">
                       #{idx + 1}
                     </span>
                     <h4 className="text-sm font-bold text-slate-800">{c.name}</h4>
-                    <span className="bg-indigo-50 text-indigo-700 text-[9px] px-2 py-0.5 rounded-full font-bold">
-                      🏢 Corporate Account
+                    <span className="bg-indigo-50 text-indigo-700 text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                      <Building2 className="w-3 h-3 text-indigo-700" strokeWidth={1.8} />
+                      <span>Corporate Account</span>
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 text-xs text-slate-500 font-medium">
                     {c.contact && (
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm">👤</span>
+                        <User className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
                         <span>Contact: <strong className="text-slate-700">{c.contact}</strong></span>
                       </div>
                     )}
                     {c.phone && (
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm">📞</span>
+                        <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
                         <span>Phone: <strong className="text-slate-700 font-mono">{c.phone}</strong></span>
                       </div>
                     )}
                     {c.address && (
                       <div className="flex items-center gap-1.5 sm:col-span-2">
-                        <span className="text-sm">📍</span>
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
                         <span>Address: <strong className="text-slate-700">{c.address}</strong></span>
                       </div>
                     )}
@@ -279,16 +297,18 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                   {c.boss_name && (
                     <div className="mt-3 p-2.5 bg-white rounded-lg border border-slate-200/60 text-xs">
                       <p className="font-semibold text-slate-700 flex items-center gap-1">
-                        <span>⛺</span> Associated Labor Camp Manager:
+                        <Tent className="w-3.5 h-3.5 text-slate-500 shrink-0" strokeWidth={1.8} />
+                        <span>Associated Labor Camp Manager:</span>
                       </p>
                       <p className="text-slate-500 mt-1 font-medium">
-                        {c.boss_name} {c.boss_phone ? `· 📞 ${c.boss_phone}` : ''}
+                        {c.boss_name} {c.boss_phone ? `· ${c.boss_phone}` : ''}
                       </p>
                     </div>
                   )}
                   {c.notes && (
-                    <p className="mt-3 text-xs text-slate-500 leading-relaxed font-medium bg-slate-100 p-2.5 rounded-lg border border-slate-200/40">
-                      📝 <span className="italic">{c.notes}</span>
+                    <p className="mt-3 text-xs text-slate-500 leading-relaxed font-medium bg-slate-100 p-2.5 rounded-lg border border-slate-200/40 flex items-start gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" strokeWidth={1.8} />
+                      <span className="italic">{c.notes}</span>
                     </p>
                   )}
                   <div className="mt-3 text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
@@ -309,46 +329,49 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                 >
                   <button
                     onClick={() => onDelete(c.id)}
-                    className="absolute top-4 right-4 text-slate-300 hover:text-rose-600 text-xs font-semibold p-1 cursor-pointer"
+                    className="absolute top-4 right-4 text-slate-300 hover:text-rose-600 text-xs font-semibold p-1 cursor-pointer transition-colors"
                   >
-                    🗑️
+                    <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
                   </button>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-amber-600 font-mono">
                       #{idx + 1}
                     </span>
                     <h4 className="text-sm font-bold text-slate-800">{c.name}</h4>
-                    <span className="bg-amber-50 text-amber-700 text-[9px] px-2 py-0.5 rounded-full font-bold">
-                      🏕️ Labor Camp
+                    <span className="bg-amber-50 text-amber-700 text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                      <Tent className="w-3 h-3 text-amber-700" strokeWidth={1.8} />
+                      <span>Labor Camp</span>
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 text-xs text-slate-500 font-medium">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-sm">📍</span>
+                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
                       <span>Location: <strong className="text-slate-700">{c.location}</strong></span>
                     </div>
                     {c.company && (
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm">🏢</span>
+                        <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
                         <span>Company: <strong className="text-slate-700">{c.company}</strong></span>
                       </div>
                     )}
                     <div className="flex items-center gap-1.5">
-                      <span className="text-sm">👷</span>
+                      <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
                       <span>Total Workers: <strong className="text-slate-700">{c.workers || 'N/A'}</strong></span>
                     </div>
                   </div>
                   <div className="mt-3 p-2.5 bg-white rounded-lg border border-slate-200/60 text-xs">
                     <p className="font-semibold text-slate-700 flex items-center gap-1">
-                      <span>👤</span> Camp Boss:
+                      <User className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
+                      <span>Camp Boss:</span>
                     </p>
                     <p className="text-slate-500 mt-1 font-medium">
-                      {c.boss_name} · <strong className="font-mono text-slate-600">📞 {c.boss_phone}</strong>
+                      {c.boss_name} · <strong className="font-mono text-slate-600">{c.boss_phone}</strong>
                     </p>
                   </div>
                   {c.notes && (
-                    <p className="mt-3 text-xs text-slate-500 leading-relaxed font-medium bg-slate-100 p-2.5 rounded-lg border border-slate-200/40">
-                      📝 <span className="italic">{c.notes}</span>
+                    <p className="mt-3 text-xs text-slate-500 leading-relaxed font-medium bg-slate-100 p-2.5 rounded-lg border border-slate-200/40 flex items-start gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" strokeWidth={1.8} />
+                      <span className="italic">{c.notes}</span>
                     </p>
                   )}
                   <div className="mt-3 text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
@@ -393,7 +416,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                             onClick={() => onDelete(c.id)}
                             className="text-rose-600 hover:text-rose-800 font-bold cursor-pointer"
                           >
-                            ✕
+                            <Trash2 className="w-3.5 h-3.5 inline" strokeWidth={1.8} />
                           </button>
                         </td>
                       </tr>
@@ -441,7 +464,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                             onClick={() => onDelete(v.id)}
                             className="text-rose-600 hover:text-rose-800 font-bold cursor-pointer"
                           >
-                            ✕
+                            <Trash2 className="w-3.5 h-3.5 inline" strokeWidth={1.8} />
                           </button>
                         </td>
                       </tr>
@@ -469,7 +492,6 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-600">
                   {processedData.map((item, idx) => {
                     const f = item as Feedback;
-                    const ratingStars = '⭐'.repeat(f.rating);
                     return (
                       <tr key={f.id} className="hover:bg-slate-50/50">
                         <td className="py-2.5 px-4 font-mono font-bold text-emerald-500">
@@ -491,8 +513,8 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                             {f.type}
                           </span>
                         </td>
-                        <td className="py-2.5 px-4 text-amber-500 font-mono tracking-widest">
-                          {ratingStars}
+                        <td className="py-2.5 px-4 text-amber-500 font-mono tracking-widest font-bold">
+                          {f.rating} / 5
                         </td>
                         <td className="py-2.5 px-4 max-w-xs truncate" title={f.feedback}>
                           {f.feedback}
@@ -502,7 +524,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                             onClick={() => onDelete(f.id)}
                             className="text-rose-600 hover:text-rose-800 font-bold cursor-pointer"
                           >
-                            ✕
+                            <Trash2 className="w-3.5 h-3.5 inline" strokeWidth={1.8} />
                           </button>
                         </td>
                       </tr>
@@ -545,7 +567,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                               c.status === 'Resolved'
                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                 : c.status === 'Open'
-                                ? 'bg-rose-50 text-rose-700 border border-rose-200 animate-pulse'
+                                ? 'bg-rose-50 text-[var(--coral,#D64545)] border border-rose-200 animate-pulse'
                                 : 'bg-amber-50 text-amber-700 border border-amber-200'
                             }`}
                           >
@@ -560,7 +582,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                             onClick={() => onDelete(c.id)}
                             className="text-rose-600 hover:text-rose-800 font-bold cursor-pointer"
                           >
-                            ✕
+                            <Trash2 className="w-3.5 h-3.5 inline text-[var(--coral,#D64545)]" strokeWidth={1.8} />
                           </button>
                         </td>
                       </tr>
@@ -616,7 +638,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                             onClick={() => onDelete(c.id)}
                             className="text-rose-600 hover:text-rose-800 font-bold cursor-pointer"
                           >
-                            ✕
+                            <Trash2 className="w-3.5 h-3.5 inline" strokeWidth={1.8} />
                           </button>
                         </td>
                       </tr>
@@ -630,7 +652,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
           {/* 8. Social Ads view */}
           {type === 'social' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {processedData.map((item, idx) => {
+              {processedData.map((item) => {
                 const s = item as SocialAd;
                 const platformInfo = SOCIAL_PLATFORMS[s.platform as keyof typeof SOCIAL_PLATFORMS];
                 return (
@@ -640,12 +662,12 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                   >
                     <button
                       onClick={() => onDelete(s.id)}
-                      className="absolute top-4 right-4 text-slate-300 hover:text-rose-600 text-xs font-semibold p-1 cursor-pointer"
+                      className="absolute top-4 right-4 text-slate-300 hover:text-rose-600 text-xs font-semibold p-1 cursor-pointer transition-colors"
                     >
-                      🗑️
+                      <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
                     </button>
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xl">{platformInfo?.icon || '📱'}</span>
+                      <Smartphone className="w-4 h-4 text-indigo-600 shrink-0" strokeWidth={1.8} />
                       <h4 className="text-sm font-bold text-slate-800">{s.title}</h4>
                     </div>
                     <div className="space-y-1 text-xs text-slate-500 font-medium">
@@ -692,9 +714,9 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                 >
                   <button
                     onClick={() => onDelete(p.id)}
-                    className="absolute top-4 right-4 text-slate-300 hover:text-rose-600 text-xs font-semibold p-1 cursor-pointer"
+                    className="absolute top-4 right-4 text-slate-300 hover:text-rose-600 text-xs font-semibold p-1 cursor-pointer transition-colors"
                   >
-                    🗑️
+                    <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
                   </button>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-emerald-600 font-mono">
@@ -725,3 +747,4 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
     </div>
   );
 }
+
