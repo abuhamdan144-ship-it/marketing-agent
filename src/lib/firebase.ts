@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { getAuth, signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import { AppData, Company, Camp, Customer, Visit, Feedback, Complaint, CompetitorIntel, SocialAd, MarketingPlan, Settings } from '../types';
+import appletConfig from '../../firebase-applet-config.json';
 
 let db: any;
 let defaultDb: any;
@@ -23,11 +24,18 @@ export async function initFirebase(): Promise<{ db: any; defaultDb: any; auth: a
   if (isInitialized) return { db, defaultDb, auth };
 
   try {
-    const response = await fetch('/firebase-applet-config.json');
-    if (!response.ok) {
-      throw new Error('Failed to load firebase-applet-config.json');
+    let firebaseConfig = appletConfig;
+
+    if (!firebaseConfig || !firebaseConfig.projectId) {
+      const response = await fetch('/firebase-applet-config.json');
+      if (response.ok) {
+        firebaseConfig = await response.json();
+      }
     }
-    const firebaseConfig = await response.json();
+
+    if (!firebaseConfig || !firebaseConfig.projectId) {
+      throw new Error('Missing valid Firebase configuration');
+    }
 
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     
