@@ -16,6 +16,11 @@ import {
   FileText,
   Smartphone,
   AlertTriangle,
+  ExternalLink,
+  DollarSign,
+  Filter,
+  Navigation,
+  Tag,
 } from 'lucide-react';
 
 interface ListsAndTablesProps {
@@ -25,15 +30,45 @@ interface ListsAndTablesProps {
   onOpenModal: (type: string) => void;
 }
 
+const CATEGORY_OPTIONS = ['All', 'Construction', 'Oil & Gas', 'Facilities Management', 'Cleaning Services', 'Manpower Supply', 'Other'];
+const REGION_OPTIONS = ['All', 'Barka', 'Muscat', 'Sohar', 'Buraimi', 'Nizwa', 'Other'];
+
 export default function ListsAndTables({ type, data, onDelete, onOpenModal }: ListsAndTablesProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+
+  // Camp Specific Filter & Sort state
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedRegion, setSelectedRegion] = useState<string>('All');
+  const [campSortOrder, setCampSortOrder] = useState<'default' | 'payday'>('default');
+
+  const getOrdinal = (day: number): string => {
+    if (day >= 11 && day <= 13) return `${day}th`;
+    switch (day % 10) {
+      case 1: return `${day}st`;
+      case 2: return `${day}nd`;
+      case 3: return `${day}rd`;
+      default: return `${day}th`;
+    }
+  };
+
+  const getDaysUntilPayday = (salaryDate?: number): number => {
+    if (!salaryDate || salaryDate < 1 || salaryDate > 31) return 999;
+    const now = new Date();
+    const today = now.getDate();
+    if (salaryDate >= today) {
+      return salaryDate - today;
+    } else {
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      return (daysInMonth - today) + salaryDate;
+    }
+  };
 
   // Filter and Sort Data using useMemo for performance
   const processedData = useMemo(() => {
     const term = searchTerm.toLowerCase();
     
-    // First, filter data by search term
+    // First, filter data by search term & specific category/region filters
     const filtered = data.filter((item) => {
       if (type === 'companies') {
         const c = item as Company;
@@ -45,11 +80,19 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
       }
       if (type === 'camps') {
         const c = item as Camp;
-        return (
+        const matchesSearch =
           c.name.toLowerCase().includes(term) ||
           c.location.toLowerCase().includes(term) ||
-          c.boss_name.toLowerCase().includes(term)
-        );
+          c.boss_name.toLowerCase().includes(term) ||
+          (c.landmark || '').toLowerCase().includes(term) ||
+          (c.region || '').toLowerCase().includes(term) ||
+          (c.company || '').toLowerCase().includes(term) ||
+          (c.category || '').toLowerCase().includes(term);
+
+        const matchesCategory = selectedCategory === 'All' || c.category === selectedCategory;
+        const matchesRegion = selectedRegion === 'All' || c.region === selectedRegion;
+
+        return matchesSearch && matchesCategory && matchesRegion;
       }
       if (type === 'customers') {
         const c = item as Customer;
@@ -99,7 +142,6 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
         let month = parseInt(parts[1], 10);
         let year = parseInt(parts[2], 10);
 
-        // Standard year check (if year is first element, e.g., YYYY/MM/DD)
         if (parts[0].length === 4) {
           year = parseInt(parts[0], 10);
           month = parseInt(parts[1], 10);
@@ -119,8 +161,17 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
       return 0;
     };
 
-    // Sort filtered data based on date and id (creation timestamp fallback)
+    // Sort filtered data
     return [...filtered].sort((a, b) => {
+      // Special sort for Camps by Upcoming Payday
+      if (type === 'camps' && campSortOrder === 'payday') {
+        const daysA = getDaysUntilPayday((a as Camp).salaryDate);
+        const daysB = getDaysUntilPayday((b as Camp).salaryDate);
+        if (daysA !== daysB) {
+          return daysA - daysB;
+        }
+      }
+
       const timeA = parseDateString(a.date);
       const timeB = parseDateString(b.date);
 
@@ -130,7 +181,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
       // Fallback to id (Date.now() creation timestamp)
       return sortOrder === 'newest' ? b.id - a.id : a.id - b.id;
     });
-  }, [data, type, searchTerm, sortOrder]);
+  }, [data, type, searchTerm, sortOrder, selectedCategory, selectedRegion, campSortOrder]);
 
   const handleEmptyState = (title: string, btnLabel: string, modalType: string) => (
     <div className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50/50">
@@ -151,8 +202,8 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
 
   return (
     <div className="space-y-4">
-      {/* Search Bar, Sorting & Add Button */}
-      {data.length > 0 && (
+      {/* Search Bar, Filter Chips & Sort Controls */}
+      <div className="space-y-3">
         <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
             {/* Search Input */}
@@ -162,7 +213,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
               </span>
               <input
                 type="text"
-                placeholder="Filter list records..."
+                placeholder={type === 'camps' ? "Search camp name, landmark, region..." : "Filter list records..."}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-8 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white placeholder-slate-400"
@@ -170,12 +221,15 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
             </div>
 
             {/* Sort Toggle Buttons */}
-            <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/60 w-full sm:w-auto shadow-inner">
+            <div className="flex flex-wrap items-center gap-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200/60 w-full sm:w-auto shadow-inner">
               <button
                 type="button"
-                onClick={() => setSortOrder('newest')}
+                onClick={() => {
+                  setSortOrder('newest');
+                  if (type === 'camps') setCampSortOrder('default');
+                }}
                 className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
-                  sortOrder === 'newest'
+                  sortOrder === 'newest' && (type !== 'camps' || campSortOrder === 'default')
                     ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/10'
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
@@ -185,9 +239,12 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
               </button>
               <button
                 type="button"
-                onClick={() => setSortOrder('oldest')}
+                onClick={() => {
+                  setSortOrder('oldest');
+                  if (type === 'camps') setCampSortOrder('default');
+                }}
                 className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
-                  sortOrder === 'oldest'
+                  sortOrder === 'oldest' && (type !== 'camps' || campSortOrder === 'default')
                     ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/10'
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
@@ -195,6 +252,21 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                 <Calendar className="w-3 h-3 text-indigo-500 rotate-180 transform" />
                 Oldest First
               </button>
+              {type === 'camps' && (
+                <button
+                  type="button"
+                  onClick={() => setCampSortOrder(campSortOrder === 'payday' ? 'default' : 'payday')}
+                  className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+                    campSortOrder === 'payday'
+                      ? 'bg-amber-500 text-white shadow-sm font-extrabold'
+                      : 'text-slate-600 hover:text-slate-800'
+                  }`}
+                  title="Sort camps with salary dates closest to today"
+                >
+                  <DollarSign className="w-3 h-3" strokeWidth={2.5} />
+                  Upcoming Payday
+                </button>
+              )}
             </div>
           </div>
 
@@ -219,7 +291,60 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
             <span>Register New Entry</span>
           </button>
         </div>
-      )}
+
+        {/* Filter Chips for Camps view (Category and Region) */}
+        {type === 'camps' && (
+          <div className="space-y-2 pt-1 border-t border-slate-100">
+            {/* Category Chips */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+                <Filter className="w-3 h-3 text-slate-400" />
+                Category:
+              </span>
+              {CATEGORY_OPTIONS.map((cat) => {
+                const isActive = selectedCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all shrink-0 cursor-pointer ${
+                      isActive
+                        ? 'bg-slate-800 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200/60'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Region Chips */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-slate-400" />
+                Region:
+              </span>
+              {REGION_OPTIONS.map((reg) => {
+                const isActive = selectedRegion === reg;
+                return (
+                  <button
+                    key={reg}
+                    onClick={() => setSelectedRegion(reg)}
+                    className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all shrink-0 cursor-pointer ${
+                      isActive
+                        ? 'bg-indigo-900 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200/60'
+                    }`}
+                  >
+                    {reg}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Render based on Type */}
       {processedData.length === 0 ? (
@@ -322,59 +447,119 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
           {type === 'camps' &&
             processedData.map((item, idx) => {
               const c = item as Camp;
+              const daysLeft = c.salaryDate ? getDaysUntilPayday(c.salaryDate) : null;
               return (
                 <div
                   key={c.id}
-                  className="bg-slate-50 hover:bg-amber-50/10 rounded-xl p-4 border border-slate-100 hover:border-amber-200 transition-all duration-200 relative group"
+                  className="bg-slate-50 hover:bg-amber-50/20 rounded-2xl p-4 border border-slate-200/80 hover:border-amber-300 transition-all duration-200 relative group space-y-3"
                 >
                   <button
                     onClick={() => onDelete(c.id)}
                     className="absolute top-4 right-4 text-slate-300 hover:text-rose-600 text-xs font-semibold p-1 cursor-pointer transition-colors"
+                    title="Delete Entry"
                   >
                     <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
                   </button>
-                  <div className="flex items-center gap-2">
+
+                  {/* Header Row */}
+                  <div className="flex flex-wrap items-center gap-2 pr-8">
                     <span className="text-xs font-bold text-amber-600 font-mono">
                       #{idx + 1}
                     </span>
-                    <h4 className="text-sm font-bold text-slate-800">{c.name}</h4>
-                    <span className="bg-amber-50 text-amber-700 text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                      <Tent className="w-3 h-3 text-amber-700" strokeWidth={1.8} />
-                      <span>Labor Camp</span>
-                    </span>
+                    <h4 className="text-base font-bold text-slate-900">{c.name}</h4>
+
+                    {/* Region Badge */}
+                    {c.region && (
+                      <span className="bg-indigo-50 text-indigo-700 text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 border border-indigo-100">
+                        <MapPin className="w-3 h-3 text-indigo-600" strokeWidth={1.8} />
+                        <span>{c.region}</span>
+                      </span>
+                    )}
+
+                    {/* Category Tag */}
+                    {c.category && (
+                      <span className="bg-amber-100/80 text-amber-900 text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 border border-amber-200">
+                        <Tag className="w-3 h-3 text-amber-700" strokeWidth={1.8} />
+                        <span>{c.category}</span>
+                      </span>
+                    )}
+
+                    {/* Payday Badge */}
+                    {c.salaryDate && (
+                      <span className="bg-emerald-50 text-emerald-800 text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 border border-emerald-200">
+                        <Calendar className="w-3 h-3 text-emerald-600" strokeWidth={1.8} />
+                        <span>Payday: {getOrdinal(c.salaryDate)}</span>
+                        {daysLeft !== null && daysLeft <= 5 && (
+                          <span className="ml-0.5 bg-emerald-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black">
+                            {daysLeft === 0 ? 'TODAY' : `${daysLeft}d left`}
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 text-xs text-slate-500 font-medium">
+
+                  {/* Location & Details Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600 font-medium bg-white p-3 rounded-xl border border-slate-200/60">
                     <div className="flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
-                      <span>Location: <strong className="text-slate-700">{c.location}</strong></span>
+                      <span>Address: <strong className="text-slate-800">{c.location}</strong></span>
                     </div>
+
+                    {c.landmark && (
+                      <div className="flex items-center gap-1.5">
+                        <Navigation className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
+                        <span>Landmark: <strong className="text-slate-800">{c.landmark}</strong></span>
+                      </div>
+                    )}
+
                     {c.company && (
                       <div className="flex items-center gap-1.5">
                         <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
-                        <span>Company: <strong className="text-slate-700">{c.company}</strong></span>
+                        <span>Company: <strong className="text-slate-800">{c.company}</strong></span>
                       </div>
                     )}
+
                     <div className="flex items-center gap-1.5">
                       <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
-                      <span>Total Workers: <strong className="text-slate-700">{c.workers || 'N/A'}</strong></span>
+                      <span>Total Workers: <strong className="text-slate-800">{c.workers || 'N/A'}</strong></span>
                     </div>
                   </div>
-                  <div className="mt-3 p-2.5 bg-white rounded-lg border border-slate-200/60 text-xs">
+
+                  {/* Google Maps Link if provided */}
+                  {c.mapsLink && (
+                    <div className="pt-0.5">
+                      <a
+                        href={c.mapsLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline bg-indigo-50/80 px-3 py-1.5 rounded-lg border border-indigo-100 transition-colors"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 text-indigo-600" strokeWidth={1.8} />
+                        <span>Open Map Link</span>
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Boss Info */}
+                  <div className="p-2.5 bg-white rounded-xl border border-slate-200/60 text-xs">
                     <p className="font-semibold text-slate-700 flex items-center gap-1">
                       <User className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
                       <span>Camp Boss:</span>
                     </p>
                     <p className="text-slate-500 mt-1 font-medium">
-                      {c.boss_name} · <strong className="font-mono text-slate-600">{c.boss_phone}</strong>
+                      {c.boss_name} · <strong className="font-mono text-slate-700">{c.boss_phone}</strong>
                     </p>
                   </div>
+
+                  {/* Notes */}
                   {c.notes && (
-                    <p className="mt-3 text-xs text-slate-500 leading-relaxed font-medium bg-slate-100 p-2.5 rounded-lg border border-slate-200/40 flex items-start gap-1.5">
+                    <p className="text-xs text-slate-500 leading-relaxed font-medium bg-slate-100 p-2.5 rounded-xl border border-slate-200/40 flex items-start gap-1.5">
                       <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" strokeWidth={1.8} />
                       <span className="italic">{c.notes}</span>
                     </p>
                   )}
-                  <div className="mt-3 text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
+
+                  <div className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
                     Registered On {c.date}
                   </div>
                 </div>

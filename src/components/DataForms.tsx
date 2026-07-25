@@ -26,6 +26,11 @@ export default function DataForms({ type, onSave, onClose }: DataFormsProps) {
     boss_phone: '',
     workers: '',
     notes: '',
+    category: 'Construction',
+    salaryDate: '27',
+    region: 'Muscat',
+    landmark: '',
+    mapsLink: '',
   });
 
   const [customerForm, setCustomerForm] = useState({
@@ -91,6 +96,11 @@ export default function DataForms({ type, onSave, onClose }: DataFormsProps) {
     onSave({
       ...campForm,
       workers: parseInt(campForm.workers) || 0,
+      salaryDate: campForm.salaryDate ? parseInt(campForm.salaryDate, 10) : undefined,
+      category: campForm.category || undefined,
+      region: campForm.region || undefined,
+      landmark: campForm.landmark.trim() || undefined,
+      mapsLink: campForm.mapsLink.trim() || undefined,
     });
   };
 
@@ -255,6 +265,7 @@ export default function DataForms({ type, onSave, onClose }: DataFormsProps) {
     case 'camp':
       return (
         <form onSubmit={handleCampSubmit} className="space-y-4">
+          {/* Camp Name & Associated Company */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
@@ -271,21 +282,6 @@ export default function DataForms({ type, onSave, onClose }: DataFormsProps) {
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                Location / Area <span className="text-rose-500">*</span>
-              </label>
-              <input
-                required
-                type="text"
-                placeholder="e.g. Ghala Industrial"
-                value={campForm.location}
-                onChange={(e) => setCampForm({ ...campForm, location: e.target.value })}
-                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
                 Associated Company
               </label>
               <input
@@ -295,6 +291,71 @@ export default function DataForms({ type, onSave, onClose }: DataFormsProps) {
                 onChange={(e) => setCampForm({ ...campForm, company: e.target.value })}
                 className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
+            </div>
+          </div>
+
+          {/* Category & Salary Date */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Category
+              </label>
+              <select
+                value={campForm.category}
+                onChange={(e) => setCampForm({ ...campForm, category: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+                <option value="Construction">Construction</option>
+                <option value="Oil & Gas">Oil &amp; Gas</option>
+                <option value="Facilities Management">Facilities Management</option>
+                <option value="Cleaning Services">Cleaning Services</option>
+                <option value="Manpower Supply">Manpower Supply</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Salary Date (Day of Month)
+              </label>
+              <select
+                value={campForm.salaryDate}
+                onChange={(e) => setCampForm({ ...campForm, salaryDate: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+                <option value="">Not Specified</option>
+                {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => {
+                  let suffix = 'th';
+                  if (day === 1 || day === 21 || day === 31) suffix = 'st';
+                  else if (day === 2 || day === 22) suffix = 'nd';
+                  else if (day === 3 || day === 23) suffix = 'rd';
+                  return (
+                    <option key={day} value={day}>
+                      {day}{suffix} of month
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          </div>
+
+          {/* Location Details: Region, Address/Location, Landmark */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Region / Zone <span className="text-rose-500">*</span>
+              </label>
+              <select
+                value={campForm.region}
+                onChange={(e) => setCampForm({ ...campForm, region: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm bg-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+                <option value="Barka">Barka</option>
+                <option value="Muscat">Muscat</option>
+                <option value="Sohar">Sohar</option>
+                <option value="Buraimi">Buraimi</option>
+                <option value="Nizwa">Nizwa</option>
+                <option value="Other">Other</option>
+              </select>
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
@@ -309,6 +370,48 @@ export default function DataForms({ type, onSave, onClose }: DataFormsProps) {
               />
             </div>
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Location / Address <span className="text-rose-500">*</span>
+              </label>
+              <input
+                required
+                type="text"
+                placeholder="e.g. Ghala Industrial Area"
+                value={campForm.location}
+                onChange={(e) => setCampForm({ ...campForm, location: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                Landmark
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Behind Lulu Hypermarket"
+                value={campForm.landmark}
+                onChange={(e) => setCampForm({ ...campForm, landmark: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Google Maps Link (Optional)
+            </label>
+            <input
+              type="url"
+              placeholder="e.g. https://maps.app.goo.gl/..."
+              value={campForm.mapsLink}
+              onChange={(e) => setCampForm({ ...campForm, mapsLink: e.target.value })}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-3 p-3 bg-amber-50/50 rounded-xl border border-amber-100">
             <div>
               <label className="block text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">
@@ -337,6 +440,7 @@ export default function DataForms({ type, onSave, onClose }: DataFormsProps) {
               />
             </div>
           </div>
+
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
               Camp Notes / Highlights

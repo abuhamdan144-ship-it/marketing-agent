@@ -15,6 +15,13 @@ import MoreView from './components/MoreView';
 import { AppData, Company, Camp, Customer, Visit, Feedback, Complaint, CompetitorIntel, SocialAd, MarketingPlan, AttendanceRecord, Settings } from './types';
 import { generateFullReport, exportPDF, exportExcel, CORRIDORS, SOCIAL_PLATFORMS } from './utils/exportUtils';
 import { 
+  Download, 
+  FileSpreadsheet, 
+  FileText, 
+  MessageCircle, 
+  Mail 
+} from 'lucide-react';
+import { 
   initFirebase, 
   authenticateAnonymously, 
   loadUserDataFromCloud, 
@@ -1025,28 +1032,70 @@ export default function App() {
               />
 
               {/* Report Relays & Exports Block */}
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">
-                  📤 Report Compilation &amp; Export Center
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                    <Download className="w-3.5 h-3.5 text-[var(--gold,#C89B3C)]" strokeWidth={2} />
+                    <span>Report Compilation &amp; Export Center</span>
+                  </h3>
+                </div>
+
+                {/* Primary Export Action */}
+                <button
+                  onClick={() => setIsExportPreviewOpen(true)}
+                  style={{
+                    background: 'linear-gradient(155deg, #D4AC5C, #C89B3C)',
+                    boxShadow: '0 4px 14px rgba(200, 155, 60, 0.35)',
+                  }}
+                  className="w-full flex items-center justify-between p-3.5 sm:p-4 rounded-xl text-[var(--ink,#16213E)] font-extrabold transition-all duration-200 transform active:scale-[0.99] cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/30 backdrop-blur-xs flex items-center justify-center text-[var(--ink,#16213E)] shrink-0">
+                      <FileSpreadsheet className="w-5 h-5" strokeWidth={2.2} />
+                    </div>
+                    <div className="text-left">
+                      <span className="text-sm font-extrabold tracking-tight font-display block">
+                        Export Full Operations Report
+                      </span>
+                      <p className="text-[11px] text-[var(--ink,#16213E)]/80 font-semibold leading-tight mt-0.5">
+                        Compile all registers (camps, visits, intel) into a master Excel workbook
+                      </p>
+                    </div>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-1.5 bg-white/40 backdrop-blur-xs px-3 py-1.5 rounded-lg text-xs font-black shrink-0 ml-2">
+                    <span>Export (.xlsx)</span>
+                  </div>
+                </button>
+
+                {/* Secondary Relay & Export Format Buttons Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                   <button
                     onClick={handleSendWhatsApp}
-                    className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition-colors active:scale-95"
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-white border border-[var(--line,#E2E5E1)] text-[var(--ink,#16213E)] hover:bg-slate-50 font-bold text-xs rounded-xl shadow-xs cursor-pointer transition-colors active:scale-95"
                   >
-                    💬 WhatsApp Relay
+                    <MessageCircle className="w-4 h-4 text-[var(--ink,#16213E)]" strokeWidth={1.8} />
+                    <span>Send via WhatsApp</span>
                   </button>
                   <button
                     onClick={handleSendEmail}
-                    className="flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition-colors active:scale-95"
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-white border border-[var(--line,#E2E5E1)] text-[var(--ink,#16213E)] hover:bg-slate-50 font-bold text-xs rounded-xl shadow-xs cursor-pointer transition-colors active:scale-95"
                   >
-                    📧 Email Relay
+                    <Mail className="w-4 h-4 text-[var(--ink,#16213E)]" strokeWidth={1.8} />
+                    <span>Send via Email</span>
                   </button>
                   <button
                     onClick={() => exportPDF(appData)}
-                    className="flex items-center justify-center gap-2 px-4 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition-colors active:scale-95"
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-white border border-[var(--line,#E2E5E1)] text-[var(--ink,#16213E)] hover:bg-slate-50 font-bold text-xs rounded-xl shadow-xs cursor-pointer transition-colors active:scale-95"
                   >
-                    📄 Export PDF Docket
+                    <FileText className="w-4 h-4 text-[var(--ink,#16213E)]" strokeWidth={1.8} />
+                    <span>Export as PDF</span>
+                  </button>
+                  <button
+                    onClick={() => exportExcel(appData)}
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-white border border-[var(--line,#E2E5E1)] text-[var(--ink,#16213E)] hover:bg-slate-50 font-bold text-xs rounded-xl shadow-xs cursor-pointer transition-colors active:scale-95"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-[var(--ink,#16213E)]" strokeWidth={1.8} />
+                    <span>Export as Excel</span>
                   </button>
                 </div>
               </div>

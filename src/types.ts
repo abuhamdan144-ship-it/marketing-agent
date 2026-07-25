@@ -20,6 +20,11 @@ export interface Camp {
   workers: number;
   notes?: string;
   date: string;
+  category?: string;
+  salaryDate?: number;
+  region?: string;
+  landmark?: string;
+  mapsLink?: string;
 }
 
 export interface Customer {

@@ -248,27 +248,27 @@ export default function AttendanceSheet({
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Official Header Card - Requested Format */}
-      <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-800 relative overflow-hidden">
+      <div className="bg-[var(--ink,#16213E)] text-white rounded-2xl p-5 sm:p-6 shadow-card border border-slate-800 relative overflow-hidden">
         {/* Background Accent Lines */}
-        <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -left-10 -top-10 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -left-10 -top-10 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-b border-slate-800 pb-6">
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-b border-slate-800 pb-5">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold uppercase tracking-widest">
-              <Calendar className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--gold-dim,#F4E9D2)]/15 text-[var(--gold,#C89B3C)] border border-[var(--gold,#C89B3C)]/30 text-xs font-bold uppercase tracking-widest">
+              <Calendar className="w-3.5 h-3.5 text-[var(--gold,#C89B3C)]" />
               Monthly Attendance Sheet
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-display uppercase">
               ATTENDANCE REGISTER
             </h1>
-            <p className="text-xs text-slate-400 font-medium">
+            <p className="text-xs text-slate-300 font-medium">
               Official Field Attendance &amp; Camp Visit Verification Log
             </p>
           </div>
 
           {/* Month & Year Selector */}
-          <div className="flex flex-wrap items-center gap-2 bg-slate-800/80 p-2 rounded-2xl border border-slate-700/80">
+          <div className="flex flex-wrap items-center gap-2 bg-slate-900/80 p-2 rounded-xl border border-slate-700/80">
             <div className="flex items-center gap-1.5 px-2">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Month &amp; Year:</span>
             </div>
@@ -276,7 +276,7 @@ export default function AttendanceSheet({
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="bg-slate-900 text-indigo-300 font-bold text-xs rounded-xl px-3 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 cursor-pointer"
+              className="bg-slate-800 text-slate-100 font-bold text-xs rounded-lg px-3 py-1.5 border border-slate-700 focus:outline-none focus:border-[var(--gold,#C89B3C)] cursor-pointer"
             >
               {MONTHS.map((m, idx) => (
                 <option key={m} value={idx}>
@@ -288,7 +288,7 @@ export default function AttendanceSheet({
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="bg-slate-900 text-indigo-300 font-bold text-xs rounded-xl px-3 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 cursor-pointer"
+              className="bg-slate-800 text-slate-100 font-bold text-xs rounded-lg px-3 py-1.5 border border-slate-700 focus:outline-none focus:border-[var(--gold,#C89B3C)] cursor-pointer"
             >
               {[2024, 2025, 2026, 2027, 2028].map((y) => (
                 <option key={y} value={y}>
@@ -302,7 +302,7 @@ export default function AttendanceSheet({
                 setSelectedMonth(currentDate.getMonth());
                 setSelectedYear(currentDate.getFullYear());
               }}
-              className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white font-semibold text-[11px] rounded-xl transition-colors cursor-pointer"
+              className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-[11px] rounded-lg transition-colors cursor-pointer border border-slate-700"
             >
               Current Month
             </button>
@@ -310,10 +310,10 @@ export default function AttendanceSheet({
         </div>
 
         {/* Employee / Agent Name Banner */}
-        <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-800/50 p-4 rounded-2xl border border-slate-700/60">
+        <div className="mt-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-300 font-extrabold text-base">
-              <UserCheck className="w-5 h-5 text-indigo-300" strokeWidth={1.8} />
+            <div className="w-10 h-10 rounded-xl bg-[var(--gold-dim,#F4E9D2)]/20 border border-[var(--gold,#C89B3C)]/30 flex items-center justify-center text-[var(--gold,#C89B3C)] font-extrabold text-base shrink-0">
+              <UserCheck className="w-5 h-5 text-[var(--gold,#C89B3C)]" strokeWidth={1.8} />
             </div>
             <div>
               <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">
@@ -325,7 +325,7 @@ export default function AttendanceSheet({
                     type="text"
                     value={employeeName}
                     onChange={(e) => setEmployeeName(e.target.value)}
-                    className="bg-slate-900 text-white font-bold text-sm px-3 py-1 rounded-xl border border-indigo-500 focus:outline-none"
+                    className="bg-slate-900 text-white font-bold text-sm px-3 py-1 rounded-xl border border-[var(--gold,#C89B3C)] focus:outline-none"
                     placeholder="Enter Employee Name"
                   />
                   <button
@@ -336,19 +336,19 @@ export default function AttendanceSheet({
                       }
                       showToast(`Employee name updated to ${employeeName}`, 'success');
                     }}
-                    className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl cursor-pointer"
+                    className="px-3 py-1 bg-[var(--gold,#C89B3C)] text-[var(--ink,#16213E)] font-extrabold text-xs rounded-xl cursor-pointer"
                   >
                     Save
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2.5 mt-0.5">
-                  <h2 className="text-base sm:text-lg font-extrabold text-indigo-200">
+                  <h2 className="text-base sm:text-lg font-extrabold text-slate-100 font-display">
                     {employeeName}
                   </h2>
                   <button
                     onClick={() => setIsEditingName(true)}
-                    className="text-slate-400 hover:text-white transition-colors cursor-pointer"
+                    className="text-slate-400 hover:text-[var(--gold,#C89B3C)] transition-colors cursor-pointer"
                     title="Edit Employee Name"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
@@ -361,21 +361,21 @@ export default function AttendanceSheet({
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               onClick={handleAutoImportFromVisits}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/20 transition-all cursor-pointer active:scale-95"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-[var(--gold,#C89B3C)] hover:bg-[#b88c2e] text-[var(--ink,#16213E)] font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer active:scale-95"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <Sparkles className="w-3.5 h-3.5 text-[var(--ink,#16213E)]" />
               Auto-Import Visits
             </button>
             <button
               onClick={() => setIsPrintModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs rounded-xl transition-all cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition-all border border-slate-700 cursor-pointer"
             >
               <Printer className="w-3.5 h-3.5" />
               Print / PDF
             </button>
             <button
               onClick={handleExportCSV}
-              className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition-all cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition-all border border-slate-700 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               CSV

@@ -86,7 +86,7 @@ export default function Overview({ appData, onNavigate }: OverviewProps) {
             <button
               key={s.id}
               onClick={() => onNavigate(s.id)}
-              className={`lg:col-span-1 flex flex-col items-center justify-center p-4 rounded-xl border text-center transition-all duration-300 transform active:scale-95 cursor-pointer ${
+              className={`lg:col-span-1 flex flex-col items-center justify-center p-4 rounded-xl border shadow-card text-center transition-all duration-300 transform active:scale-95 cursor-pointer ${
                 s.color
               } ${isDimmed ? 'opacity-55' : 'opacity-100'}`}
               style={
