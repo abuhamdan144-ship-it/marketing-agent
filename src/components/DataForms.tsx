@@ -1,4 +1,12 @@
 import React, { useState } from 'react';
+import { 
+  MapPin, 
+  Locate, 
+  Loader2, 
+  CheckCircle2, 
+  RefreshCw, 
+  AlertCircle 
+} from 'lucide-react';
 
 interface DataFormsProps {
   type: string;
@@ -31,7 +39,48 @@ export default function DataForms({ type, onSave, onClose }: DataFormsProps) {
     region: 'Muscat',
     landmark: '',
     mapsLink: '',
+    latitude: undefined as number | undefined,
+    longitude: undefined as number | undefined,
   });
+
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  const handleShareCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setIsGettingLocation(true);
+    setLocationError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const generatedLink = `https://www.google.com/maps?q=${lat},${lng}`;
+
+        setCampForm((prev) => ({
+          ...prev,
+          latitude: lat,
+          longitude: lng,
+          mapsLink: generatedLink,
+        }));
+        setIsGettingLocation(false);
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        setIsGettingLocation(false);
+        setLocationError("Couldn't get your location — try again or paste a Google Maps link");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  };
 
   const [customerForm, setCustomerForm] = useState({
     name: '',
@@ -101,6 +150,8 @@ export default function DataForms({ type, onSave, onClose }: DataFormsProps) {
       region: campForm.region || undefined,
       landmark: campForm.landmark.trim() || undefined,
       mapsLink: campForm.mapsLink.trim() || undefined,
+      latitude: campForm.latitude,
+      longitude: campForm.longitude,
     });
   };
 
@@ -399,17 +450,73 @@ export default function DataForms({ type, onSave, onClose }: DataFormsProps) {
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-              Google Maps Link (Optional)
-            </label>
-            <input
-              type="url"
-              placeholder="e.g. https://maps.app.goo.gl/..."
-              value={campForm.mapsLink}
-              onChange={(e) => setCampForm({ ...campForm, mapsLink: e.target.value })}
-              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
+          {/* GPS Location Share & Maps Link */}
+          <div className="space-y-2.5 p-3.5 bg-slate-50/90 rounded-2xl border border-slate-200/90">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-[var(--gold,#C89B3C)]" strokeWidth={2.2} />
+                <span>GPS Location &amp; Map Link</span>
+              </label>
+            </div>
+
+            {/* Location Share Action Button or Status Confirmation */}
+            {isGettingLocation ? (
+              <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-amber-50/90 border border-amber-200 text-amber-900 text-xs font-bold animate-pulse">
+                <Loader2 className="w-4 h-4 animate-spin text-[var(--gold,#C89B3C)]" />
+                <span>Getting your location...</span>
+              </div>
+            ) : campForm.latitude !== undefined && campForm.longitude !== undefined ? (
+              <div className="p-3 bg-emerald-50/90 border border-emerald-200/90 rounded-xl space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 shrink-0" strokeWidth={2.2} />
+                    <div className="min-w-0">
+                      <span className="text-xs font-extrabold text-emerald-950 block">GPS Coordinates Captured</span>
+                      <span className="text-[11px] font-mono text-emerald-800 font-bold tracking-tight block truncate">
+                        {campForm.latitude.toFixed(6)}, {campForm.longitude.toFixed(6)}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleShareCurrentLocation}
+                    className="flex items-center gap-1 text-[11px] font-bold text-emerald-900 bg-white hover:bg-emerald-100/50 px-2.5 py-1.5 rounded-lg border border-emerald-300/80 transition-colors cursor-pointer shrink-0 shadow-xs"
+                  >
+                    <RefreshCw className="w-3 h-3 text-emerald-700" strokeWidth={2} />
+                    <span>Change Location</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleShareCurrentLocation}
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[var(--ink,#16213E)] hover:bg-[#1f2d52] text-white font-extrabold text-xs shadow-xs transition-all duration-200 active:scale-[0.99] cursor-pointer"
+              >
+                <Locate className="w-4 h-4 text-[var(--gold,#C89B3C)]" strokeWidth={2.2} />
+                <span>Share Current Location</span>
+              </button>
+            )}
+
+            {locationError && (
+              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" strokeWidth={2} />
+                <span>{locationError}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                Google Maps Link {campForm.latitude !== undefined ? '(Auto-generated)' : '(Manual Fallback)'}
+              </label>
+              <input
+                type="url"
+                placeholder="e.g. https://www.google.com/maps?q=23.588,58.382 or https://maps.app.goo.gl/..."
+                value={campForm.mapsLink}
+                onChange={(e) => setCampForm({ ...campForm, mapsLink: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 p-3 bg-amber-50/50 rounded-xl border border-amber-100">

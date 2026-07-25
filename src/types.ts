@@ -25,6 +25,8 @@ export interface Camp {
   region?: string;
   landmark?: string;
   mapsLink?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface Customer {

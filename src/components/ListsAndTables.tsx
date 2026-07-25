@@ -502,7 +502,20 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal }: Li
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600 font-medium bg-white p-3 rounded-xl border border-slate-200/60">
                     <div className="flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
-                      <span>Address: <strong className="text-slate-800">{c.location}</strong></span>
+                      <span>Address: {c.mapsLink ? (
+                        <a
+                          href={c.mapsLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1"
+                          title="Open in Google Maps"
+                        >
+                          <span>{c.location}</span>
+                          <ExternalLink className="w-3 h-3 text-indigo-500" strokeWidth={2} />
+                        </a>
+                      ) : (
+                        <strong className="text-slate-800">{c.location}</strong>
+                      )}</span>
                     </div>
 
                     {c.landmark && (
