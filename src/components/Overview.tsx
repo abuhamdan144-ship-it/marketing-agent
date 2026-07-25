@@ -40,6 +40,13 @@ export default function Overview({ appData, onNavigate }: OverviewProps) {
       count: appData.visits.length,
       color: 'bg-rose-50/50 border-rose-100 hover:border-rose-300 text-rose-700 hover:bg-rose-50',
     },
+    {
+      id: 'attendance',
+      label: 'Attendance Sheet',
+      icon: '📝',
+      count: appData.attendance.length,
+      color: 'bg-purple-50/50 border-purple-100 hover:border-purple-300 text-purple-700 hover:bg-purple-50',
+    },
   ];
 
   return (

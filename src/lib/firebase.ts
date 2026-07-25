@@ -85,7 +85,8 @@ export async function loadUserDataFromCloud(userId: string): Promise<Partial<App
     'complaints',
     'competitors',
     'social',
-    'plans'
+    'plans',
+    'attendance'
   ];
 
   const results: any = {};
@@ -195,7 +196,8 @@ export async function migrateLocalDataToCloud(
     { key: 'complaints', colName: 'complaints' },
     { key: 'competitors', colName: 'competitors' },
     { key: 'social', colName: 'social' },
-    { key: 'plans', colName: 'plans' }
+    { key: 'plans', colName: 'plans' },
+    { key: 'attendance', colName: 'attendance' }
   ];
 
   // Batch writes are efficient

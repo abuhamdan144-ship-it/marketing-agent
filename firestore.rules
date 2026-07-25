@@ -76,6 +76,13 @@ service cloud.firestore {
       allow delete: if isAuthorized(resource.data.userId);
     }
 
+    match /attendance/{id} {
+      allow read: if isAuthorized(resource.data.userId);
+      allow create: if isAuthorized(request.resource.data.userId);
+      allow update: if isAuthorized(resource.data.userId) && isAuthorized(request.resource.data.userId);
+      allow delete: if isAuthorized(resource.data.userId);
+    }
+
     match /settings/{userId} {
       allow read: if isAuthorized(userId);
       allow create, update: if isAuthorized(userId);

@@ -8,6 +8,7 @@ interface TabsProps {
     camps: number;
     customers: number;
     visits: number;
+    attendance?: number;
   };
 }
 
@@ -15,6 +16,7 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
   const tabs = [
     { id: 'dashboard', label: 'Home', icon: '🏠' },
     { id: 'analytics', label: 'Analytics', icon: '📈' },
+    { id: 'attendance', label: 'Attendance Sheet', icon: '📝', badge: badges.attendance },
     { id: 'companies', label: 'Companies', icon: '🏢', badge: badges.companies },
     { id: 'camps', label: 'Camps', icon: '🏕️', badge: badges.camps },
     { id: 'customers', label: 'Customers', icon: '👥' },

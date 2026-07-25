@@ -88,6 +88,15 @@ export interface MarketingPlan {
   date: string;
 }
 
+export interface AttendanceRecord {
+  id: number;
+  date: string; // YYYY-MM-DD
+  session: string; // Morning, Afternoon, Evening, Full Day
+  placeAndCampVisit: string; // Place and Camp visited
+  managerSig: string; // "Signed", "Pending", or manager signature initials/text
+  notes?: string;
+}
+
 export interface Settings {
   agentName: string;
   managerWhatsApp: string;
@@ -118,6 +127,7 @@ export interface AppData {
   competitors: CompetitorIntel[];
   social: SocialAd[];
   plans: MarketingPlan[];
+  attendance: AttendanceRecord[];
   settings: Settings;
   rates: ExchangeRates;
 }

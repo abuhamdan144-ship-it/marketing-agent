@@ -10,7 +10,8 @@ import GoalTracker from './components/GoalTracker';
 import Tabs from './components/Tabs';
 import Toast from './components/Toast';
 import ExportPreviewModal from './components/ExportPreviewModal';
-import { AppData, Company, Camp, Customer, Visit, Feedback, Complaint, CompetitorIntel, SocialAd, MarketingPlan, Settings } from './types';
+import AttendanceSheet from './components/AttendanceSheet';
+import { AppData, Company, Camp, Customer, Visit, Feedback, Complaint, CompetitorIntel, SocialAd, MarketingPlan, AttendanceRecord, Settings } from './types';
 import { generateFullReport, exportPDF, exportExcel, CORRIDORS, SOCIAL_PLATFORMS } from './utils/exportUtils';
 import { 
   initFirebase, 
@@ -34,6 +35,7 @@ const initialData: AppData = {
   competitors: [],
   social: [],
   plans: [],
+  attendance: [],
   settings: {
     agentName: '',
     managerWhatsApp: '',
@@ -59,6 +61,7 @@ const loadInitialLocalData = (): AppData => {
         competitors: parsed.competitors || [],
         social: parsed.social || [],
         plans: parsed.plans || [],
+        attendance: parsed.attendance || [],
         settings: parsed.settings || { agentName: '', managerWhatsApp: '', managerEmail: '', monthlyVisitGoal: 15 },
         rates: parsed.rates || {},
       };
@@ -165,6 +168,7 @@ export default function App() {
               competitors: parsed.competitors || [],
               social: parsed.social || [],
               plans: parsed.plans || [],
+              attendance: parsed.attendance || [],
               settings: parsed.settings || { agentName: '', managerWhatsApp: '', managerEmail: '', monthlyVisitGoal: 15 },
               rates: parsed.rates || {},
             };
@@ -231,7 +235,8 @@ export default function App() {
           { key: 'complaints', name: 'complaints' },
           { key: 'competitors', name: 'competitors' },
           { key: 'social', name: 'social' },
-          { key: 'plans', name: 'plans' }
+          { key: 'plans', name: 'plans' },
+          { key: 'attendance', name: 'attendance' }
         ];
 
         if (localDataParsed) {
@@ -345,6 +350,7 @@ export default function App() {
           competitors: mergeCollection(syncedCloudData.competitors as CompetitorIntel[], localDataParsed?.competitors),
           social: mergeCollection(syncedCloudData.social as SocialAd[], localDataParsed?.social),
           plans: mergeCollection(syncedCloudData.plans as MarketingPlan[], localDataParsed?.plans),
+          attendance: mergeCollection(syncedCloudData.attendance as AttendanceRecord[], localDataParsed?.attendance),
           settings: (syncedCloudData.settings as Settings) || (localDataParsed?.settings) || { agentName: '', managerWhatsApp: '', managerEmail: '', monthlyVisitGoal: 15 },
           rates: (localDataParsed && localDataParsed.rates) || {},
         };
@@ -389,6 +395,7 @@ export default function App() {
               competitors: parsed.competitors || [],
               social: parsed.social || [],
               plans: parsed.plans || [],
+              attendance: parsed.attendance || [],
               settings: parsed.settings || { agentName: '', managerWhatsApp: '', managerEmail: '', monthlyVisitGoal: 15 },
               rates: parsed.rates || {},
             };
@@ -577,6 +584,30 @@ export default function App() {
     }
   };
 
+  // Save Attendance Entry
+  const handleSaveAttendanceEntry = async (entry: AttendanceRecord) => {
+    const updated = { ...appData };
+    const index = updated.attendance.findIndex((x) => x.id === entry.id);
+    if (index >= 0) {
+      updated.attendance[index] = entry;
+    } else {
+      updated.attendance = [entry, ...updated.attendance];
+    }
+    saveToLocalStorage(updated);
+
+    if (!isForcedOffline && user) {
+      try {
+        setSyncStatus('loading');
+        await saveDocumentToCloud('attendance', entry, user.uid);
+        setSyncStatus('synced');
+      } catch (error) {
+        console.error('Error saving attendance entry to Cloud:', error);
+        setSyncStatus('error');
+        showToast('Saved locally. Cloud upload pending reconnection.', 'warning');
+      }
+    }
+  };
+
   // Delete Callback
   const handleDeleteEntry = async (id: number) => {
     const updated = { ...appData };
@@ -592,6 +623,7 @@ export default function App() {
     else if (updated.competitors.some((x) => x.id === id)) collectionName = 'competitors';
     else if (updated.social.some((x) => x.id === id)) collectionName = 'social';
     else if (updated.plans.some((x) => x.id === id)) collectionName = 'plans';
+    else if (updated.attendance.some((x) => x.id === id)) collectionName = 'attendance';
 
     updated.companies = updated.companies.filter((x) => x.id !== id);
     updated.camps = updated.camps.filter((x) => x.id !== id);
@@ -602,6 +634,7 @@ export default function App() {
     updated.competitors = updated.competitors.filter((x) => x.id !== id);
     updated.social = updated.social.filter((x) => x.id !== id);
     updated.plans = updated.plans.filter((x) => x.id !== id);
+    updated.attendance = updated.attendance.filter((x) => x.id !== id);
 
     // Record deletion ID offline queue to ensure it doesn't reappear on sync / page refresh
     try {
@@ -796,6 +829,7 @@ export default function App() {
     const labelMap: Record<string, string> = {
       dashboard: 'Dashboard Home',
       analytics: 'Operations Analytics & Intel',
+      attendance: 'Monthly Attendance Register',
       companies: 'Registered Companies',
       camps: 'Labor Camps Target List',
       customers: 'Leads & Customers Register',
@@ -830,6 +864,7 @@ export default function App() {
           camps: appData.camps.length,
           customers: appData.customers.length,
           visits: appData.visits.length,
+          attendance: appData.attendance.length,
         }}
       />
 
@@ -1000,8 +1035,20 @@ export default function App() {
             </div>
           )}
 
+          {/* Monthly Attendance Sheet View */}
+          {activeTab === 'attendance' && (
+            <AttendanceSheet
+              attendanceData={appData.attendance}
+              appData={appData}
+              onSaveEntry={handleSaveAttendanceEntry}
+              onDeleteEntry={handleDeleteEntry}
+              settings={appData.settings}
+              showToast={showToast}
+            />
+          )}
+
           {/* List views */}
-          {activeTab !== 'dashboard' && activeTab !== 'analytics' && activeTab !== 'settings' && (
+          {activeTab !== 'dashboard' && activeTab !== 'analytics' && activeTab !== 'attendance' && activeTab !== 'settings' && (
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
               <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
                 <div>
