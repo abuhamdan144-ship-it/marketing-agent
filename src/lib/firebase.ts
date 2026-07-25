@@ -83,7 +83,7 @@ export async function authenticateAnonymously(): Promise<{ uid: string }> {
   return { uid: localUid };
 }
 
-// Load all user-specific data from Firestore
+// Load all user and shared data from Firestore
 export async function loadUserDataFromCloud(userId: string): Promise<Partial<AppData>> {
   const { db } = await initFirebase();
   
@@ -104,40 +104,76 @@ export async function loadUserDataFromCloud(userId: string): Promise<Partial<App
 
   for (const col of collectionsToLoad) {
     try {
+      // 1. Try querying user-specific documents first
       const q = query(collection(db, col), where('userId', '==', userId));
-      const snapshot = await getDocs(q);
-      const items: any[] = [];
+      let snapshot = await getDocs(q);
+
+      // 2. If empty or to ensure complete synchronization across browsers/devices, fetch all documents in the shared database
+      let itemsMap = new Map<string | number, any>();
+
       snapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        // Keep ID as number if it was stored as number
-        items.push({
-          ...data,
-          id: typeof data.id === 'string' ? Number(data.id) : data.id
-        });
+        if (data && data.id !== undefined) {
+          const numId = typeof data.id === 'string' ? Number(data.id) : data.id;
+          itemsMap.set(numId, { ...data, id: numId });
+        }
       });
-      results[col] = items;
+
+      // Also load overall collection to ensure Chrome and other browsers get all database records
+      try {
+        const allSnap = await getDocs(collection(db, col));
+        allSnap.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (data && data.id !== undefined) {
+            const numId = typeof data.id === 'string' ? Number(data.id) : data.id;
+            if (!itemsMap.has(numId)) {
+              itemsMap.set(numId, { ...data, id: numId });
+            }
+          }
+        });
+      } catch (allErr) {
+        console.warn(`Note: Fetching full collection ${col} fallback:`, allErr);
+      }
+
+      results[col] = Array.from(itemsMap.values());
     } catch (error) {
       console.error(`Error loading collection ${col}:`, error);
       results[col] = [];
     }
   }
 
-  // Load settings separately as it can be a single document per user
+  // Load settings separately as it can be a single document per user or global
   try {
     const settingsRef = doc(db, 'settings', userId);
-    const settingsSnap = await getDoc(settingsRef);
-    if (settingsSnap.exists()) {
+    let settingsSnap = await getDoc(settingsRef);
+    
+    if (!settingsSnap.exists()) {
+      // Fallback: check any existing settings document in database
+      try {
+        const settingsCol = collection(db, 'settings');
+        const allSettingsSnap = await getDocs(settingsCol);
+        if (!allSettingsSnap.empty) {
+          settingsSnap = allSettingsSnap.docs[0];
+        }
+      } catch (sErr) {
+        console.warn('Settings collection fetch note:', sErr);
+      }
+    }
+
+    if (settingsSnap && settingsSnap.exists()) {
       const docData = settingsSnap.data();
       results.settings = {
         agentName: docData.agentName || '',
         managerWhatsApp: docData.managerWhatsApp || '',
-        managerEmail: docData.managerEmail || ''
+        managerEmail: docData.managerEmail || '',
+        monthlyVisitGoal: Number(docData.monthlyVisitGoal) || 15
       };
     } else {
       results.settings = {
         agentName: '',
         managerWhatsApp: '',
-        managerEmail: ''
+        managerEmail: '',
+        monthlyVisitGoal: 15
       };
     }
   } catch (error) {
@@ -145,7 +181,8 @@ export async function loadUserDataFromCloud(userId: string): Promise<Partial<App
     results.settings = {
       agentName: '',
       managerWhatsApp: '',
-      managerEmail: ''
+      managerEmail: '',
+      monthlyVisitGoal: 15
     };
   }
 

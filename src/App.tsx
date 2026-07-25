@@ -105,6 +105,12 @@ export default function App() {
   });
 
   useEffect(() => {
+    // Purge outdated legacy cache keys from previous versions if present
+    const legacyKeys = ['aljadeed_marketing_data', 'aljadeed_marketing_agent_v1', 'aljadeed_marketing_agent_v2'];
+    legacyKeys.forEach(k => {
+      try { localStorage.removeItem(k); } catch (e) { /* ignore */ }
+    });
+
     const handleOnline = () => {
       setIsNetworkOnline(true);
       showToast('Network connection detected. Syncing with databases...', 'success');
@@ -863,6 +869,74 @@ export default function App() {
     }
   };
 
+  // Force Cloud Database Resync & Clear Stale Browser Cache
+  const handleForceCloudResync = async () => {
+    setIsSyncing(true);
+    setSyncStatus('loading');
+    showToast('Clearing stale local cache and fetching fresh cloud database...', 'info');
+
+    try {
+      // 1. Clear local storage cache
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      localStorage.removeItem('aljadeed_deleted_ids');
+
+      // 2. Initialize Firebase and authenticate
+      const { auth } = await initFirebase();
+      const currentUser = await authenticateAnonymously();
+      setUser(currentUser);
+
+      // 3. Load fresh data directly from Cloud Firestore
+      const cloudData = await loadUserDataFromCloud(currentUser.uid);
+
+      const freshData: AppData = {
+        companies: (cloudData.companies as Company[]) || [],
+        camps: (cloudData.camps as Camp[]) || [],
+        customers: (cloudData.customers as Customer[]) || [],
+        visits: (cloudData.visits as Visit[]) || [],
+        feedback: (cloudData.feedback as Feedback[]) || [],
+        complaints: (cloudData.complaints as Complaint[]) || [],
+        competitors: (cloudData.competitors as CompetitorIntel[]) || [],
+        social: (cloudData.social as SocialAd[]) || [],
+        plans: (cloudData.plans as MarketingPlan[]) || [],
+        attendance: (cloudData.attendance as AttendanceRecord[]) || [],
+        settings: (cloudData.settings && (cloudData.settings.agentName || cloudData.settings.managerWhatsApp || cloudData.settings.managerEmail))
+          ? (cloudData.settings as Settings)
+          : { agentName: '', managerWhatsApp: '', managerEmail: '', monthlyVisitGoal: 15 },
+        rates: {},
+      };
+
+      setAppData(freshData);
+      setSettingsForm({
+        agentName: freshData.settings.agentName || '',
+        managerWhatsApp: freshData.settings.managerWhatsApp || '',
+        managerEmail: freshData.settings.managerEmail || '',
+        monthlyVisitGoal: freshData.settings.monthlyVisitGoal || 15,
+      });
+
+      // Save fresh data back to local cache
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(freshData));
+      setSyncStatus('synced');
+      showToast('Successfully synchronized with Firebase Cloud Database! Chrome cache updated.', 'success');
+    } catch (err) {
+      console.error('Error during forced cloud database resync:', err);
+      setSyncStatus('error');
+      showToast('Error syncing with Cloud Database. Check network connection.', 'error');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Reset Chrome Device Session & Reconnect
+  const handleResetDeviceSession = async () => {
+    if (window.confirm('Reset Chrome session device ID and re-establish connection to Cloud Database?')) {
+      localStorage.removeItem('aljadeed_firebase_device_uid');
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      localStorage.removeItem('aljadeed_deleted_ids');
+      showToast('Session device ID cleared. Reconnecting to Cloud Database...', 'info');
+      await handleForceCloudResync();
+    }
+  };
+
   // Clear Database
   const handleClearDatabase = async () => {
     if (window.confirm('🚨 Are you absolutely sure you want to purge the entire database? This is irreversible.')) {
@@ -1000,6 +1074,8 @@ export default function App() {
           syncStatus={syncStatus}
           isForcedOffline={isForcedOffline}
           onToggleForcedOffline={handleToggleForcedOffline}
+          onForceResync={handleForceCloudResync}
+          isSyncing={isSyncing}
         />
 
         {/* Dynamic Workspace Container */}
@@ -1334,6 +1410,53 @@ export default function App() {
                     className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition-colors"
                   >
                     💾 Save configurations
+                  </button>
+                </div>
+              </div>
+
+              {/* Chrome Browser & Cloud Database Health Card */}
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
+                <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider font-display flex items-center gap-1.5">
+                      <span>⚡ Chrome Browser &amp; Cloud Database Health</span>
+                    </h3>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                      Manage database synchronization, clear outdated browser cache, and verify live cloud connections.
+                    </p>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+                    syncStatus === 'synced' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}>
+                    {syncStatus === 'synced' ? '✓ Cloud Synced' : syncStatus === 'loading' ? 'Syncing...' : 'Offline / Error'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                  <div>
+                    <span className="font-bold text-slate-400 uppercase text-[10px] block">Target Firebase Database ID</span>
+                    <span className="font-mono text-slate-700 font-semibold break-all">ai-studio-aljadeedmarketin-40edb3b6-e7fe-401d-b0d0-81a09a767412</span>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-400 uppercase text-[10px] block">Current User / Device Session UID</span>
+                    <span className="font-mono text-slate-700 font-semibold break-all">{user?.uid || 'Connecting...'}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2.5">
+                  <button
+                    onClick={handleForceCloudResync}
+                    disabled={isSyncing}
+                    className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <span>🔄 Force Resync from Cloud DB</span>
+                  </button>
+                  <button
+                    onClick={handleResetDeviceSession}
+                    disabled={isSyncing}
+                    className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl cursor-pointer transition-colors flex items-center justify-center gap-2 border border-slate-200"
+                  >
+                    <span>🔑 Reset Device Session ID</span>
                   </button>
                 </div>
               </div>
