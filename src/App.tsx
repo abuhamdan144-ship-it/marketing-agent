@@ -11,6 +11,7 @@ import Tabs from './components/Tabs';
 import Toast from './components/Toast';
 import ExportPreviewModal from './components/ExportPreviewModal';
 import AttendanceSheet from './components/AttendanceSheet';
+import MoreView from './components/MoreView';
 import { AppData, Company, Camp, Customer, Visit, Feedback, Complaint, CompetitorIntel, SocialAd, MarketingPlan, AttendanceRecord, Settings } from './types';
 import { generateFullReport, exportPDF, exportExcel, CORRIDORS, SOCIAL_PLATFORMS } from './utils/exportUtils';
 import { 
@@ -902,6 +903,7 @@ export default function App() {
       social: 'Social Ad Campaigns',
       plans: 'Active Marketing Plans',
       settings: 'Dashboard Configurations',
+      more: 'More Operations & Workspace',
     };
     return labelMap[activeTab] || 'Marketing Agent Notebook';
   };
@@ -1110,8 +1112,16 @@ export default function App() {
             />
           )}
 
+          {/* More Operations View */}
+          {activeTab === 'more' && (
+            <MoreView
+              appData={appData}
+              onNavigate={(tab) => setActiveTab(tab)}
+            />
+          )}
+
           {/* List views */}
-          {activeTab !== 'dashboard' && activeTab !== 'analytics' && activeTab !== 'attendance' && activeTab !== 'settings' && (
+          {activeTab !== 'dashboard' && activeTab !== 'analytics' && activeTab !== 'attendance' && activeTab !== 'settings' && activeTab !== 'more' && (
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
               <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
                 <div>

@@ -10,6 +10,7 @@ import {
   Users,
   MapPin,
   TrendingUp,
+  Info,
 } from 'lucide-react';
 
 interface OverviewProps {
@@ -34,7 +35,7 @@ export default function Overview({ appData, onNavigate }: OverviewProps) {
       label: 'Labor Camps',
       icon: Tent,
       count: appData.camps.length,
-      color: 'bg-amber-50/50 border-amber-100 hover:border-amber-300 text-amber-700 hover:bg-amber-50',
+      color: 'text-amber-800 shadow-xs',
     },
     {
       id: 'customers',
@@ -59,6 +60,8 @@ export default function Overview({ appData, onNavigate }: OverviewProps) {
     },
   ];
 
+  const showNoteCard = appData.companies.length === 0 && appData.customers.length === 0;
+
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-5">
       <div className="flex items-center justify-between">
@@ -76,14 +79,30 @@ export default function Overview({ appData, onNavigate }: OverviewProps) {
         {/* Core Operational Button Cards */}
         {stats.map((s) => {
           const Icon = s.icon;
+          const isDimmed = (s.id === 'companies' || s.id === 'customers') && s.count === 0;
+          const isCamp = s.id === 'camps';
+
           return (
             <button
               key={s.id}
               onClick={() => onNavigate(s.id)}
-              className={`lg:col-span-1 flex flex-col items-center justify-center p-4 rounded-xl border text-center transition-all duration-300 transform active:scale-95 cursor-pointer ${s.color}`}
+              className={`lg:col-span-1 flex flex-col items-center justify-center p-4 rounded-xl border text-center transition-all duration-300 transform active:scale-95 cursor-pointer ${
+                s.color
+              } ${isDimmed ? 'opacity-55' : 'opacity-100'}`}
+              style={
+                isCamp
+                  ? {
+                      background: 'linear-gradient(135deg, #FFFDF8 0%, #FFFFFF 100%)',
+                      borderColor: 'rgba(200, 155, 60, 0.35)',
+                    }
+                  : undefined
+              }
             >
               <div className="mb-2">
-                <Icon className="w-6 h-6 text-[var(--ink,#16213E)]" strokeWidth={1.8} />
+                <Icon
+                  className={`w-6 h-6 ${isCamp ? 'text-[var(--gold,#C89B3C)]' : 'text-[var(--ink,#16213E)]'}`}
+                  strokeWidth={1.8}
+                />
               </div>
               <span className="text-2xl font-extrabold font-display leading-tight">{s.count}</span>
               <span className="text-[10px] font-bold uppercase tracking-wider opacity-90 mt-1">
@@ -157,6 +176,16 @@ export default function Overview({ appData, onNavigate }: OverviewProps) {
           </div>
         </div>
       </div>
+
+      {/* Note Card when Companies and Customers are both 0 */}
+      {showNoteCard && (
+        <div className="flex items-center gap-2.5 p-3.5 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 text-slate-600 text-xs font-medium">
+          <Info className="w-4 h-4 text-indigo-500 shrink-0" strokeWidth={1.8} />
+          <span>
+            No companies or customers logged yet. Tap Company or Customer below to add your first record — they'll show up here automatically.
+          </span>
+        </div>
+      )}
     </div>
   );
 }

@@ -13,6 +13,7 @@ import {
   Smartphone,
   ClipboardList,
   Settings as SettingsIcon,
+  MoreHorizontal,
 } from 'lucide-react';
 
 interface TabsProps {
@@ -43,6 +44,16 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
     { id: 'plans', label: 'Plans', icon: ClipboardList },
     { id: 'settings', label: 'Settings', icon: SettingsIcon },
   ];
+
+  const mobileNavTabs = [
+    { id: 'dashboard', label: 'Home', icon: Home },
+    { id: 'visits', label: 'Visits', icon: MapPin },
+    { id: 'camps', label: 'Camps', icon: Tent, badge: badges.camps },
+    { id: 'customers', label: 'Customers', icon: Users },
+    { id: 'more', label: 'More', icon: MoreHorizontal },
+  ];
+
+  const mainTabIds = ['dashboard', 'visits', 'camps', 'customers'];
 
   return (
     <div>
@@ -98,32 +109,41 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
       </div>
 
       {/* Persistent Bottom Navigation for Mobile & Small Tablets */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-2 py-1.5 flex items-center justify-between gap-1 shadow-2xl shadow-indigo-950/20 z-40 overflow-x-auto select-none no-scrollbar">
-        {tabs.map((t) => {
-          const isActive = activeTab === t.id;
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--line,#E2E5E1)] px-1 py-1.5 flex items-center justify-around shadow-2xl z-40 select-none">
+        {mobileNavTabs.map((t) => {
+          const isActive =
+            t.id === 'more'
+              ? activeTab === 'more' || !mainTabIds.includes(activeTab)
+              : activeTab === t.id;
           const Icon = t.icon;
+
           return (
             <button
               key={t.id}
               onClick={() => onTabChange(t.id)}
-              className={`flex flex-col items-center justify-center p-1 px-3 min-w-[50px] shrink-0 rounded-xl transition-all relative ${
-                isActive ? 'text-indigo-600 font-extrabold scale-105' : 'text-slate-400 font-semibold'
-              }`}
+              className="flex flex-col items-center justify-center flex-1 py-0.5 cursor-pointer select-none transition-all"
             >
-              <Icon
-                className={`w-[18px] h-[18px] ${
-                  t.isComplaint && !isActive ? 'text-[var(--coral,#D64545)]' : ''
+              <div
+                className={`w-9 h-7 flex items-center justify-center rounded-xl transition-all relative ${
+                  isActive
+                    ? 'bg-[var(--gold-dim,#F4E9D2)] text-[var(--ink,#16213E)]'
+                    : 'bg-transparent text-[var(--ink-30,#A6ACBC)]'
                 }`}
-                strokeWidth={1.8}
-              />
-              <span className="text-[8px] tracking-tight mt-0.5 whitespace-nowrap">
+              >
+                <Icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.2 : 1.8} />
+                {t.badge && t.badge > 0 ? (
+                  <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[8px] font-extrabold px-1 rounded-full min-w-[14px] text-center border border-white">
+                    {t.badge}
+                  </span>
+                ) : null}
+              </div>
+              <span
+                className={`text-[9px] tracking-tight mt-0.5 whitespace-nowrap font-bold ${
+                  isActive ? 'text-[var(--ink,#16213E)]' : 'text-[var(--ink-30,#A6ACBC)]'
+                }`}
+              >
                 {t.label}
               </span>
-              {t.badge && t.badge > 0 ? (
-                <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[8px] font-extrabold px-1 rounded-full min-w-[14px] text-center border border-white">
-                  {t.badge}
-                </span>
-              ) : null}
             </button>
           );
         })}
