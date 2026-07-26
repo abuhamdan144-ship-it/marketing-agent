@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Home,
@@ -15,6 +15,7 @@ import {
   ClipboardList,
   Settings as SettingsIcon,
   MoreHorizontal,
+  LucideIcon,
 } from 'lucide-react';
 
 interface TabsProps {
@@ -27,6 +28,95 @@ interface TabsProps {
     visits: number;
     attendance?: number;
   };
+}
+
+interface SidebarTabProps {
+  key?: string;
+  label: string;
+  Icon: LucideIcon;
+  isActive: boolean;
+  isComplaint?: boolean;
+  badge?: number;
+  onClick: () => void;
+}
+
+function SidebarTabButton({ label, Icon, isActive, isComplaint, badge, onClick }: SidebarTabProps) {
+  const ref = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState({ x: 50, y: 50 });
+  const [hovering, setHovering] = useState(false);
+  const [sweepKey, setSweepKey] = useState(0);
+
+  const handleMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = ref.current?.getBoundingClientRect();
+    if (!rect) return;
+    setPos({
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100,
+    });
+  };
+
+  return (
+    <motion.button
+      ref={ref}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => {
+        setSweepKey((k) => k + 1);
+        onClick();
+      }}
+      onMouseMove={handleMove}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+      className="w-full relative flex items-center justify-between px-3.5 py-2.5 rounded-r-md text-xs font-semibold cursor-pointer overflow-hidden"
+      style={{
+        color: isActive ? '#ffffff' : '#8891A3',
+        fontWeight: isActive ? 700 : 600,
+        background: isActive ? 'rgba(201,162,39,0.10)' : 'transparent',
+        borderLeft: `2px solid ${isActive ? '#C9A227' : 'transparent'}`,
+        transition: 'color 0.2s ease, background 0.3s ease',
+      }}
+    >
+      {isActive && (
+        <div className="absolute inset-0 pointer-events-none rounded-r-md" style={{ padding: 1 }}>
+          <div
+            className="absolute inset-0 rounded-r-md beam-rotate"
+            style={{
+              background:
+                'conic-gradient(from var(--beam-angle, 0deg), transparent 0%, transparent 74%, rgba(201,162,39,0.85) 82%, rgba(255,241,199,0.95) 86%, rgba(201,162,39,0.85) 90%, transparent 98%)',
+            }}
+          />
+          <div className="absolute rounded-r-md" style={{ inset: 1, background: '#101C36' }} />
+        </div>
+      )}
+
+      {hovering && (
+        <div
+          className="pointer-events-none absolute inset-0 rounded-r-md"
+          style={{
+            background: `radial-gradient(90px circle at ${pos.x}% ${pos.y}%, rgba(255,241,199,0.14), rgba(201,162,39,0.08) 45%, transparent 70%)`,
+          }}
+        />
+      )}
+
+      <div key={sweepKey} className="sweep pointer-events-none absolute inset-0 rounded-r-md" />
+
+      <div className="relative flex items-center gap-3 z-10">
+        <Icon
+          className="w-4 h-4 shrink-0"
+          style={{ color: isActive ? '#C9A227' : isComplaint ? '#F27373' : '#8891A3' }}
+          strokeWidth={isActive ? 2.2 : 1.8}
+        />
+        <span>{label}</span>
+      </div>
+      {badge && badge > 0 ? (
+        <span
+          className="relative z-10 font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-md"
+          style={{ background: 'rgba(214,69,69,0.2)', color: '#F27373', border: '1px solid rgba(214,69,69,0.3)' }}
+        >
+          {badge}
+        </span>
+      ) : null}
+    </motion.button>
+  );
 }
 
 export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
@@ -58,47 +148,47 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
 
   return (
     <div>
+      <style>{`
+        @property --beam-angle {
+          syntax: '<angle>';
+          initial-value: 0deg;
+          inherits: false;
+        }
+        @keyframes beam-spin {
+          from { --beam-angle: 0deg; }
+          to { --beam-angle: 360deg; }
+        }
+        .beam-rotate {
+          animation: beam-spin 3.2s linear infinite;
+        }
+        @keyframes sweep-once {
+          0% { transform: translateX(-120%) skewX(-15deg); opacity: 0; }
+          15% { opacity: 0.5; }
+          100% { transform: translateX(220%) skewX(-15deg); opacity: 0; }
+        }
+        .sweep {
+          background: linear-gradient(100deg, transparent 40%, rgba(255,255,255,0.16) 50%, transparent 60%);
+          animation: sweep-once 0.7s ease-out;
+        }
+      `}</style>
+
       {/* Desktop / Tablet Sidebar Navigation */}
       <div className="hidden lg:flex flex-col bg-[#0F1B33] text-[#8891A3] w-64 min-h-screen p-4 border-r border-white/10 shrink-0 select-none">
         <div className="mb-5 px-2.5">
           <span className="ops-eyebrow text-[#8891A3] text-[10px]">OPS NAVIGATION</span>
         </div>
         <nav className="space-y-1 flex-1 relative">
-          {tabs.map((t) => {
-            const isActive = activeTab === t.id;
-            const Icon = t.icon;
-            return (
-              <motion.button
-                key={t.id}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => onTabChange(t.id)}
-                className={`w-full relative flex items-center justify-between px-3.5 py-2.5 rounded-r-md text-xs font-semibold cursor-pointer transition-colors ${
-                  isActive
-                    ? 'bg-[#rgba(201,162,39,0.12)] bg-[#C9A227]/10 text-white font-bold border-l-2 border-[#C9A227]'
-                    : 'hover:bg-white/5 text-[#8891A3] hover:text-slate-200 border-l-2 border-transparent'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon
-                    className={`w-4 h-4 shrink-0 ${
-                      isActive
-                        ? 'text-[#C9A227]'
-                        : t.isComplaint
-                        ? 'text-[#F27373]'
-                        : 'text-[#8891A3]'
-                    }`}
-                    strokeWidth={isActive ? 2.2 : 1.8}
-                  />
-                  <span>{t.label}</span>
-                </div>
-                {t.badge && t.badge > 0 ? (
-                  <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-[#D64545]/20 text-[#F27373] border border-[#D64545]/30">
-                    {t.badge}
-                  </span>
-                ) : null}
-              </motion.button>
-            );
-          })}
+          {tabs.map((t) => (
+            <SidebarTabButton
+              key={t.id}
+              label={t.label}
+              Icon={t.icon}
+              isActive={activeTab === t.id}
+              isComplaint={t.isComplaint}
+              badge={t.badge}
+              onClick={() => onTabChange(t.id)}
+            />
+          ))}
         </nav>
         <div className="mt-auto border-t border-white/10 pt-4 px-2.5">
           <div className="ops-eyebrow text-[#5B6478]">AL JADEED EXCHANGE</div>
