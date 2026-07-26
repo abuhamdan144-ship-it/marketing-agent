@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { AppData, Settings } from '../types';
-import { Target, TrendingUp, Edit2, CheckCircle2, Award, ArrowUpRight, Flame, X, AlertTriangle, Rocket, Sparkles } from 'lucide-react';
+import { motion } from 'motion/react';
+import { AppData } from '../types';
+import { Target, Edit2, CheckCircle2, Award, Flame, X, AlertTriangle, Rocket, Sparkles } from 'lucide-react';
 
 interface GoalTrackerProps {
   appData: AppData;
@@ -14,7 +15,7 @@ export default function GoalTracker({ appData, onUpdateGoal, onHide }: GoalTrack
 
   const targetGoal = appData.settings.monthlyVisitGoal || 15;
 
-  // 1. Get current month visits
+  // Get current month visits
   const currentMonthData = useMemo(() => {
     const today = new Date();
     const currentYear = today.getFullYear();
@@ -27,8 +28,6 @@ export default function GoalTracker({ appData, onUpdateGoal, onHide }: GoalTrack
     const count = currentMonthVisits.length;
     const percentage = Math.min(100, Math.round((count / targetGoal) * 100));
     
-    // Status assessment
-    // Assuming mid-month is day 15. If current day-of-month fraction is greater than progress fraction, behind.
     const dayOfMonth = today.getDate();
     const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
     const monthElapsedFraction = dayOfMonth / daysInMonth;
@@ -60,22 +59,21 @@ export default function GoalTracker({ appData, onUpdateGoal, onHide }: GoalTrack
   };
 
   return (
-    <div className="bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 text-white rounded-2xl p-5 shadow-xl border border-indigo-950 relative overflow-hidden">
-      {/* Background radial highlight */}
-      <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/10 rounded-full filter blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-500/5 rounded-full filter blur-3xl pointer-events-none" />
-
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="bg-[#0F1B33] text-white rounded-lg p-5 border border-white/10 shadow-ops-panel relative overflow-hidden select-none"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-indigo-500/20 rounded-xl border border-indigo-400/20 text-indigo-300">
+          <div className="p-2 bg-[#C9A227]/10 rounded border border-[#C9A227]/30 text-[#C9A227]">
             <Target className="w-4 h-4 animate-pulse" />
           </div>
           <div>
-            <h3 className="text-xs font-extrabold uppercase tracking-widest text-indigo-200 font-display">
-              Monthly Remittance Drive Target
-            </h3>
-            <p className="text-[10px] text-slate-400 font-bold mt-0.5">
-              Tracking campaigns and camp deployments for <strong className="text-slate-200">{currentMonthData.monthName}</strong>
+            <span className="ops-eyebrow text-[#C9A227]">REMITTANCE DRIVE TARGET</span>
+            <p className="font-mono text-[11px] text-[#8891A3] mt-0.5">
+              Campaigns &amp; field deployments for <strong className="text-white">{currentMonthData.monthName}</strong>
             </p>
           </div>
         </div>
@@ -83,25 +81,25 @@ export default function GoalTracker({ appData, onUpdateGoal, onHide }: GoalTrack
         {/* Quick Edit Target */}
         <div className="flex items-center gap-2">
           {isEditing ? (
-            <form onSubmit={handleSaveGoal} className="flex items-center gap-1.5 animate-fade-in">
+            <form onSubmit={handleSaveGoal} className="flex items-center gap-1.5">
               <input
                 type="number"
                 min="1"
                 max="1000"
                 value={goalInput}
                 onChange={(e) => setGoalInput(Number(e.target.value))}
-                className="w-16 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-xs text-center font-bold text-white focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                className="w-16 bg-[#1C2A4A] border border-white/20 rounded px-2 py-1 text-xs text-center font-mono font-bold text-white focus:outline-none focus:border-[#C9A227]"
               />
               <button
                 type="submit"
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] uppercase tracking-wider px-2 py-1 rounded-lg shadow cursor-pointer transition-colors"
+                className="bg-[#2F9E77] hover:bg-[#2F9E77]/80 text-white font-mono font-bold text-[10px] uppercase px-2 py-1 rounded cursor-pointer transition-colors"
               >
-                Set
+                SAVE
               </button>
               <button
                 type="button"
                 onClick={() => setIsEditing(false)}
-                className="text-slate-400 hover:text-white font-bold text-[10px] px-1.5 py-1"
+                className="text-[#8891A3] hover:text-white font-mono text-[10px] px-1 py-1"
               >
                 ✕
               </button>
@@ -113,17 +111,17 @@ export default function GoalTracker({ appData, onUpdateGoal, onHide }: GoalTrack
                   setGoalInput(targetGoal);
                   setIsEditing(true);
                 }}
-                className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-300 bg-white/5 hover:bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/5 cursor-pointer transition-all"
+                className="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold text-slate-300 bg-white/5 hover:bg-white/10 px-2.5 py-1.5 rounded border border-white/10 cursor-pointer transition-all"
               >
-                <Edit2 className="w-3 h-3 text-indigo-400" />
-                Adjust Target Goal ({targetGoal})
+                <Edit2 className="w-3 h-3 text-[#C9A227]" />
+                GOAL ({targetGoal})
               </button>
               {onHide && (
                 <button
                   type="button"
                   onClick={onHide}
                   title="Hide Goal Tracker"
-                  className="p-1.5 bg-white/5 hover:bg-rose-500/25 hover:text-rose-400 text-slate-400 rounded-lg border border-white/5 cursor-pointer transition-all flex items-center justify-center"
+                  className="p-1.5 bg-white/5 hover:bg-[#D64545]/20 text-[#8891A3] hover:text-[#F27373] rounded border border-white/10 cursor-pointer transition-colors flex items-center justify-center"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -134,10 +132,10 @@ export default function GoalTracker({ appData, onUpdateGoal, onHide }: GoalTrack
       </div>
 
       {/* Progress Core */}
-      <div className="mt-5 grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-5 items-center">
         
         {/* Status circle metrics */}
-        <div className="md:col-span-1 flex flex-col items-center justify-center bg-slate-800/40 p-3 rounded-xl border border-white/5 text-center">
+        <div className="md:col-span-1 flex flex-col items-center justify-center bg-[#1C2A4A]/50 p-3 rounded border border-white/5 text-center">
           <div className="relative flex items-center justify-center">
             {/* SVG circle percentage tracker */}
             <svg className="w-20 h-20 transform -rotate-90">
@@ -145,15 +143,15 @@ export default function GoalTracker({ appData, onUpdateGoal, onHide }: GoalTrack
                 cx="40"
                 cy="40"
                 r="34"
-                className="stroke-slate-800 fill-none"
+                className="stroke-[#0B1526] fill-none"
                 strokeWidth="6"
               />
               <circle
                 cx="40"
                 cy="40"
                 r="34"
-                className={`stroke-indigo-500 fill-none transition-all duration-1000 ${
-                  currentMonthData.status === 'completed' ? 'stroke-emerald-400' : 'stroke-indigo-400'
+                className={`fill-none transition-all duration-1000 ${
+                  currentMonthData.status === 'completed' ? 'stroke-[#4ADE94]' : 'stroke-[#C9A227]'
                 }`}
                 strokeWidth="6"
                 strokeDasharray={213.6}
@@ -162,77 +160,77 @@ export default function GoalTracker({ appData, onUpdateGoal, onHide }: GoalTrack
               />
             </svg>
             <div className="absolute text-center">
-              <span className="text-lg font-extrabold font-display leading-none">
+              <span className="text-lg font-mono font-extrabold leading-none text-white">
                 {currentMonthData.percentage}%
               </span>
-              <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                Completed
+              <p className="ops-eyebrow text-[#8891A3] text-[8px] mt-0.5">
+                COMPLETE
               </p>
             </div>
           </div>
 
-          <div className="mt-3">
+          <div className="mt-2.5">
             {currentMonthData.status === 'completed' && (
-              <span className="inline-flex items-center gap-1 text-[9px] bg-emerald-500/10 text-emerald-400 font-bold px-2 py-0.5 rounded-md border border-emerald-500/10">
+              <span className="inline-flex items-center gap-1 font-mono text-[9px] bg-[#2F9E77]/20 text-[#4ADE94] font-bold px-2 py-0.5 rounded border border-[#2F9E77]/30">
                 <Award className="w-3 h-3" />
-                Target Smashed!
+                TARGET ACHIEVED
               </span>
             )}
             {currentMonthData.status === 'on-track' && (
-              <span className="inline-flex items-center gap-1 text-[9px] bg-blue-500/10 text-blue-400 font-bold px-2 py-0.5 rounded-md border border-blue-500/10">
-                <Flame className="w-3 h-3 text-amber-400" />
-                On Track
+              <span className="inline-flex items-center gap-1 font-mono text-[9px] bg-[#2E4B8F]/30 text-[#8891A3] font-bold px-2 py-0.5 rounded border border-[#2E4B8F]/40">
+                <Flame className="w-3 h-3 text-[#C9A227]" />
+                ON TRACK
               </span>
             )}
             {currentMonthData.status === 'behind' && (
-              <span className="inline-flex items-center gap-1 text-[9px] bg-amber-500/10 text-amber-400 font-bold px-2 py-0.5 rounded-md border border-amber-500/10">
-                <AlertTriangle className="w-3 h-3 text-[var(--coral,#D64545)]" />
-                Run campaigns
+              <span className="inline-flex items-center gap-1 font-mono text-[9px] bg-[#D64545]/20 text-[#F27373] font-bold px-2 py-0.5 rounded border border-[#D64545]/30">
+                <AlertTriangle className="w-3 h-3" />
+                BEHIND TARGET
               </span>
             )}
           </div>
         </div>
 
         {/* Progress details and bar */}
-        <div className="md:col-span-3 space-y-4">
+        <div className="md:col-span-3 space-y-3.5">
           <div className="flex justify-between items-end">
             <div>
-              <span className="text-2xl font-black font-display text-white">
-                {currentMonthData.count} <span className="text-slate-400 text-sm font-normal">/ {targetGoal}</span>
-              </span>
-              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
-                Campaigns completed this month
+              <div className="font-mono text-2xl font-black text-white">
+                {currentMonthData.count} <span className="text-[#8891A3] text-xs font-normal">/ {targetGoal}</span>
+              </div>
+              <p className="ops-eyebrow text-[#8891A3] text-[9px] mt-0.5">
+                CAMPAIGNS LOGGED THIS MONTH
               </p>
             </div>
 
             <div className="text-right">
               {currentMonthData.remaining > 0 ? (
-                <span className="text-xs font-bold text-indigo-300">
-                  {currentMonthData.remaining} more to achieve target
+                <span className="font-mono text-xs font-bold text-[#C9A227]">
+                  {currentMonthData.remaining} VISITS NEEDED
                 </span>
               ) : (
-                <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5 justify-end">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Monthly Objective Achieved
+                <span className="font-mono text-xs font-bold text-[#4ADE94] flex items-center gap-1 justify-end">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  OBJECTIVE ACHIEVED
                 </span>
               )}
-              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
-                Current day of month: {currentMonthData.dayOfMonth} of {currentMonthData.daysInMonth}
+              <p className="font-mono text-[10px] text-[#8891A3] mt-0.5">
+                DAY {currentMonthData.dayOfMonth} OF {currentMonthData.daysInMonth}
               </p>
             </div>
           </div>
 
           {/* Large custom sleek progress bar */}
           <div className="relative">
-            <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden border border-white/5">
+            <div className="h-2.5 w-full bg-[#0B1526] rounded-full overflow-hidden border border-white/10">
               <div 
                 style={{ width: `${currentMonthData.percentage}%` }}
                 className={`h-full rounded-full transition-all duration-1000 relative ${
                   currentMonthData.status === 'completed'
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                    ? 'bg-[#2F9E77]'
                     : currentMonthData.status === 'behind'
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-400 animate-pulse'
-                    : 'bg-gradient-to-r from-indigo-500 to-blue-400'
+                    ? 'bg-[#D64545]'
+                    : 'bg-[#C9A227]'
                 }`}
               />
             </div>
@@ -240,29 +238,30 @@ export default function GoalTracker({ appData, onUpdateGoal, onHide }: GoalTrack
             {/* Visual marker of elapsed month proportion */}
             <div 
               style={{ left: `${(currentMonthData.dayOfMonth / currentMonthData.daysInMonth) * 100}%` }}
-              className="absolute -top-1 -bottom-1 w-0.5 bg-rose-400/60 z-10"
+              className="absolute -top-1 -bottom-1 w-0.5 bg-[#F27373] z-10"
               title="Current time progress marker"
             >
-              <span className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-rose-500 text-white font-sans text-[7px] font-bold px-1 rounded-sm shadow-md whitespace-nowrap">
-                Today
+              <span className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-[#D64545] text-white font-mono text-[7px] font-bold px-1 rounded-xs whitespace-nowrap">
+                TODAY
               </span>
             </div>
           </div>
 
-          {/* Quick micro-insight */}
-          <div className="text-[11px] text-slate-400 italic bg-white/5 p-2 rounded-lg border border-white/5 flex items-center gap-1.5">
+          {/* Micro-insight */}
+          <div className="font-mono text-[10px] text-[#8891A3] bg-[#1C2A4A]/60 p-2.5 rounded border border-white/5 flex items-center gap-1.5">
             {currentMonthData.status === 'completed' ? (
-              <span><Sparkles className="w-3.5 h-3.5 text-emerald-400 inline mr-1" /> <strong>Exceptional outreach work, agent!</strong> You have fully achieved this month's targets. Keep logging visits to build stronger market dominance.</span>
+              <span><Sparkles className="w-3.5 h-3.5 text-[#4ADE94] inline mr-1" /> Target achieved for this period. Maintain logged field presence for market dominance.</span>
             ) : currentMonthData.status === 'behind' ? (
-              <span><AlertTriangle className="w-3.5 h-3.5 text-[var(--coral,#D64545)] inline mr-1" /> <strong>Slightly behind pace.</strong> You have {currentMonthData.remaining} visits remaining. Focus on labor camp deployments during the upcoming pay cycle!</span>
+              <span><AlertTriangle className="w-3.5 h-3.5 text-[#F27373] inline mr-1" /> Behind pace. {currentMonthData.remaining} visits remaining. Prioritize labor camp deployments.</span>
             ) : (
-              <span><Rocket className="w-3.5 h-3.5 text-indigo-400 inline mr-1" /> <strong>Solid progress!</strong> You are perfectly on track to achieve your monthly target goal of {targetGoal} visits.</span>
+              <span><Rocket className="w-3.5 h-3.5 text-[#C9A227] inline mr-1" /> On track toward target goal of {targetGoal} field visits.</span>
             )}
           </div>
 
         </div>
 
       </div>
-    </div>
+    </motion.div>
   );
 }
+

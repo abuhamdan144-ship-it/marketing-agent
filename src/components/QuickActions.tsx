@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import {
   Building2,
   Tent,
@@ -41,28 +42,36 @@ export default function QuickActions({ onOpenModal, onExportAll }: QuickActionsP
   const PrimaryIcon = primaryAction.icon;
 
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3.5 flex items-center gap-1.5">
-        <Zap className="w-3.5 h-3.5 text-[var(--gold,#C89B3C)]" strokeWidth={2} />
-        <span>Operations Control &amp; Quick Logging</span>
-      </h3>
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="ops-card p-5 space-y-3"
+    >
+      <div className="flex items-center justify-between border-b border-[#E2E5E1] pb-2.5">
+        <div className="flex items-center gap-1.5">
+          <Zap className="w-3.5 h-3.5 text-[#C9A227]" strokeWidth={2.2} />
+          <span className="ops-eyebrow text-[#0F1B33]">OPERATIONS CONTROL &amp; QUICK LOGGING</span>
+        </div>
+      </div>
 
       {/* Full-width Primary Action: Field Visit */}
-      <button
+      <motion.button
+        whileTap={{ scale: 0.98 }}
         onClick={() => onOpenModal(primaryAction.type)}
-        className="w-full flex items-center justify-between p-3.5 sm:p-4 rounded-xl bg-[var(--ink,#16213E)] text-white hover:bg-[#1a2748] transition-all duration-200 transform active:scale-[0.99] cursor-pointer shadow-md group mb-3"
+        className="w-full flex items-center justify-between p-3.5 rounded-lg bg-[#0F1B33] text-white hover:bg-[#1C2A4A] transition-colors cursor-pointer border border-[#C9A227]/30 shadow-ops-panel group"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[var(--gold,#C89B3C)] flex items-center justify-center text-[var(--ink,#16213E)] shadow-xs group-hover:scale-105 transition-transform shrink-0">
+          <div className="w-9 h-9 rounded bg-[#C9A227] flex items-center justify-center text-[#0F1B33] font-bold shadow-xs shrink-0">
             <PrimaryIcon className="w-5 h-5" strokeWidth={2.2} />
           </div>
           <div className="text-left">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-extrabold tracking-tight text-white font-display">
+              <span className="text-sm font-bold tracking-tight text-white">
                 {primaryAction.label}
               </span>
-              <span className="text-[9px] uppercase tracking-wider bg-white/10 text-[var(--gold-dim,#F4E9D2)] px-2 py-0.5 rounded-full font-bold">
-                Most Frequent
+              <span className="ops-eyebrow text-[#C9A227] bg-[#C9A227]/15 px-1.5 py-0.5 rounded border border-[#C9A227]/30 text-[8px]">
+                HIGH FREQUENCY
               </span>
             </div>
             <p className="text-[11px] text-slate-300 font-medium leading-tight mt-0.5">
@@ -70,18 +79,19 @@ export default function QuickActions({ onOpenModal, onExportAll }: QuickActionsP
             </p>
           </div>
         </div>
-        <div className="text-[10px] font-bold text-[var(--gold,#C89B3C)] bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 flex items-center gap-1 shrink-0">
-          <span>+ Log Visit</span>
+        <div className="font-mono text-xs font-bold text-[#C9A227] bg-white/5 px-2.5 py-1 rounded border border-white/10 flex items-center gap-1 shrink-0">
+          <span>+ LOG VISIT</span>
         </div>
-      </button>
+      </motion.button>
 
-      {/* 2-Column Grid for Remaining Actions */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">
+      {/* Grid for Remaining Actions */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-2.5">
         {remainingActions.map((act) => {
           const Icon = act.icon;
           return (
-            <button
+            <motion.button
               key={act.type}
+              whileTap={{ scale: 0.96 }}
               onClick={() => {
                 if (act.type === 'export') {
                   onExportAll();
@@ -89,35 +99,35 @@ export default function QuickActions({ onOpenModal, onExportAll }: QuickActionsP
                   onOpenModal(act.type);
                 }
               }}
-              style={{ boxShadow: '0 1px 2px rgba(22, 33, 62, 0.04)' }}
-              className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all duration-200 transform active:scale-95 cursor-pointer hover:-translate-y-0.5 group ${
+              className={`flex flex-col items-center justify-center p-3 rounded-lg border text-center transition-colors cursor-pointer hover:border-[#0F1B33]/30 ${
                 act.isSpecial
-                  ? 'bg-gradient-to-br from-indigo-50/80 to-indigo-100/40 border-indigo-200/80 hover:border-indigo-300 text-indigo-700'
-                  : 'bg-white hover:bg-slate-50 border-slate-200/60 hover:border-slate-300 text-slate-700'
+                  ? 'bg-[#1C2A4A]/5 border-[#2E4B8F]/30 text-[#0F1B33]'
+                  : 'bg-white border-[#E2E5E1] text-[#0F1B33]'
               }`}
             >
-              <div className="mb-1.5 group-hover:scale-110 transition-transform">
+              <div className="mb-1">
                 <Icon
-                  className={`w-5 h-5 ${
+                  className={`w-4 h-4 ${
                     act.isComplaint
-                      ? 'text-[var(--coral,#D64545)]'
-                      : 'text-[var(--ink,#16213E)]'
+                      ? 'text-[#D64545]'
+                      : 'text-[#0F1B33]'
                   }`}
-                  strokeWidth={1.8}
+                  strokeWidth={2}
                 />
               </div>
-              <span className="text-xs font-bold text-slate-800 tracking-tight leading-tight">
+              <span className="text-xs font-bold text-[#0F1B33] tracking-tight">
                 {act.label}
               </span>
-              <span className="text-[9px] text-slate-400 font-medium leading-normal mt-0.5 max-w-[90px] mx-auto hidden sm:block">
+              <span className="text-[9px] text-[#8891A3] font-medium mt-0.5 max-w-[90px] mx-auto hidden sm:block truncate">
                 {act.desc}
               </span>
-            </button>
+            </motion.button>
           );
         })}
       </div>
-    </div>
+    </motion.div>
   );
 }
+
 
 

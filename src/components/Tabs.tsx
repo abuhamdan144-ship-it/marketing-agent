@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import {
   Home,
   TrendingUp,
@@ -30,9 +31,9 @@ interface TabsProps {
 
 export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
   const tabs = [
-    { id: 'dashboard', label: 'Home', icon: Home },
+    { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp },
-    { id: 'attendance', label: 'Attendance Sheet', icon: ClipboardCheck, badge: badges.attendance },
+    { id: 'attendance', label: 'Attendance', icon: ClipboardCheck, badge: badges.attendance },
     { id: 'companies', label: 'Companies', icon: Building2, badge: badges.companies },
     { id: 'camps', label: 'Camps', icon: Tent, badge: badges.camps },
     { id: 'customers', label: 'Customers', icon: Users },
@@ -46,7 +47,7 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
   ];
 
   const mobileNavTabs = [
-    { id: 'dashboard', label: 'Home', icon: Home },
+    { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'visits', label: 'Visits', icon: MapPin },
     { id: 'camps', label: 'Camps', icon: Tent, badge: badges.camps },
     { id: 'customers', label: 'Customers', icon: Users },
@@ -57,59 +58,58 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
 
   return (
     <div>
-      {/* Desktop / Tablet Sidebar & Top Navigation */}
-      <div className="hidden lg:flex flex-col bg-slate-900 text-slate-300 w-64 min-h-screen p-5 border-r border-slate-800 shrink-0">
-        <div className="mb-6 px-2">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-            Marketing Workspace
-          </div>
+      {/* Desktop / Tablet Sidebar Navigation */}
+      <div className="hidden lg:flex flex-col bg-[#0F1B33] text-[#8891A3] w-64 min-h-screen p-4 border-r border-white/10 shrink-0 select-none">
+        <div className="mb-5 px-2.5">
+          <span className="ops-eyebrow text-[#8891A3] text-[10px]">OPS NAVIGATION</span>
         </div>
-        <nav className="space-y-1.5 flex-1">
+        <nav className="space-y-1 flex-1 relative">
           {tabs.map((t) => {
             const isActive = activeTab === t.id;
             const Icon = t.icon;
             return (
-              <button
+              <motion.button
                 key={t.id}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => onTabChange(t.id)}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all transform active:scale-98 cursor-pointer ${
+                className={`w-full relative flex items-center justify-between px-3.5 py-2.5 rounded-r-md text-xs font-semibold cursor-pointer transition-colors ${
                   isActive
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/10'
-                    : 'hover:bg-slate-800 hover:text-slate-100'
+                    ? 'bg-[#rgba(201,162,39,0.12)] bg-[#C9A227]/10 text-white font-bold border-l-2 border-[#C9A227]'
+                    : 'hover:bg-white/5 text-[#8891A3] hover:text-slate-200 border-l-2 border-transparent'
                 }`}
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-3">
                   <Icon
-                    className={`w-[18px] h-[18px] shrink-0 ${
-                      t.isComplaint && !isActive
-                        ? 'text-[var(--coral,#D64545)]'
-                        : ''
+                    className={`w-4 h-4 shrink-0 ${
+                      isActive
+                        ? 'text-[#C9A227]'
+                        : t.isComplaint
+                        ? 'text-[#F27373]'
+                        : 'text-[#8891A3]'
                     }`}
-                    strokeWidth={1.8}
+                    strokeWidth={isActive ? 2.2 : 1.8}
                   />
                   <span>{t.label}</span>
                 </div>
                 {t.badge && t.badge > 0 ? (
-                  <span className="bg-rose-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full min-w-[16px] text-center">
+                  <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-[#D64545]/20 text-[#F27373] border border-[#D64545]/30">
                     {t.badge}
                   </span>
                 ) : null}
-              </button>
+              </motion.button>
             );
           })}
         </nav>
-        <div className="mt-auto border-t border-slate-800 pt-4 px-2">
-          <div className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">
-            Agent Notebook v3.5
-          </div>
-          <div className="text-[9px] text-slate-600 font-medium mt-1">
-            Build with React, TS &amp; Tailwind
+        <div className="mt-auto border-t border-white/10 pt-4 px-2.5">
+          <div className="ops-eyebrow text-[#5B6478]">AL JADEED EXCHANGE</div>
+          <div className="font-mono text-[10px] text-slate-400 font-semibold mt-0.5">
+            OPS CONSOLE v3.2
           </div>
         </div>
       </div>
 
-      {/* Persistent Bottom Navigation for Mobile & Small Tablets */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--line,#E2E5E1)] px-1 py-1.5 flex items-center justify-around shadow-2xl z-40 select-none">
+      {/* Persistent Bottom Navigation for Mobile */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0F1B33] border-t border-white/10 px-2 py-1 flex items-center justify-around shadow-2xl z-40 select-none">
         {mobileNavTabs.map((t) => {
           const isActive =
             t.id === 'more'
@@ -118,37 +118,39 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
           const Icon = t.icon;
 
           return (
-            <button
+            <motion.button
               key={t.id}
+              whileTap={{ scale: 0.95 }}
               onClick={() => onTabChange(t.id)}
-              className="flex flex-col items-center justify-center flex-1 py-0.5 cursor-pointer select-none transition-all"
+              className="flex flex-col items-center justify-center flex-1 py-1 cursor-pointer relative"
             >
               <div
-                className={`w-9 h-7 flex items-center justify-center rounded-xl transition-all relative ${
+                className={`w-9 h-7 flex items-center justify-center rounded-md transition-all relative ${
                   isActive
-                    ? 'bg-[var(--gold-dim,#F4E9D2)] text-[var(--ink,#16213E)]'
-                    : 'bg-transparent text-[var(--ink-30,#A6ACBC)]'
+                    ? 'bg-[#C9A227]/15 text-[#C9A227] border border-[#C9A227]/30'
+                    : 'text-[#8891A3]'
                 }`}
               >
-                <Icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.2 : 1.8} />
+                <Icon className="w-4 h-4" strokeWidth={isActive ? 2.2 : 1.8} />
                 {t.badge && t.badge > 0 ? (
-                  <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[8px] font-extrabold px-1 rounded-full min-w-[14px] text-center border border-white">
+                  <span className="absolute -top-1 -right-1 font-mono text-[9px] font-bold bg-[#D64545] text-white px-1 rounded border border-[#0F1B33]">
                     {t.badge}
                   </span>
                 ) : null}
               </div>
               <span
-                className={`text-[9px] tracking-tight mt-0.5 whitespace-nowrap font-bold ${
-                  isActive ? 'text-[var(--ink,#16213E)]' : 'text-[var(--ink-30,#A6ACBC)]'
+                className={`text-[10px] font-medium tracking-tight mt-0.5 ${
+                  isActive ? 'text-[#C9A227] font-bold' : 'text-[#8891A3]'
                 }`}
               >
                 {t.label}
               </span>
-            </button>
+            </motion.button>
           );
         })}
       </div>
     </div>
   );
 }
+
 

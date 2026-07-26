@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import { CORRIDORS } from '../utils/exportUtils';
 import { ExchangeRates } from '../types';
 import { Globe, RefreshCw } from 'lucide-react';
@@ -13,63 +14,66 @@ interface LiveRatesProps {
 
 export default function LiveRates({ rates, rateSource, isFetching, onRefresh, isOnline = true }: LiveRatesProps) {
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-          <Globe className="w-4 h-4 text-indigo-600" />
-          <span>Live Exchange Rates</span>
-          <span className="bg-indigo-50 text-indigo-700 text-[10px] px-2 py-0.5 rounded-full font-bold border border-indigo-100">
-            OMR to Corridors
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="bg-[#0F1B33] text-white rounded-lg p-5 border border-white/10 shadow-ops-panel select-none"
+    >
+      <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b border-white/10">
+        <div className="flex items-center gap-2">
+          <Globe className="w-4 h-4 text-[#C9A227]" />
+          <span className="ops-eyebrow text-[#C9A227]">FX CORRIDOR BENCHMARKS</span>
+          <span className="bg-[#1C2A4A] text-[#8891A3] font-mono text-[9px] px-2 py-0.5 rounded border border-white/5 font-bold">
+            1 OMR =
           </span>
-        </h3>
-        <button
+        </div>
+        <motion.button
+          whileTap={{ scale: 0.9 }}
           onClick={onRefresh}
           disabled={isFetching}
-          className={`p-2 bg-slate-50 hover:bg-indigo-50 rounded-lg text-indigo-600 transition-all active:scale-95 border border-slate-100 cursor-pointer flex items-center justify-center ${
+          className={`p-1.5 bg-[#1C2A4A] hover:bg-white/10 rounded text-[#C9A227] transition-colors border border-white/10 cursor-pointer flex items-center justify-center ${
             isFetching ? 'animate-spin opacity-50' : ''
           }`}
           title="Refresh Exchange Rates"
         >
           <RefreshCw className="w-3.5 h-3.5" />
-        </button>
+        </motion.button>
       </div>
 
-      {isOnline ? (
-        <div className="flex items-center gap-2.5 px-3 py-2 bg-emerald-50/50 rounded-xl border border-emerald-100 mb-4 text-xs font-medium text-emerald-800">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
-          <span className="font-semibold text-emerald-700">Rates Feed:</span>
-          <span className="font-mono text-[11px] flex-1 text-slate-600">{rateSource}</span>
+      <div className="flex items-center justify-between px-3 py-1.5 bg-[#1C2A4A]/60 rounded border border-white/5 mb-3 font-mono text-[10px]">
+        <div className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-[#4ADE94] animate-pulse' : 'bg-[#C9A227]'}`} />
+          <span className="text-[#8891A3] font-bold">FEED SOURCE:</span>
+          <span className="text-slate-200">{rateSource}</span>
         </div>
-      ) : (
-        <div className="flex items-center gap-2.5 px-3 py-2 bg-amber-50/50 rounded-xl border border-amber-100 mb-4 text-xs font-medium text-amber-800">
-          <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0 animate-pulse" />
-          <span className="font-semibold text-amber-700">Rates Feed:</span>
-          <span className="font-mono text-[11px] flex-1 text-slate-600">{rateSource}</span>
-        </div>
-      )}
+        <span className="text-[#8891A3] text-[9px]">OMAN FX</span>
+      </div>
 
-      <div className="grid grid-cols-2 xs:grid-cols-4 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 xs:grid-cols-4 sm:grid-cols-4 gap-2.5">
         {CORRIDORS.map((c) => {
           const val = rates[c.id];
           const displayVal = val && typeof val === 'number' ? val.toFixed(2) : '--';
           return (
-            <div
+            <motion.div
               key={c.id}
-              className="flex flex-col items-center justify-center p-3.5 bg-slate-50 hover:bg-indigo-50/30 rounded-xl border border-slate-100 hover:border-indigo-100 transition-all duration-200 group"
+              whileHover={{ y: -2 }}
+              className="flex flex-col items-center justify-center p-3 bg-[#1C2A4A] hover:bg-[#1C2A4A]/80 rounded border border-white/5 hover:border-[#C9A227]/30 transition-all text-center"
             >
-              <span className="text-2xl group-hover:scale-110 transition-transform duration-200">
+              <span className="text-xl">
                 {c.flag}
               </span>
-              <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">
+              <span className="ops-eyebrow text-[#8891A3] text-[9px] mt-1">
                 {c.code}
               </span>
-              <span className="text-base font-extrabold text-indigo-900 mt-0.5 font-mono">
+              <span className="text-base font-mono font-extrabold text-[#C9A227] mt-0.5">
                 {displayVal}
               </span>
-            </div>
+            </motion.div>
           );
         })}
       </div>
-    </div>
+    </motion.div>
   );
 }
+

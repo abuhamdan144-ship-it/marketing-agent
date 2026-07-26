@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { motion } from 'motion/react';
 import { 
   ResponsiveContainer, 
   AreaChart, 
@@ -11,18 +12,14 @@ import {
   CartesianGrid, 
   Tooltip, 
   Legend, 
-  PieChart, 
-  Pie, 
   Cell 
 } from 'recharts';
-import { AppData, Visit, CompetitorIntel } from '../types';
+import { AppData } from '../types';
 import { 
   TrendingUp, 
   TrendingDown,
   ArrowUpRight,
-  ArrowDownRight,
   Users, 
-  MapPin, 
   ShieldAlert, 
   Sparkles, 
   Calendar, 
@@ -43,7 +40,6 @@ const MONTH_NAMES = [
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
-// Helper to format "YYYY-MM-DD" or "YYYY-MM" to "MMM 'YY"
 function formatMonthYear(dateStr: string): string {
   if (!dateStr) return 'Unknown';
   const parts = dateStr.split('-');
@@ -57,7 +53,6 @@ function formatMonthYear(dateStr: string): string {
   return dateStr;
 }
 
-// Sample Visit Data when none exists to make sure the app has an immediately stunning design
 const DEFAULT_VISIT_DATA = [
   { month: "Jan '26", visits: 12, people: 240 },
   { month: "Feb '26", visits: 18, people: 390 },
@@ -67,7 +62,6 @@ const DEFAULT_VISIT_DATA = [
   { month: "Jun '26", visits: 55, people: 1240 },
 ];
 
-// Sample Competitor Data
 const DEFAULT_COMPETITOR_DATA = [
   { name: 'Joyalukkas Exchange', reports: 6, score: 16, level: 'High Impact' },
   { name: 'Western Union', reports: 5, score: 14, level: 'High Impact' },
@@ -83,60 +77,41 @@ const CustomVisitTooltip = ({ active, payload, label }: any) => {
     const projectionPld = payload.find((p: any) => p.dataKey === 'projection');
 
     return (
-      <div className="bg-slate-900 border border-slate-800 text-slate-100 p-3 rounded-xl shadow-xl space-y-2 min-w-[210px] text-xs font-sans">
-        <div className="border-b border-slate-800 pb-1.5 mb-1 flex justify-between items-center">
-          <span className="text-[10px] font-bold text-slate-400 font-mono uppercase tracking-wider">
-            Operational Month
+      <div className="bg-[#0B1526] border border-white/10 text-white p-3 rounded shadow-ops-panel space-y-1.5 min-w-[210px] font-mono text-xs">
+        <div className="border-b border-white/10 pb-1 flex justify-between items-center">
+          <span className="ops-eyebrow text-[#8891A3]">
+            OPERATIONAL PERIOD
           </span>
-          <span className="text-xs font-black text-indigo-400">
+          <span className="text-xs font-bold text-[#C9A227]">
             {label}
           </span>
         </div>
-        <div className="space-y-2 pt-0.5">
+        <div className="space-y-1 pt-0.5">
           {visitsPld && visitsPld.value !== undefined && visitsPld.value !== null && (
             <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-1.5 font-medium text-slate-300">
-                <span className="w-2 h-2 rounded-full inline-block bg-[#6366f1]" />
-                Deployments Logged
-              </div>
-              <span className="font-extrabold text-white text-right">
+              <span className="text-[#8891A3]">DEPLOYMENTS:</span>
+              <span className="font-bold text-white">
                 {visitsPld.value} visits
               </span>
             </div>
           )}
           {peoplePld && peoplePld.value !== undefined && peoplePld.value !== null && (
             <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-1.5 font-medium text-slate-300">
-                <span className="w-2 h-2 rounded-full inline-block bg-[#10b981]" />
-                Audience Reach
-              </div>
-              <span className="font-extrabold text-white text-right">
+              <span className="text-[#8891A3]">REACH:</span>
+              <span className="font-bold text-[#4ADE94]">
                 {Number(peoplePld.value).toLocaleString()} reached
               </span>
             </div>
           )}
           {projectionPld && projectionPld.value !== undefined && (
-            <div className="flex items-center justify-between gap-4 border-t border-slate-800/40 pt-1.5 mt-1">
-              <div className="flex items-center gap-1.5 font-medium text-slate-300">
-                <span className="w-2 h-1 bg-[#f43f5e] inline-block rounded-sm" />
-                SLR Trend Projection
-              </div>
-              <span className="font-extrabold text-rose-400 text-right">
+            <div className="flex items-center justify-between gap-4 border-t border-white/10 pt-1 mt-1">
+              <span className="text-[#8891A3]">SLR PROJECTION:</span>
+              <span className="font-bold text-[#F27373]">
                 {Math.round(Number(projectionPld.value))} visits
               </span>
             </div>
           )}
         </div>
-        {label?.toLowerCase().includes('forecast') && (
-          <div className="border-t border-slate-800/80 pt-1.5 mt-1 text-[9px] text-rose-300 font-semibold flex items-center gap-1">
-            🔮 Forecasted trend using Simple Linear Regression.
-          </div>
-        )}
-        {visitsPld && Number(visitsPld.value) >= 30 && (
-          <div className="border-t border-slate-800/80 pt-1.5 mt-1 text-[9px] text-indigo-300 font-semibold flex items-center gap-1">
-            🚀 Period of high labor camp campaign intensity.
-          </div>
-        )}
       </div>
     );
   }
@@ -146,38 +121,23 @@ const CustomVisitTooltip = ({ active, payload, label }: any) => {
 const CustomCompetitorTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
-    
-    let badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-    if (data.level?.includes('High')) {
-      badgeColor = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
-    } else if (data.level?.includes('Medium')) {
-      badgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-    }
-
     return (
-      <div className="bg-slate-900 border border-slate-800 text-slate-100 p-3 rounded-xl shadow-xl space-y-2 min-w-[210px] text-xs font-sans">
-        <div className="border-b border-slate-800 pb-1.5 mb-1">
-          <p className="text-xs font-black text-slate-200 line-clamp-1">{data.name}</p>
-          <span className={`inline-block text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border mt-1 ${badgeColor}`}>
+      <div className="bg-[#0B1526] border border-white/10 text-white p-3 rounded shadow-ops-panel space-y-1.5 min-w-[210px] font-mono text-xs">
+        <div className="border-b border-white/10 pb-1">
+          <p className="font-bold text-white truncate">{data.name}</p>
+          <span className="ops-eyebrow text-[#C9A227] mt-0.5 inline-block">
             {data.level}
           </span>
         </div>
-        <div className="space-y-1.5 pt-0.5">
+        <div className="space-y-1 pt-0.5">
           <div className="flex items-center justify-between">
-            <span className="text-slate-400 font-medium">Monitoring Actions</span>
-            <span className="font-extrabold text-indigo-300">{data.reports} logs</span>
+            <span className="text-[#8891A3]">LOGS:</span>
+            <span className="font-bold text-white">{data.reports}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-slate-400 font-medium">Threat Level Weight</span>
-            <span className="font-extrabold text-amber-400">{data.score} severity score</span>
+            <span className="text-[#8891A3]">THREAT SCORE:</span>
+            <span className="font-bold text-[#C9A227]">{data.score}</span>
           </div>
-        </div>
-        <div className="border-t border-slate-800/80 pt-1.5 mt-1 text-[9px] text-slate-400 leading-relaxed italic">
-          {data.level?.includes('High') ? (
-            <span>🚨 Aggressive fee waiver campaigns detected. Critical threat to local camp market share.</span>
-          ) : (
-            <span>💡 Active remittance operator being standardly monitored.</span>
-          )}
         </div>
       </div>
     );
@@ -186,7 +146,6 @@ const CustomCompetitorTooltip = ({ active, payload }: any) => {
 };
 
 export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
-  // 1. Prepare Visit Growth Data
   const visitChartData = useMemo(() => {
     let sourceData: Array<{ month: string; visits: number; people: number; rawKey?: string }> = [];
     let isDemo = false;
@@ -195,12 +154,11 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
       sourceData = DEFAULT_VISIT_DATA.map(d => ({ ...d }));
       isDemo = true;
     } else {
-      // Group visits by Year-Month
       const monthlyGroups: Record<string, { visits: number; people: number }> = {};
       
       appData.visits.forEach((v) => {
         if (!v.date) return;
-        const monthKey = v.date.substring(0, 7); // "YYYY-MM"
+        const monthKey = v.date.substring(0, 7);
         if (!monthlyGroups[monthKey]) {
           monthlyGroups[monthKey] = { visits: 0, people: 0 };
         }
@@ -208,7 +166,6 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
         monthlyGroups[monthKey].people += Number(v.people) || 0;
       });
 
-      // Sort chronologically
       const sortedKeys = Object.keys(monthlyGroups).sort();
       
       sourceData = sortedKeys.map((key) => ({
@@ -219,7 +176,6 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
       }));
     }
 
-    // Calculate linear regression on sourceData
     const n = sourceData.length;
     let slope = 0;
     let intercept = 0;
@@ -244,16 +200,14 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
       }
     }
 
-    // Map existing data to include projection values
     const dataWithProjection = sourceData.map((d, index) => ({
       ...d,
       projection: Number((slope * index + intercept).toFixed(1))
     }));
 
-    // Generate next month's forecast point
     let nextMonthLabel = 'Forecast';
     if (isDemo) {
-      nextMonthLabel = "Jul '26 (Forecast)";
+      nextMonthLabel = "Jul '26 (Fcst)";
     } else if (sourceData.length > 0) {
       const lastItem = sourceData[sourceData.length - 1];
       if (lastItem.rawKey) {
@@ -266,13 +220,12 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
           year += 1;
         }
         const nextKey = `${year}-${month.toString().padStart(2, '0')}`;
-        nextMonthLabel = `${formatMonthYear(nextKey)} (Forecast)`;
+        nextMonthLabel = `${formatMonthYear(nextKey)} (Fcst)`;
       }
     }
 
     const forecastedVisits = Math.max(0, slope * n + intercept);
 
-    // Append forecasted item with undefined visits/people so area curves terminate
     dataWithProjection.push({
       month: nextMonthLabel,
       visits: undefined as any,
@@ -287,13 +240,11 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
     };
   }, [appData.visits]);
 
-  // 2. Prepare Competitor Intel Data
   const competitorChartData = useMemo(() => {
     if (!appData.competitors || appData.competitors.length === 0) {
       return { data: DEFAULT_COMPETITOR_DATA, isDemo: true };
     }
 
-    // Group by competitor name
     const groups: Record<string, { name: string; reports: number; score: number }> = {};
     
     appData.competitors.forEach((c) => {
@@ -304,7 +255,6 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
       
       groups[name].reports += 1;
       
-      // Calculate a score based on impact: High = 3, Medium = 2, Low = 1
       let weight = 2;
       if (c.impact?.toLowerCase() === 'high') weight = 3;
       if (c.impact?.toLowerCase() === 'low') weight = 1;
@@ -313,7 +263,7 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
 
     const list = Object.values(groups)
       .sort((a, b) => b.score - a.score)
-      .slice(0, 6) // limit to top 6 competitors
+      .slice(0, 6)
       .map((item) => {
         let level = 'Low Impact';
         if (item.score >= 10) level = 'High Impact';
@@ -327,24 +277,23 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
     return { data: list, isDemo: false };
   }, [appData.competitors]);
 
-  // Insights computation
   const insights = useMemo(() => {
     const isDemo = visitChartData.isDemo || competitorChartData.isDemo;
     if (isDemo) {
       return [
         {
-          title: "Steady Expansion Track",
-          desc: "Average audience engagement during labor camp drives shows a 25% month-on-month escalation in reach.",
+          title: "STEADY EXPANSION TRACK",
+          desc: "Average audience engagement during labor camp drives shows +25% MoM escalation.",
           type: "success"
         },
         {
-          title: "Competitor Market Aggression",
-          desc: "High competitor monitoring levels logged for Joyalukkas and Western Union indicates intense fee and rate wars.",
+          title: "RIVAL BRAND AGGRESSION",
+          desc: "High competitor monitoring levels logged for Joyalukkas and Western Union.",
           type: "warning"
         },
         {
-          title: "Field Recommendation",
-          desc: "Targeting high-capacity camp visits during weekend paydays yields maximum customer lead conversions.",
+          title: "FIELD RECOMMENDATION",
+          desc: "Targeting high-capacity camp visits during weekend paydays yields maximum lead conversion.",
           type: "info"
         }
       ];
@@ -354,14 +303,13 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
     const visits = appData.visits;
     const competitors = appData.competitors;
 
-    // Total reach calculation
     const totalReach = visits.reduce((acc, curr) => acc + (Number(curr.people) || 0), 0);
     const averageReach = visits.length ? Math.round(totalReach / visits.length) : 0;
 
     if (visits.length > 0) {
       list.push({
-        title: "Field Campaign Performance",
-        desc: `With ${visits.length} logged deployments, you have engaged approximately ${totalReach} prospective customers face-to-face, averaging ${averageReach} contacts per campaign.`,
+        title: "FIELD OUTREACH PERFORMANCE",
+        desc: `${visits.length} logged deployments engaged ~${totalReach} prospective customers face-to-face (${averageReach}/campaign).`,
         type: "success"
       });
     }
@@ -369,16 +317,16 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
     if (competitors.length > 0) {
       const topComp = competitorChartData.data[0];
       list.push({
-        title: "Primary Rival Focus",
-        desc: `Intelligence reports indicate "${topComp.name}" is your most tracked competitor, presenting a ${topComp.level} threat level.`,
+        title: "PRIMARY RIVAL FOCUS",
+        desc: `Intelligence indicates "${topComp.name}" is most tracked, presenting a ${topComp.level} threat.`,
         type: "warning"
       });
     }
 
     if (list.length < 3) {
       list.push({
-        title: "Operations Suggestion",
-        desc: "Regularly register your daily field visits, labor camp deployments, and competitor price updates to keep these business intelligence insights fully synchronized.",
+        title: "OPERATIONS SUGGESTION",
+        desc: "Regularly register field visits, labor camp deployments, and competitor price updates to keep BI synced.",
         type: "info"
       });
     }
@@ -386,11 +334,10 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
     return list;
   }, [appData.visits, appData.competitors, visitChartData.isDemo, competitorChartData.isDemo]);
 
-  const COLORS = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+  const COLORS = ['#C9A227', '#2E4B8F', '#2F9E77', '#D64545', '#1C2A4A', '#8891A3'];
 
   const isDemoMode = visitChartData.isDemo || competitorChartData.isDemo;
 
-  // 3. Monthly Goal Target calculations
   const monthlyGoalMetrics = useMemo(() => {
     const today = new Date();
     const currentYear = today.getFullYear();
@@ -410,14 +357,13 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
     };
   }, [appData.visits, appData.settings]);
 
-  // 4. Period-over-Period (PoP) Growth Calculations for Customer Visits & Audience Reach
   const popMetrics = useMemo(() => {
     const data = visitChartData.data;
     if (data.length < 1) {
       return {
         hasTwoPeriods: false,
-        currentPeriodName: 'Current Period',
-        prevPeriodName: 'Previous Period',
+        currentPeriodName: 'Current',
+        prevPeriodName: 'Previous',
         currentVisits: 0,
         prevVisits: 0,
         visitsGrowth: 0,
@@ -429,8 +375,8 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
       };
     }
 
-    const totalVisits = data.reduce((sum, item) => sum + item.visits, 0);
-    const totalPeople = data.reduce((sum, item) => sum + item.people, 0);
+    const totalVisits = data.reduce((sum, item) => sum + (item.visits || 0), 0);
+    const totalPeople = data.reduce((sum, item) => sum + (item.people || 0), 0);
 
     if (data.length < 2) {
       const current = data[0];
@@ -438,10 +384,10 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
         hasTwoPeriods: false,
         currentPeriodName: current.month,
         prevPeriodName: 'Previous',
-        currentVisits: current.visits,
+        currentVisits: current.visits || 0,
         prevVisits: 0,
         visitsGrowth: 100,
-        currentPeople: current.people,
+        currentPeople: current.people || 0,
         prevPeople: 0,
         peopleGrowth: 100,
         totalVisits,
@@ -449,24 +395,28 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
       };
     }
 
-    const current = data[data.length - 1];
-    const previous = data[data.length - 2];
+    const current = data[data.length - 2]; // last valid non-forecast item
+    const previous = data.length >= 3 ? data[data.length - 3] : data[0];
 
-    const visitsDiff = current.visits - previous.visits;
-    const visitsGrowth = previous.visits > 0 ? (visitsDiff / previous.visits) * 100 : current.visits > 0 ? 100 : 0;
+    const cVis = current.visits || 0;
+    const pVis = previous.visits || 0;
+    const visitsDiff = cVis - pVis;
+    const visitsGrowth = pVis > 0 ? (visitsDiff / pVis) * 100 : cVis > 0 ? 100 : 0;
 
-    const peopleDiff = current.people - previous.people;
-    const peopleGrowth = previous.people > 0 ? (peopleDiff / previous.people) * 100 : current.people > 0 ? 100 : 0;
+    const cPeo = current.people || 0;
+    const pPeo = previous.people || 0;
+    const peopleDiff = cPeo - pPeo;
+    const peopleGrowth = pPeo > 0 ? (peopleDiff / pPeo) * 100 : cPeo > 0 ? 100 : 0;
 
     return {
       hasTwoPeriods: true,
       currentPeriodName: current.month,
       prevPeriodName: previous.month,
-      currentVisits: current.visits,
-      prevVisits: previous.visits,
+      currentVisits: cVis,
+      prevVisits: pVis,
       visitsGrowth,
-      currentPeople: current.people,
-      prevPeople: previous.people,
+      currentPeople: cPeo,
+      prevPeople: pPeo,
       peopleGrowth,
       totalVisits,
       totalPeople,
@@ -474,344 +424,277 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
   }, [visitChartData]);
 
   return (
-    <div className="space-y-6">
-      {/* Title & Badge */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+    <div className="space-y-4 select-none">
+      {/* Title & Badge Header */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0F1B33] text-white p-4 rounded-lg border border-white/10 shadow-ops-panel"
+      >
         <div>
-          <h2 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider font-display flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-indigo-600" />
-            Operations Intelligence &amp; Analytics
-          </h2>
-          <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-            Statistical breakdown of agent outreach performance and competitive market landscape
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-[#C9A227]" />
+            <h2 className="ops-eyebrow text-[#C9A227]">OPERATIONS INTELLIGENCE &amp; ANALYTICS</h2>
+          </div>
+          <p className="text-xs text-[#8891A3] mt-0.5 font-mono">
+            Statistical breakdown of outreach performance &amp; market intelligence
           </p>
         </div>
         
         {isDemoMode && (
-          <span className="self-start sm:self-center inline-flex items-center gap-1.5 text-[10px] bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full border border-indigo-100 font-bold">
+          <span className="self-start sm:self-center font-mono text-[10px] bg-[#1C2A4A] text-[#C9A227] px-2.5 py-1 rounded border border-white/10 font-bold flex items-center gap-1.5">
             <Info className="w-3.5 h-3.5" />
-            Showing Interactive Sample Data
+            INTERACTIVE BENCHMARK DATA
           </span>
         )}
-      </div>
+      </motion.div>
 
-      {/* Period-over-Period Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Card 1: Visit Growth */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500" />
+      {/* Metric Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Card 1: Deployment Frequency */}
+        <div className="ops-card p-4 flex flex-col justify-between border-l-4 border-l-[#2E4B8F]">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-sans">
-              Deployment Frequency PoP
-            </span>
-            <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
-              <Calendar className="w-4 h-4" />
-            </div>
+            <span className="ops-eyebrow text-[#8891A3]">DEPLOYMENTS (PoP)</span>
+            <Calendar className="w-4 h-4 text-[#2E4B8F]" />
           </div>
-          
-          <div className="mt-4">
+          <div className="mt-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold text-slate-800 font-display">
+              <span className="text-2xl font-mono font-extrabold text-[#0F1B33]">
                 {popMetrics.currentVisits}
               </span>
-              <span className="text-xs font-semibold text-slate-400 font-sans">
-                deployments ({popMetrics.currentPeriodName})
+              <span className="text-[10px] font-mono text-[#8891A3]">
+                {popMetrics.currentPeriodName}
               </span>
             </div>
-            
-            <div className="flex items-center gap-2 mt-2">
-              <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded ${
                 popMetrics.visitsGrowth >= 0 
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
-                  : 'bg-rose-50 text-rose-700 border border-rose-100'
+                  ? 'bg-[#2F9E77]/10 text-[#2F9E77]' 
+                  : 'bg-[#D64545]/10 text-[#D64545]'
               }`}>
-                {popMetrics.visitsGrowth >= 0 ? (
-                  <>
-                    <TrendingUp className="w-3 h-3" />
-                    +{popMetrics.visitsGrowth.toFixed(1)}%
-                  </>
-                ) : (
-                  <>
-                    <TrendingDown className="w-3 h-3" />
-                    {popMetrics.visitsGrowth.toFixed(1)}%
-                  </>
-                )}
+                {popMetrics.visitsGrowth >= 0 ? `+${popMetrics.visitsGrowth.toFixed(0)}%` : `${popMetrics.visitsGrowth.toFixed(0)}%`}
               </span>
-              <span className="text-[10px] font-medium text-slate-400 font-sans">
-                vs. {popMetrics.prevVisits} in {popMetrics.prevPeriodName}
+              <span className="text-[10px] text-[#8891A3] font-mono">
+                vs {popMetrics.prevVisits} ({popMetrics.prevPeriodName})
               </span>
             </div>
           </div>
         </div>
 
-        {/* Card 2: Reach Growth */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500" />
+        {/* Card 2: Audience Reach */}
+        <div className="ops-card p-4 flex flex-col justify-between border-l-4 border-l-[#2F9E77]">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-sans">
-              Audience Reach PoP
-            </span>
-            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
-              <Users className="w-4 h-4" />
-            </div>
+            <span className="ops-eyebrow text-[#8891A3]">REACH (PoP)</span>
+            <Users className="w-4 h-4 text-[#2F9E77]" />
           </div>
-          
-          <div className="mt-4">
+          <div className="mt-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold text-slate-800 font-display">
+              <span className="text-2xl font-mono font-extrabold text-[#0F1B33]">
                 {popMetrics.currentPeople.toLocaleString()}
               </span>
-              <span className="text-xs font-semibold text-slate-400 font-sans">
-                contacts ({popMetrics.currentPeriodName})
+              <span className="text-[10px] font-mono text-[#8891A3]">
+                contacts
               </span>
             </div>
-            
-            <div className="flex items-center gap-2 mt-2">
-              <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded ${
                 popMetrics.peopleGrowth >= 0 
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
-                  : 'bg-rose-50 text-rose-700 border border-rose-100'
+                  ? 'bg-[#2F9E77]/10 text-[#2F9E77]' 
+                  : 'bg-[#D64545]/10 text-[#D64545]'
               }`}>
-                {popMetrics.peopleGrowth >= 0 ? (
-                  <>
-                    <TrendingUp className="w-3 h-3" />
-                    +{popMetrics.peopleGrowth.toFixed(1)}%
-                  </>
-                ) : (
-                  <>
-                    <TrendingDown className="w-3 h-3" />
-                    {popMetrics.peopleGrowth.toFixed(1)}%
-                  </>
-                )}
+                {popMetrics.peopleGrowth >= 0 ? `+${popMetrics.peopleGrowth.toFixed(0)}%` : `${popMetrics.peopleGrowth.toFixed(0)}%`}
               </span>
-              <span className="text-[10px] font-medium text-slate-400 font-sans">
-                vs. {popMetrics.prevPeople.toLocaleString()} in {popMetrics.prevPeriodName}
+              <span className="text-[10px] text-[#8891A3] font-mono">
+                vs {popMetrics.prevPeople.toLocaleString()}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Card 3: Monthly Visit Target Goal Progress */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-600" />
+        {/* Card 3: Monthly Goal */}
+        <div className="ops-card p-4 flex flex-col justify-between border-l-4 border-l-[#C9A227]">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-sans">
-              Monthly Visit Goal
-            </span>
-            <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
-              <BarChart3 className="w-4 h-4" />
-            </div>
+            <span className="ops-eyebrow text-[#8891A3]">MONTHLY TARGET</span>
+            <Target className="w-4 h-4 text-[#C9A227]" />
           </div>
-          
-          <div className="mt-4">
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="text-2xl font-extrabold text-slate-800 font-display">
-                {monthlyGoalMetrics.count} <span className="text-xs text-slate-400 font-medium font-sans">/ {monthlyGoalMetrics.targetGoal} visits</span>
+          <div className="mt-3">
+            <div className="flex items-baseline justify-between">
+              <span className="text-xl font-mono font-extrabold text-[#0F1B33]">
+                {monthlyGoalMetrics.count} <span className="text-xs text-[#8891A3]">/ {monthlyGoalMetrics.targetGoal}</span>
               </span>
-              <span className="text-xs font-bold text-indigo-600 font-sans">
+              <span className="text-xs font-mono font-bold text-[#C9A227]">
                 {monthlyGoalMetrics.percentage}%
               </span>
             </div>
-            
-            {/* Custom progress bar */}
-            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mt-3">
+            <div className="h-1.5 w-full bg-[#EEF0F3] rounded overflow-hidden mt-2 border border-[#E2E5E1]">
               <div 
                 style={{ width: `${monthlyGoalMetrics.percentage}%` }}
-                className={`h-full rounded-full transition-all duration-500 ${
-                  monthlyGoalMetrics.percentage >= 100 ? 'bg-emerald-500' : 'bg-indigo-600'
+                className={`h-full transition-all duration-500 ${
+                  monthlyGoalMetrics.percentage >= 100 ? 'bg-[#2F9E77]' : 'bg-[#C9A227]'
                 }`}
               />
             </div>
-            
-            <p className="text-[9px] font-bold text-slate-400 mt-2.5 font-sans flex justify-between">
-              {monthlyGoalMetrics.remaining > 0 ? (
-                <span className="flex items-center gap-1"><Target className="w-3 h-3 text-indigo-500" /> {monthlyGoalMetrics.remaining} more needed to reach goal</span>
-              ) : (
-                <span className="text-emerald-600 font-extrabold flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-600" /> Target Achieved!</span>
-              )}
-            </p>
           </div>
         </div>
 
-        {/* Card 4: Overall Lifetime Metrics */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-violet-500" />
+        {/* Card 4: Lifetime Reach */}
+        <div className="ops-card p-4 flex flex-col justify-between border-l-4 border-l-[#0F1B33]">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-sans">
-              Lifetime Program Reach
-            </span>
-            <div className="p-2 rounded-xl bg-violet-50 text-violet-600">
-              <ArrowUpRight className="w-4 h-4" />
-            </div>
+            <span className="ops-eyebrow text-[#8891A3]">LIFETIME REACH</span>
+            <ArrowUpRight className="w-4 h-4 text-[#0F1B33]" />
           </div>
-          
-          <div className="mt-4">
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold text-slate-800 font-display">
-                {popMetrics.totalPeople.toLocaleString()}
-              </span>
-              <span className="text-xs font-semibold text-slate-400 font-sans">
-                lifetime contacts
-              </span>
-            </div>
-            
-            <p className="text-[10px] font-medium text-slate-400 mt-2 font-sans">
-              Aggregated across <strong className="text-slate-600 font-extrabold">{popMetrics.totalVisits}</strong> total operations logged to date.
+          <div className="mt-3">
+            <span className="text-2xl font-mono font-extrabold text-[#0F1B33]">
+              {popMetrics.totalPeople.toLocaleString()}
+            </span>
+            <p className="text-[10px] font-mono text-[#8891A3] mt-1">
+              Across {popMetrics.totalVisits} logged operations
             </p>
           </div>
         </div>
       </div>
 
-      {/* Bento Grid Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Dark Ops Console Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         
         {/* Chart 1: Monthly Visit Growth */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
+        <div className="bg-[#0F1B33] text-white rounded-lg p-4 border border-white/10 shadow-ops-panel flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-emerald-500" />
-                Outreach &amp; Monthly Visit Growth
-              </h3>
-              <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
-                Outreach Metrics
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-[#C9A227]" />
+                <span className="ops-eyebrow text-[#C9A227]">OUTREACH &amp; CAMPAIGN GROWTH</span>
+              </div>
+              <span className="bg-[#1C2A4A] text-[#8891A3] font-mono text-[9px] px-2 py-0.5 rounded border border-white/5 font-bold">
+                FORECAST: {visitChartData.forecastValue} VISITS
               </span>
             </div>
-            
-            <p className="text-xs text-slate-400 font-medium mb-6">
-              Monthly overview of registered field campaigns and customer reach. Includes a <strong>Simple Linear Regression (SLR)</strong> trend projection forecasting next month's output at <strong className="text-rose-500 font-bold">{visitChartData.forecastValue} campaigns</strong>.
-            </p>
           </div>
 
-          <div className="h-[280px] w-full">
+          <div className="h-[260px] w-full mt-2">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={visitChartData.data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                  <linearGradient id="colorVisitsDark" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#C9A227" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#C9A227" stopOpacity={0}/>
                   </linearGradient>
-                  <linearGradient id="colorPeople" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  <linearGradient id="colorPeopleDark" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#4ADE94" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#4ADE94" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="rgba(255,255,255,0.06)" />
                 <XAxis 
                   dataKey="month" 
-                  tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }} 
+                  tick={{ fill: '#8891A3', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} 
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis 
                   yAxisId="left"
-                  tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }} 
+                  tick={{ fill: '#8891A3', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} 
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis 
                   yAxisId="right"
                   orientation="right"
-                  tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }} 
+                  tick={{ fill: '#8891A3', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} 
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip content={<CustomVisitTooltip />} />
                 <Legend 
-                  wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '15px' }}
-                  iconType="circle"
+                  wrapperStyle={{ fontSize: '10px', fontFamily: 'JetBrains Mono, monospace', paddingTop: '10px' }}
+                  iconType="rect"
                 />
                 <Area 
                   yAxisId="left"
                   type="monotone" 
                   dataKey="visits" 
-                  name="Deployments Logged" 
-                  stroke="#6366f1" 
-                  strokeWidth={2.5}
+                  name="Deployments" 
+                  stroke="#C9A227" 
+                  strokeWidth={2}
                   fillOpacity={1} 
-                  fill="url(#colorVisits)" 
+                  fill="url(#colorVisitsDark)" 
                 />
                 <Line
                   yAxisId="left"
                   type="monotone"
                   dataKey="projection"
-                  name="Trend Projection (SLR)"
-                  stroke="#f43f5e"
-                  strokeWidth={2}
+                  name="SLR Trend"
+                  stroke="#F27373"
+                  strokeWidth={1.5}
                   strokeDasharray="4 4"
-                  dot={{ r: 3.5, stroke: '#f43f5e', strokeWidth: 1.5, fill: '#fff' }}
-                  activeDot={{ r: 5 }}
+                  dot={{ r: 3, stroke: '#F27373', fill: '#0F1B33' }}
                 />
                 <Area 
                   yAxisId="right"
                   type="monotone" 
                   dataKey="people" 
-                  name="Audience Reach" 
-                  stroke="#10b981" 
-                  strokeWidth={2.5}
+                  name="Reach" 
+                  stroke="#4ADE94" 
+                  strokeWidth={2}
                   fillOpacity={1} 
-                  fill="url(#colorPeople)" 
+                  fill="url(#colorPeopleDark)" 
                 />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Chart 2: Top Competitors */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
+        {/* Chart 2: Competitor Intelligence */}
+        <div className="bg-[#0F1B33] text-white rounded-lg p-4 border border-white/10 shadow-ops-panel flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-rose-500" />
-                Top Competitors Intelligence Map
-              </h3>
-              <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
-                Market Shares
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-[#F27373]" />
+                <span className="ops-eyebrow text-[#F27373]">COMPETITOR MARKET INTEL MAP</span>
+              </div>
+              <span className="bg-[#1C2A4A] text-[#8891A3] font-mono text-[9px] px-2 py-0.5 rounded border border-white/5 font-bold">
+                TOP RIVALS
               </span>
             </div>
-
-            <p className="text-xs text-slate-400 font-medium mb-6">
-              Rival brands mapped by monitoring frequency weighted against their impact level (High, Medium, Low).
-            </p>
           </div>
 
-          <div className="h-[280px] w-full">
+          <div className="h-[260px] w-full mt-2">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={competitorChartData.data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="rgba(255,255,255,0.06)" />
                 <XAxis 
                   dataKey="name" 
-                  tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 600 }} 
+                  tick={{ fill: '#8891A3', fontSize: 9, fontFamily: 'JetBrains Mono, monospace' }} 
                   axisLine={false}
                   tickLine={false}
                   interval={0}
-                  tickFormatter={(val) => val.length > 12 ? `${val.substring(0, 10)}..` : val}
+                  tickFormatter={(val) => val.length > 10 ? `${val.substring(0, 8)}..` : val}
                 />
                 <YAxis 
-                  tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }} 
+                  tick={{ fill: '#8891A3', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} 
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip content={<CustomCompetitorTooltip />} />
                 <Legend 
-                  wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '15px' }}
-                  iconType="circle"
+                  wrapperStyle={{ fontSize: '10px', fontFamily: 'JetBrains Mono, monospace', paddingTop: '10px' }}
+                  iconType="rect"
                 />
                 <Bar 
                   dataKey="reports" 
-                  name="Monitoring Actions" 
-                  fill="#3b82f6" 
-                  radius={[6, 6, 0, 0]}
+                  name="Logs" 
+                  fill="#2E4B8F" 
+                  radius={[2, 2, 0, 0]}
                 >
-                  {competitorChartData.data.map((entry, index) => (
+                  {competitorChartData.data.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Bar>
                 <Bar 
                   dataKey="score" 
-                  name="Cumulative Threat Score" 
-                  fill="#f59e0b" 
-                  radius={[6, 6, 0, 0]}
+                  name="Threat Weight" 
+                  fill="#C9A227" 
+                  radius={[2, 2, 0, 0]}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -821,33 +704,31 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
       </div>
 
       {/* Insights Section */}
-      <div className="bg-slate-900 rounded-2xl p-5 shadow-lg border border-slate-800 text-slate-100">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-          <Sparkles className="w-4.5 h-4.5 text-indigo-400" />
-          AI &amp; Operational Analytics Insights
-        </h3>
+      <div className="bg-[#0F1B33] text-white rounded-lg p-4 border border-white/10 shadow-ops-panel">
+        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-white/10">
+          <Sparkles className="w-4 h-4 text-[#C9A227]" />
+          <span className="ops-eyebrow text-[#C9A227]">TACTICAL FIELD INSIGHTS</span>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {insights.map((insight, idx) => (
             <div 
               key={idx} 
-              className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/50 hover:bg-slate-800/60 transition-colors"
+              className="p-3 rounded bg-[#1C2A4A]/80 border border-white/5 space-y-1"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="p-1 rounded-md bg-slate-700/50 text-indigo-300">
-                  {insight.type === 'success' ? (
-                    <TrendingUp className="w-4 h-4 text-emerald-400" />
-                  ) : insight.type === 'warning' ? (
-                    <Flame className="w-4 h-4 text-amber-400" />
-                  ) : (
-                    <Lightbulb className="w-4 h-4 text-indigo-400" />
-                  )}
-                </span>
-                <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wide">
+              <div className="flex items-center gap-1.5">
+                {insight.type === 'success' ? (
+                  <TrendingUp className="w-3.5 h-3.5 text-[#4ADE94]" />
+                ) : insight.type === 'warning' ? (
+                  <Flame className="w-3.5 h-3.5 text-[#C9A227]" />
+                ) : (
+                  <Lightbulb className="w-3.5 h-3.5 text-[#2E4B8F]" />
+                )}
+                <span className="ops-eyebrow text-slate-200 text-[10px]">
                   {insight.title}
-                </h4>
+                </span>
               </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
+              <p className="text-xs text-[#8891A3] leading-relaxed">
                 {insight.desc}
               </p>
             </div>
@@ -857,3 +738,4 @@ export default function AnalyticsSection({ appData }: AnalyticsSectionProps) {
     </div>
   );
 }
+

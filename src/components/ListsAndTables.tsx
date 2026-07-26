@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { motion } from 'motion/react';
 import { Company, Camp, Customer, Visit, Feedback, Complaint, CompetitorIntel, SocialAd, MarketingPlan } from '../types';
 import { SOCIAL_PLATFORMS } from '../utils/exportUtils';
 import {
@@ -66,11 +67,10 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
     }
   };
 
-  // Filter and Sort Data using useMemo for performance
+  // Filter and Sort Data using useMemo
   const processedData = useMemo(() => {
     const term = searchTerm.toLowerCase();
     
-    // First, filter data by search term & specific category/region filters
     const filtered = data.filter((item) => {
       if (type === 'companies') {
         const c = item as Company;
@@ -131,13 +131,11 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
       return true;
     });
 
-    // Helper to safely parse localized or standard date strings to timestamp
     const parseDateString = (dateStr?: string): number => {
       if (!dateStr) return 0;
       const parsed = Date.parse(dateStr);
       if (!isNaN(parsed)) return parsed;
 
-      // Split typical locale formats: DD/MM/YYYY or MM/DD/YYYY
       const parts = dateStr.split(/[\/\-\.]/);
       if (parts.length === 3) {
         let day = parseInt(parts[0], 10);
@@ -163,9 +161,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
       return 0;
     };
 
-    // Sort filtered data
     return [...filtered].sort((a, b) => {
-      // Special sort for Camps by Upcoming Payday
       if (type === 'camps' && campSortOrder === 'payday') {
         const daysA = getDaysUntilPayday((a as Camp).salaryDate);
         const daysB = getDaysUntilPayday((b as Camp).salaryDate);
@@ -180,64 +176,64 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
       if (timeA !== timeB) {
         return sortOrder === 'newest' ? timeB - timeA : timeA - timeB;
       }
-      // Fallback to id (Date.now() creation timestamp)
       return sortOrder === 'newest' ? b.id - a.id : a.id - b.id;
     });
   }, [data, type, searchTerm, sortOrder, selectedCategory, selectedRegion, campSortOrder]);
 
   const handleEmptyState = (title: string, btnLabel: string, modalType: string) => (
-    <div className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50/50">
-      <FolderPlus className="w-10 h-10 text-slate-300 mb-3" strokeWidth={1.5} />
-      <h4 className="text-sm font-bold text-slate-700">{title}</h4>
-      <p className="text-xs text-slate-400 mt-1 max-w-[280px]">
+    <div className="flex flex-col items-center justify-center p-10 text-center border border-dashed border-[#E2E5E1] rounded-lg bg-white">
+      <FolderPlus className="w-8 h-8 text-[#8891A3] mb-2" strokeWidth={1.5} />
+      <span className="ops-eyebrow text-[#0F1B33] text-xs">{title}</span>
+      <p className="text-xs text-[#8891A3] mt-1 max-w-[280px]">
         Keep operations tracked by registering entries to compile your marketing intelligence.
       </p>
-      <button
+      <motion.button
+        whileTap={{ scale: 0.96 }}
         onClick={() => onOpenModal(modalType)}
-        className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer flex items-center gap-1.5"
+        className="mt-4 px-3.5 py-2 bg-[#0F1B33] hover:bg-[#1C2A4A] text-[#C9A227] font-mono font-bold text-xs rounded border border-[#C9A227]/30 shadow-xs cursor-pointer flex items-center gap-1.5"
       >
         <Plus className="w-3.5 h-3.5" strokeWidth={2} />
-        <span>{btnLabel}</span>
-      </button>
+        <span>{btnLabel.toUpperCase()}</span>
+      </motion.button>
     </div>
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 select-none">
       {/* Search Bar, Filter Chips & Sort Controls */}
       <div className="space-y-3">
         <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
+          <div className="flex flex-col sm:flex-row gap-2.5 w-full md:w-auto items-center">
             {/* Search Input */}
             <div className="relative w-full sm:w-64">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-xs">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[#8891A3]">
                 <Search className="w-3.5 h-3.5" strokeWidth={2} />
               </span>
               <input
                 type="text"
-                placeholder={type === 'camps' ? "Search camp name, landmark, region..." : "Filter list records..."}
+                placeholder={type === 'camps' ? "Search camp, landmark, region..." : "Search records..."}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-8 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white placeholder-slate-400"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded border border-[#E2E5E1] focus:border-[#0F1B33] focus:outline-none bg-white font-sans text-[#0F1B33] placeholder-[#8891A3]"
               />
             </div>
 
             {/* Sort Toggle Buttons */}
-            <div className="flex flex-wrap items-center gap-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200/60 w-full sm:w-auto shadow-inner">
+            <div className="flex items-center gap-1 bg-[#EEF0F3] p-1 rounded border border-[#E2E5E1] w-full sm:w-auto font-mono">
               <button
                 type="button"
                 onClick={() => {
                   setSortOrder('newest');
                   if (type === 'camps') setCampSortOrder('default');
                 }}
-                className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`flex-1 sm:flex-none px-2.5 py-1 rounded text-[10px] font-bold transition-colors cursor-pointer flex items-center justify-center gap-1 ${
                   sortOrder === 'newest' && (type !== 'camps' || campSortOrder === 'default')
-                    ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/10'
-                    : 'text-slate-500 hover:text-slate-700'
+                    ? 'bg-[#0F1B33] text-white'
+                    : 'text-[#8891A3] hover:text-[#0F1B33]'
                 }`}
               >
-                <Calendar className="w-3 h-3 text-indigo-500" />
-                Newest First
+                <Calendar className="w-3 h-3 text-[#C9A227]" />
+                NEWEST
               </button>
               <button
                 type="button"
@@ -245,34 +241,35 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
                   setSortOrder('oldest');
                   if (type === 'camps') setCampSortOrder('default');
                 }}
-                className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`flex-1 sm:flex-none px-2.5 py-1 rounded text-[10px] font-bold transition-colors cursor-pointer flex items-center justify-center gap-1 ${
                   sortOrder === 'oldest' && (type !== 'camps' || campSortOrder === 'default')
-                    ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/10'
-                    : 'text-slate-500 hover:text-slate-700'
+                    ? 'bg-[#0F1B33] text-white'
+                    : 'text-[#8891A3] hover:text-[#0F1B33]'
                 }`}
               >
-                <Calendar className="w-3 h-3 text-indigo-500 rotate-180 transform" />
-                Oldest First
+                <Calendar className="w-3 h-3 text-[#C9A227] rotate-180" />
+                OLDEST
               </button>
               {type === 'camps' && (
                 <button
                   type="button"
                   onClick={() => setCampSortOrder(campSortOrder === 'payday' ? 'default' : 'payday')}
-                  className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+                  className={`flex-1 sm:flex-none px-2.5 py-1 rounded text-[10px] font-bold transition-colors cursor-pointer flex items-center justify-center gap-1 ${
                     campSortOrder === 'payday'
-                      ? 'bg-amber-500 text-white shadow-sm font-extrabold'
-                      : 'text-slate-600 hover:text-slate-800'
+                      ? 'bg-[#C9A227] text-[#0F1B33]'
+                      : 'text-[#8891A3] hover:text-[#0F1B33]'
                   }`}
                   title="Sort camps with salary dates closest to today"
                 >
                   <DollarSign className="w-3 h-3" strokeWidth={2.5} />
-                  Upcoming Payday
+                  PAYDAY NEAR
                 </button>
               )}
             </div>
           </div>
 
-          <button
+          <motion.button
+            whileTap={{ scale: 0.96 }}
             onClick={() => {
               const mapping: { [key: string]: string } = {
                 companies: 'company',
@@ -287,21 +284,20 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
               };
               onOpenModal(mapping[type]);
             }}
-            className="w-full md:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
+            className="w-full md:w-auto px-3.5 py-1.5 bg-[#0F1B33] hover:bg-[#1C2A4A] text-[#C9A227] font-mono font-bold text-xs rounded border border-[#C9A227]/30 shadow-xs cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
           >
             <Plus className="w-3.5 h-3.5" strokeWidth={2} />
-            <span>Register New Entry</span>
-          </button>
+            <span>REGISTER NEW ENTRY</span>
+          </motion.button>
         </div>
 
-        {/* Filter Chips for Camps view (Category and Region) */}
+        {/* Filter Chips for Camps view */}
         {type === 'camps' && (
-          <div className="space-y-2 pt-1 border-t border-slate-100">
-            {/* Category Chips */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
-                <Filter className="w-3 h-3 text-slate-400" />
-                Category:
+          <div className="space-y-1.5 pt-2 border-t border-[#E2E5E1]">
+            <div className="flex items-center gap-1 overflow-x-auto pb-1 text-xs">
+              <span className="ops-eyebrow text-[#8891A3] text-[9px] shrink-0 mr-1 flex items-center gap-1">
+                <Filter className="w-3 h-3" />
+                CATEGORY:
               </span>
               {CATEGORY_OPTIONS.map((cat) => {
                 const isActive = selectedCategory === cat;
@@ -309,23 +305,22 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all shrink-0 cursor-pointer ${
+                    className={`px-2.5 py-0.5 rounded font-mono text-[10px] font-bold transition-colors shrink-0 cursor-pointer ${
                       isActive
-                        ? 'bg-slate-800 text-white shadow-xs'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200/60'
+                        ? 'bg-[#0F1B33] text-[#C9A227]'
+                        : 'bg-white text-[#8891A3] border border-[#E2E5E1] hover:text-[#0F1B33]'
                     }`}
                   >
-                    {cat}
+                    {cat.toUpperCase()}
                   </button>
                 );
               })}
             </div>
 
-            {/* Region Chips */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-slate-400" />
-                Region:
+            <div className="flex items-center gap-1 overflow-x-auto pb-1 text-xs">
+              <span className="ops-eyebrow text-[#8891A3] text-[9px] shrink-0 mr-1 flex items-center gap-1">
+                <MapPin className="w-3 h-3" />
+                REGION:
               </span>
               {REGION_OPTIONS.map((reg) => {
                 const isActive = selectedRegion === reg;
@@ -333,13 +328,13 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
                   <button
                     key={reg}
                     onClick={() => setSelectedRegion(reg)}
-                    className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all shrink-0 cursor-pointer ${
+                    className={`px-2.5 py-0.5 rounded font-mono text-[10px] font-bold transition-colors shrink-0 cursor-pointer ${
                       isActive
-                        ? 'bg-indigo-900 text-white shadow-xs'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200/60'
+                        ? 'bg-[#2E4B8F] text-white'
+                        : 'bg-white text-[#8891A3] border border-[#E2E5E1] hover:text-[#0F1B33]'
                     }`}
                   >
-                    {reg}
+                    {reg.toUpperCase()}
                   </button>
                 );
               })}
@@ -369,12 +364,12 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
             ? handleEmptyState('No social ad campaigns listed', 'Launch Ad Campaign', 'social')
             : handleEmptyState('No strategic plans configured', 'Create Action Plan', 'plan')
         ) : (
-          <div className="p-8 text-center bg-slate-50 rounded-xl text-xs text-slate-400 font-medium">
-            No matching results found for "{searchTerm}"
+          <div className="p-8 text-center bg-white rounded border border-[#E2E5E1] text-xs text-[#8891A3] font-mono">
+            No matching records found for "{searchTerm}"
           </div>
         )
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {/* 1. Companies view */}
           {type === 'companies' &&
             processedData.map((item, idx) => {
@@ -382,85 +377,84 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
               return (
                 <div
                   key={c.id}
-                  className="bg-slate-50 hover:bg-indigo-50/10 rounded-xl p-4 border border-slate-100 hover:border-indigo-100 transition-all duration-200 relative group"
+                  className="ops-card p-4 space-y-2 relative group"
                 >
-                  <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                  <div className="absolute top-3.5 right-3.5 flex items-center gap-1">
                     {onEdit && (
                       <button
                         onClick={() => onEdit('company', c)}
-                        className="px-2.5 py-1 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 rounded-lg cursor-pointer transition-colors flex items-center gap-1 shadow-xs"
+                        className="px-2 py-0.5 text-[10px] font-mono font-bold text-[#2E4B8F] bg-[#2E4B8F]/10 hover:bg-[#2E4B8F]/20 rounded border border-[#2E4B8F]/30 cursor-pointer flex items-center gap-1"
                         title="Edit Company Details"
                       >
-                        <Pencil className="w-3 h-3 text-indigo-600" strokeWidth={2} />
-                        <span>Edit</span>
+                        <Pencil className="w-3 h-3" />
+                        <span>EDIT</span>
                       </button>
                     )}
                     <button
                       onClick={() => onDelete(c.id)}
-                      className="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
+                      className="p-1 text-[#8891A3] hover:text-[#D64545] cursor-pointer transition-colors"
                       title="Delete Entry"
                     >
-                      <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <div className="flex items-center gap-2 pr-24">
-                    <span className="text-xs font-bold text-indigo-600 font-mono">
-                      #{idx + 1}
+
+                  <div className="flex items-center gap-2 pr-20">
+                    <span className="font-mono text-xs font-bold text-[#C9A227]">
+                      #{String(idx + 1).padStart(2, '0')}
                     </span>
-                    <h4 className="text-sm font-bold text-slate-800">{c.name}</h4>
-                    <span className="bg-indigo-50 text-indigo-700 text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                      <Building2 className="w-3 h-3 text-indigo-700" strokeWidth={1.8} />
-                      <span>Corporate Account</span>
+                    <h4 className="text-sm font-bold text-[#0F1B33]">{c.name}</h4>
+                    <span className="bg-[#0F1B33] text-[#C9A227] text-[9px] font-mono px-2 py-0.5 rounded font-bold">
+                      CORPORATE
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 text-xs text-slate-500 font-medium">
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#5B6478]">
                     {c.contact && (
                       <div className="flex items-center gap-1.5">
-                        <User className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
-                        <span>Contact: <strong className="text-slate-700">{c.contact}</strong></span>
+                        <User className="w-3.5 h-3.5 text-[#8891A3] shrink-0" />
+                        <span>Contact: <strong className="text-[#0F1B33]">{c.contact}</strong></span>
                       </div>
                     )}
                     {c.phone && (
                       <div className="flex items-center gap-1.5">
-                        <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
-                        <span>Phone: <strong className="text-slate-700 font-mono">{c.phone}</strong></span>
+                        <Phone className="w-3.5 h-3.5 text-[#8891A3] shrink-0" />
+                        <span>Phone: <strong className="text-[#0F1B33] font-mono">{c.phone}</strong></span>
                       </div>
                     )}
                     {c.address && (
                       <div className="flex items-center gap-1.5 sm:col-span-2">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
+                        <MapPin className="w-3.5 h-3.5 text-[#8891A3] shrink-0" />
                         <span>Address: <a
                           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.address)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1"
-                          title="Open address in Google Maps"
+                          className="font-bold text-[#2E4B8F] hover:underline inline-flex items-center gap-1"
                         >
                           <span>{c.address}</span>
-                          <ExternalLink className="w-3 h-3 text-indigo-500" strokeWidth={2} />
+                          <ExternalLink className="w-3 h-3" />
                         </a></span>
                       </div>
                     )}
                   </div>
+
                   {c.boss_name && (
-                    <div className="mt-3 p-2.5 bg-white rounded-lg border border-slate-200/60 text-xs">
-                      <p className="font-semibold text-slate-700 flex items-center gap-1">
-                        <Tent className="w-3.5 h-3.5 text-slate-500 shrink-0" strokeWidth={1.8} />
-                        <span>Associated Labor Camp Manager:</span>
-                      </p>
-                      <p className="text-slate-500 mt-1 font-medium">
+                    <div className="p-2 bg-[#EEF0F3] rounded border border-[#E2E5E1] text-xs">
+                      <span className="ops-eyebrow text-[#0F1B33]">CAMP MANAGER</span>
+                      <p className="text-[#0F1B33] font-medium mt-0.5 font-mono">
                         {c.boss_name} {c.boss_phone ? `· ${c.boss_phone}` : ''}
                       </p>
                     </div>
                   )}
+
                   {c.notes && (
-                    <p className="mt-3 text-xs text-slate-500 leading-relaxed font-medium bg-slate-100 p-2.5 rounded-lg border border-slate-200/40 flex items-start gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" strokeWidth={1.8} />
-                      <span className="italic">{c.notes}</span>
+                    <p className="text-xs text-[#5B6478] bg-[#EEF0F3] p-2 rounded border border-[#E2E5E1] italic">
+                      "{c.notes}"
                     </p>
                   )}
-                  <div className="mt-3 text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
-                    Registered On {c.date}
+
+                  <div className="ops-eyebrow text-[#8891A3] text-[9px]">
+                    REGISTERED ON {c.date}
                   </div>
                 </div>
               );
@@ -474,152 +468,115 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
               return (
                 <div
                   key={c.id}
-                  className="bg-slate-50 hover:bg-amber-50/20 rounded-2xl p-4 border border-slate-200/80 hover:border-amber-300 transition-all duration-200 relative group space-y-3"
+                  className="ops-card p-4 space-y-2.5 relative group border-l-4 border-l-[#C9A227]"
                 >
-                  <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                  <div className="absolute top-3.5 right-3.5 flex items-center gap-1">
                     {onEdit && (
                       <button
                         onClick={() => onEdit('camp', c)}
-                        className="px-2.5 py-1 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 rounded-lg cursor-pointer transition-colors flex items-center gap-1 shadow-xs"
+                        className="px-2 py-0.5 text-[10px] font-mono font-bold text-[#2E4B8F] bg-[#2E4B8F]/10 hover:bg-[#2E4B8F]/20 rounded border border-[#2E4B8F]/30 cursor-pointer flex items-center gap-1"
                         title="Edit Camp Details"
                       >
-                        <Pencil className="w-3 h-3 text-indigo-600" strokeWidth={2} />
-                        <span>Edit</span>
+                        <Pencil className="w-3 h-3" />
+                        <span>EDIT</span>
                       </button>
                     )}
                     <button
                       onClick={() => onDelete(c.id)}
-                      className="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
+                      className="p-1 text-[#8891A3] hover:text-[#D64545] cursor-pointer transition-colors"
                       title="Delete Entry"
                     >
-                      <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
                   {/* Header Row */}
-                  <div className="flex flex-wrap items-center gap-2 pr-24">
-                    <span className="text-xs font-bold text-amber-600 font-mono">
-                      #{idx + 1}
+                  <div className="flex flex-wrap items-center gap-2 pr-20">
+                    <span className="font-mono text-xs font-bold text-[#C9A227]">
+                      #{String(idx + 1).padStart(2, '0')}
                     </span>
-                    <h4 className="text-base font-bold text-slate-900">{c.name}</h4>
+                    <h4 className="text-base font-bold text-[#0F1B33]">{c.name}</h4>
 
-                    {/* Region Badge */}
                     {c.region && (
-                      <span className="bg-indigo-50 text-indigo-700 text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 border border-indigo-100">
-                        <MapPin className="w-3 h-3 text-indigo-600" strokeWidth={1.8} />
-                        <span>{c.region}</span>
+                      <span className="bg-[#2E4B8F]/10 text-[#2E4B8F] font-mono text-[9px] px-2 py-0.5 rounded font-bold border border-[#2E4B8F]/20">
+                        {c.region.toUpperCase()}
                       </span>
                     )}
 
-                    {/* Category Tag */}
                     {c.category && (
-                      <span className="bg-amber-100/80 text-amber-900 text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 border border-amber-200">
-                        <Tag className="w-3 h-3 text-amber-700" strokeWidth={1.8} />
-                        <span>{c.category}</span>
+                      <span className="bg-[#C9A227]/10 text-[#0F1B33] font-mono text-[9px] px-2 py-0.5 rounded font-bold border border-[#C9A227]/30">
+                        {c.category.toUpperCase()}
                       </span>
                     )}
 
-                    {/* Payday Badge */}
                     {c.salaryDate && (
-                      <span className="bg-emerald-50 text-emerald-800 text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 border border-emerald-200">
-                        <Calendar className="w-3 h-3 text-emerald-600" strokeWidth={1.8} />
-                        <span>Payday: {getOrdinal(c.salaryDate)}</span>
+                      <span className="bg-[#2F9E77]/10 text-[#2F9E77] font-mono text-[9px] px-2 py-0.5 rounded font-bold border border-[#2F9E77]/30 flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        <span>PAYDAY: {getOrdinal(c.salaryDate)}</span>
                         {daysLeft !== null && daysLeft <= 5 && (
-                          <span className="ml-0.5 bg-emerald-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black">
-                            {daysLeft === 0 ? 'TODAY' : `${daysLeft}d left`}
+                          <span className="ml-1 bg-[#2F9E77] text-white px-1.5 py-0.2 rounded text-[8px] font-black">
+                            {daysLeft === 0 ? 'TODAY' : `${daysLeft}D LEFT`}
                           </span>
                         )}
                       </span>
                     )}
                   </div>
 
-                  {/* Location & Details Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600 font-medium bg-white p-3 rounded-xl border border-slate-200/60">
+                  {/* Details Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#5B6478] bg-[#EEF0F3] p-2.5 rounded border border-[#E2E5E1]">
                     <div className="flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
+                      <MapPin className="w-3.5 h-3.5 text-[#8891A3] shrink-0" />
                       <span>Address: {c.mapsLink ? (
                         <a
                           href={c.mapsLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1"
-                          title="Open in Google Maps"
+                          className="font-bold text-[#2E4B8F] hover:underline inline-flex items-center gap-1"
                         >
                           <span>{c.location}</span>
-                          <ExternalLink className="w-3 h-3 text-indigo-500" strokeWidth={2} />
-                        </a>
-                      ) : c.location ? (
-                        <a
-                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.location + (c.landmark ? ', ' + c.landmark : ''))}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1"
-                          title="Search address in Google Maps"
-                        >
-                          <span>{c.location}</span>
-                          <ExternalLink className="w-3 h-3 text-indigo-500" strokeWidth={2} />
+                          <ExternalLink className="w-3 h-3" />
                         </a>
                       ) : (
-                        <strong className="text-slate-800">-</strong>
+                        <span className="font-bold text-[#0F1B33]">{c.location || '-'}</span>
                       )}</span>
                     </div>
 
                     {c.landmark && (
                       <div className="flex items-center gap-1.5">
-                        <Navigation className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
-                        <span>Landmark: <strong className="text-slate-800">{c.landmark}</strong></span>
+                        <Navigation className="w-3.5 h-3.5 text-[#8891A3] shrink-0" />
+                        <span>Landmark: <strong className="text-[#0F1B33]">{c.landmark}</strong></span>
                       </div>
                     )}
 
                     {c.company && (
                       <div className="flex items-center gap-1.5">
-                        <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
-                        <span>Company: <strong className="text-slate-800">{c.company}</strong></span>
+                        <Building2 className="w-3.5 h-3.5 text-[#8891A3] shrink-0" />
+                        <span>Company: <strong className="text-[#0F1B33]">{c.company}</strong></span>
                       </div>
                     )}
 
                     <div className="flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
-                      <span>Total Workers: <strong className="text-slate-800">{c.workers || 'N/A'}</strong></span>
+                      <Users className="w-3.5 h-3.5 text-[#8891A3] shrink-0" />
+                      <span>Workers: <strong className="font-mono text-[#0F1B33]">{c.workers || 'N/A'}</strong></span>
                     </div>
                   </div>
-
-                  {/* Google Maps Link if provided or available */}
-                  {(c.mapsLink || c.location) && (
-                    <div className="pt-0.5">
-                      <a
-                        href={c.mapsLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.location + (c.landmark ? ', ' + c.landmark : ''))}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline bg-indigo-50/80 px-3 py-1.5 rounded-lg border border-indigo-100 transition-colors"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5 text-indigo-600" strokeWidth={1.8} />
-                        <span>Open in Google Maps</span>
-                      </a>
-                    </div>
-                  )}
 
                   {/* Boss Info */}
-                  <div className="p-2.5 bg-white rounded-xl border border-slate-200/60 text-xs">
-                    <p className="font-semibold text-slate-700 flex items-center gap-1">
-                      <User className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.8} />
-                      <span>Camp Boss:</span>
-                    </p>
-                    <p className="text-slate-500 mt-1 font-medium">
-                      {c.boss_name} · <strong className="font-mono text-slate-700">{c.boss_phone}</strong>
+                  <div className="p-2 bg-white rounded border border-[#E2E5E1] text-xs">
+                    <span className="ops-eyebrow text-[#0F1B33]">CAMP BOSS CONTACT</span>
+                    <p className="text-[#0F1B33] font-medium mt-0.5 font-mono">
+                      {c.boss_name} · <strong className="text-[#2E4B8F]">{c.boss_phone}</strong>
                     </p>
                   </div>
 
-                  {/* Notes */}
                   {c.notes && (
-                    <p className="text-xs text-slate-500 leading-relaxed font-medium bg-slate-100 p-2.5 rounded-xl border border-slate-200/40 flex items-start gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" strokeWidth={1.8} />
-                      <span className="italic">{c.notes}</span>
+                    <p className="text-xs text-[#5B6478] bg-[#EEF0F3] p-2 rounded border border-[#E2E5E1] italic">
+                      "{c.notes}"
                     </p>
                   )}
 
-                  <div className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
-                    Registered On {c.date}
+                  <div className="ops-eyebrow text-[#8891A3] text-[9px]">
+                    REGISTERED ON {c.date}
                   </div>
                 </div>
               );
@@ -627,66 +584,65 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
 
           {/* 3. Customers view */}
           {type === 'customers' && (
-            <div className="overflow-x-auto rounded-xl border border-slate-100 shadow-inner bg-white">
+            <div className="overflow-x-auto rounded border border-[#E2E5E1] bg-white shadow-xs">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                    <th className="py-3 px-4">#</th>
-                    <th className="py-3 px-4">Customer Name</th>
-                    <th className="py-3 px-4">Phone Number</th>
-                    <th className="py-3 px-4">Location</th>
-                    <th className="py-3 px-4">Segment</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                  <tr className="bg-[#0F1B33] text-white font-mono text-[10px]">
+                    <th className="py-2.5 px-3">#</th>
+                    <th className="py-2.5 px-3">CUSTOMER</th>
+                    <th className="py-2.5 px-3">PHONE</th>
+                    <th className="py-2.5 px-3">LOCATION</th>
+                    <th className="py-2.5 px-3">SEGMENT</th>
+                    <th className="py-2.5 px-3 text-right">ACTIONS</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-medium text-slate-600">
+                <tbody className="divide-y divide-[#E2E5E1] font-medium text-[#0F1B33]">
                   {processedData.map((item, idx) => {
                     const c = item as Customer;
                     return (
-                      <tr key={c.id} className="hover:bg-slate-50/50">
-                        <td className="py-2.5 px-4 font-mono font-bold text-indigo-500">
-                          {idx + 1}
+                      <tr key={c.id} className="hover:bg-[#EEF0F3]/60 transition-colors">
+                        <td className="py-2.5 px-3 font-mono font-bold text-[#C9A227]">
+                          {String(idx + 1).padStart(2, '0')}
                         </td>
-                        <td className="py-2.5 px-4 font-bold text-slate-800">{c.name}</td>
-                        <td className="py-2.5 px-4 font-mono">{c.phone || '-'}</td>
-                        <td className="py-2.5 px-4">
+                        <td className="py-2.5 px-3 font-bold text-[#0F1B33]">{c.name}</td>
+                        <td className="py-2.5 px-3 font-mono text-[#2E4B8F]">{c.phone || '-'}</td>
+                        <td className="py-2.5 px-3">
                           {c.location ? (
                             <a
                               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.location)}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1"
-                              title="Open location in Google Maps"
+                              className="font-bold text-[#2E4B8F] hover:underline inline-flex items-center gap-1"
                             >
                               <span>{c.location}</span>
-                              <ExternalLink className="w-3 h-3 text-indigo-400 shrink-0" strokeWidth={1.8} />
+                              <ExternalLink className="w-3 h-3 text-[#8891A3]" />
                             </a>
                           ) : (
                             '-'
                           )}
                         </td>
-                        <td className="py-2.5 px-4">
-                          <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-semibold text-[10px]">
-                            {c.type}
+                        <td className="py-2.5 px-3">
+                          <span className="px-2 py-0.5 bg-[#EEF0F3] rounded text-[#0F1B33] font-mono text-[9px] font-bold border border-[#E2E5E1]">
+                            {c.type.toUpperCase()}
                           </span>
                         </td>
-                        <td className="py-2.5 px-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="py-2.5 px-3 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
                             {onEdit && (
                               <button
                                 onClick={() => onEdit('customer', c)}
-                                className="text-indigo-600 hover:text-indigo-800 font-bold p-1 cursor-pointer"
+                                className="text-[#2E4B8F] p-1 cursor-pointer hover:opacity-80"
                                 title="Edit Customer"
                               >
-                                <Pencil className="w-3.5 h-3.5" strokeWidth={1.8} />
+                                <Pencil className="w-3.5 h-3.5" />
                               </button>
                             )}
                             <button
                               onClick={() => onDelete(c.id)}
-                              className="text-rose-600 hover:text-rose-800 font-bold p-1 cursor-pointer"
+                              className="text-[#D64545] p-1 cursor-pointer hover:opacity-80"
                               title="Delete Customer"
                             >
-                              <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </td>
@@ -700,68 +656,67 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
 
           {/* 4. Visits view */}
           {type === 'visits' && (
-            <div className="overflow-x-auto rounded-xl border border-slate-100 shadow-inner bg-white">
+            <div className="overflow-x-auto rounded border border-[#E2E5E1] bg-white shadow-xs">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                    <th className="py-3 px-4">#</th>
-                    <th className="py-3 px-4">Location Visited</th>
-                    <th className="py-3 px-4">Activity Category</th>
-                    <th className="py-3 px-4">Est. Audience</th>
-                    <th className="py-3 px-4">Key Findings</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                  <tr className="bg-[#0F1B33] text-white font-mono text-[10px]">
+                    <th className="py-2.5 px-3">#</th>
+                    <th className="py-2.5 px-3">LOCATION</th>
+                    <th className="py-2.5 px-3">CATEGORY</th>
+                    <th className="py-2.5 px-3">EST. AUDIENCE</th>
+                    <th className="py-2.5 px-3">KEY FINDINGS</th>
+                    <th className="py-2.5 px-3 text-right">ACTIONS</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-medium text-slate-600">
+                <tbody className="divide-y divide-[#E2E5E1] font-medium text-[#0F1B33]">
                   {processedData.map((item, idx) => {
                     const v = item as Visit;
                     return (
-                      <tr key={v.id} className="hover:bg-slate-50/50">
-                        <td className="py-2.5 px-4 font-mono font-bold text-rose-500">
-                          {idx + 1}
+                      <tr key={v.id} className="hover:bg-[#EEF0F3]/60 transition-colors">
+                        <td className="py-2.5 px-3 font-mono font-bold text-[#C9A227]">
+                          {String(idx + 1).padStart(2, '0')}
                         </td>
-                        <td className="py-2.5 px-4 font-bold text-slate-800">
+                        <td className="py-2.5 px-3 font-bold text-[#0F1B33]">
                           {v.place ? (
                             <a
                               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.place)}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline inline-flex items-center gap-1"
-                              title="Search place in Google Maps"
+                              className="font-bold text-[#2E4B8F] hover:underline inline-flex items-center gap-1"
                             >
                               <span>{v.place}</span>
-                              <ExternalLink className="w-3 h-3 text-indigo-400 shrink-0" strokeWidth={1.8} />
+                              <ExternalLink className="w-3 h-3 text-[#8891A3]" />
                             </a>
                           ) : (
                             '-'
                           )}
                         </td>
-                        <td className="py-2.5 px-4">
-                          <span className="px-2 py-0.5 bg-rose-50 text-rose-700 rounded-md font-bold uppercase text-[9px]">
-                            {v.type}
+                        <td className="py-2.5 px-3">
+                          <span className="px-2 py-0.5 bg-[#C9A227]/15 text-[#0F1B33] rounded font-mono font-bold text-[9px] border border-[#C9A227]/30">
+                            {v.type.toUpperCase()}
                           </span>
                         </td>
-                        <td className="py-2.5 px-4 font-mono">{v.people}</td>
-                        <td className="py-2.5 px-4 max-w-xs truncate" title={v.notes}>
+                        <td className="py-2.5 px-3 font-mono font-bold text-[#2E4B8F]">{v.people}</td>
+                        <td className="py-2.5 px-3 max-w-xs truncate text-[#5B6478]" title={v.notes}>
                           {v.notes || '-'}
                         </td>
-                        <td className="py-2.5 px-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="py-2.5 px-3 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
                             {onEdit && (
                               <button
                                 onClick={() => onEdit('visit', v)}
-                                className="text-indigo-600 hover:text-indigo-800 font-bold p-1 cursor-pointer"
+                                className="text-[#2E4B8F] p-1 cursor-pointer hover:opacity-80"
                                 title="Edit Visit"
                               >
-                                <Pencil className="w-3.5 h-3.5" strokeWidth={1.8} />
+                                <Pencil className="w-3.5 h-3.5" />
                               </button>
                             )}
                             <button
                               onClick={() => onDelete(v.id)}
-                              className="text-rose-600 hover:text-rose-800 font-bold p-1 cursor-pointer"
+                              className="text-[#D64545] p-1 cursor-pointer hover:opacity-80"
                               title="Delete Visit"
                             >
-                              <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </td>
@@ -775,65 +730,65 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
 
           {/* 5. Feedback view */}
           {type === 'feedback' && (
-            <div className="overflow-x-auto rounded-xl border border-slate-100 shadow-inner bg-white">
+            <div className="overflow-x-auto rounded border border-[#E2E5E1] bg-white shadow-xs">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                    <th className="py-3 px-4">#</th>
-                    <th className="py-3 px-4">Customer Name</th>
-                    <th className="py-3 px-4">Vibe Level</th>
-                    <th className="py-3 px-4">Rating Index</th>
-                    <th className="py-3 px-4">Detailed Comments</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                  <tr className="bg-[#0F1B33] text-white font-mono text-[10px]">
+                    <th className="py-2.5 px-3">#</th>
+                    <th className="py-2.5 px-3">CLIENT</th>
+                    <th className="py-2.5 px-3">SENTIMENT</th>
+                    <th className="py-2.5 px-3">RATING</th>
+                    <th className="py-2.5 px-3">COMMENTS</th>
+                    <th className="py-2.5 px-3 text-right">ACTIONS</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-medium text-slate-600">
+                <tbody className="divide-y divide-[#E2E5E1] font-medium text-[#0F1B33]">
                   {processedData.map((item, idx) => {
                     const f = item as Feedback;
                     return (
-                      <tr key={f.id} className="hover:bg-slate-50/50">
-                        <td className="py-2.5 px-4 font-mono font-bold text-emerald-500">
-                          {idx + 1}
+                      <tr key={f.id} className="hover:bg-[#EEF0F3]/60 transition-colors">
+                        <td className="py-2.5 px-3 font-mono font-bold text-[#2F9E77]">
+                          {String(idx + 1).padStart(2, '0')}
                         </td>
-                        <td className="py-2.5 px-4 font-bold text-slate-800">
+                        <td className="py-2.5 px-3 font-bold text-[#0F1B33]">
                           {f.customer || 'Anonymous'}
                         </td>
-                        <td className="py-2.5 px-4 font-semibold">
+                        <td className="py-2.5 px-3">
                           <span
-                            className={`px-2 py-0.5 rounded text-[10px] ${
+                            className={`px-2 py-0.5 rounded font-mono text-[9px] font-bold ${
                               f.type === 'Positive'
-                                ? 'bg-emerald-50 text-emerald-700'
+                                ? 'bg-[#2F9E77]/10 text-[#2F9E77] border border-[#2F9E77]/20'
                                 : f.type === 'Negative'
-                                ? 'bg-rose-50 text-rose-700'
-                                : 'bg-amber-50 text-amber-700'
+                                ? 'bg-[#D64545]/10 text-[#D64545] border border-[#D64545]/20'
+                                : 'bg-[#C9A227]/10 text-[#0F1B33] border border-[#C9A227]/20'
                             }`}
                           >
-                            {f.type}
+                            {f.type.toUpperCase()}
                           </span>
                         </td>
-                        <td className="py-2.5 px-4 text-amber-500 font-mono tracking-widest font-bold">
+                        <td className="py-2.5 px-3 text-[#C9A227] font-mono font-bold">
                           {f.rating} / 5
                         </td>
-                        <td className="py-2.5 px-4 max-w-xs truncate" title={f.feedback}>
+                        <td className="py-2.5 px-3 max-w-xs truncate text-[#5B6478]" title={f.feedback}>
                           {f.feedback}
                         </td>
-                        <td className="py-2.5 px-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="py-2.5 px-3 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
                             {onEdit && (
                               <button
                                 onClick={() => onEdit('feedback', f)}
-                                className="text-indigo-600 hover:text-indigo-800 font-bold p-1 cursor-pointer"
+                                className="text-[#2E4B8F] p-1 cursor-pointer hover:opacity-80"
                                 title="Edit Feedback"
                               >
-                                <Pencil className="w-3.5 h-3.5" strokeWidth={1.8} />
+                                <Pencil className="w-3.5 h-3.5" />
                               </button>
                             )}
                             <button
                               onClick={() => onDelete(f.id)}
-                              className="text-rose-600 hover:text-rose-800 font-bold p-1 cursor-pointer"
+                              className="text-[#D64545] p-1 cursor-pointer hover:opacity-80"
                               title="Delete Feedback"
                             >
-                              <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </td>
@@ -847,63 +802,61 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
 
           {/* 6. Complaints view */}
           {type === 'complaints' && (
-            <div className="overflow-x-auto rounded-xl border border-slate-100 shadow-inner bg-white">
+            <div className="overflow-x-auto rounded border border-[#E2E5E1] bg-white shadow-xs">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                    <th className="py-3 px-4">#</th>
-                    <th className="py-3 px-4">Client Name</th>
-                    <th className="py-3 px-4">Category</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4">Description</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                  <tr className="bg-[#0F1B33] text-white font-mono text-[10px]">
+                    <th className="py-2.5 px-3">#</th>
+                    <th className="py-2.5 px-3">CLIENT</th>
+                    <th className="py-2.5 px-3">CATEGORY</th>
+                    <th className="py-2.5 px-3">STATUS</th>
+                    <th className="py-2.5 px-3">DESCRIPTION</th>
+                    <th className="py-2.5 px-3 text-right">ACTIONS</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-medium text-slate-600">
+                <tbody className="divide-y divide-[#E2E5E1] font-medium text-[#0F1B33]">
                   {processedData.map((item, idx) => {
                     const c = item as Complaint;
                     return (
-                      <tr key={c.id} className="hover:bg-slate-50/50">
-                        <td className="py-3 px-4 font-mono font-bold text-rose-600">
-                          {idx + 1}
+                      <tr key={c.id} className="hover:bg-[#EEF0F3]/60 transition-colors">
+                        <td className="py-2.5 px-3 font-mono font-bold text-[#D64545]">
+                          {String(idx + 1).padStart(2, '0')}
                         </td>
-                        <td className="py-3 px-4 font-bold text-slate-800">{c.customer}</td>
-                        <td className="py-3 px-4 font-semibold text-slate-500">
-                          {c.category}
-                        </td>
-                        <td className="py-3 px-4">
+                        <td className="py-2.5 px-3 font-bold text-[#0F1B33]">{c.customer}</td>
+                        <td className="py-2.5 px-3 text-[#5B6478] font-mono text-[10px]">{c.category.toUpperCase()}</td>
+                        <td className="py-2.5 px-3">
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                            className={`px-2 py-0.5 rounded font-mono text-[9px] font-bold ${
                               c.status === 'Resolved'
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                ? 'bg-[#2F9E77]/10 text-[#2F9E77] border border-[#2F9E77]/20'
                                 : c.status === 'Open'
-                                ? 'bg-rose-50 text-[var(--coral,#D64545)] border border-rose-200 animate-pulse'
-                                : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                ? 'bg-[#D64545]/10 text-[#D64545] border border-[#D64545]/20 animate-pulse'
+                                : 'bg-[#C9A227]/10 text-[#0F1B33] border border-[#C9A227]/20'
                             }`}
                           >
-                            {c.status}
+                            {c.status.toUpperCase()}
                           </span>
                         </td>
-                        <td className="py-3 px-4 max-w-xs truncate" title={c.description}>
+                        <td className="py-2.5 px-3 max-w-xs truncate text-[#5B6478]" title={c.description}>
                           {c.description}
                         </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="py-2.5 px-3 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
                             {onEdit && (
                               <button
                                 onClick={() => onEdit('complaint', c)}
-                                className="text-indigo-600 hover:text-indigo-800 font-bold p-1 cursor-pointer"
+                                className="text-[#2E4B8F] p-1 cursor-pointer hover:opacity-80"
                                 title="Edit Complaint"
                               >
-                                <Pencil className="w-3.5 h-3.5" strokeWidth={1.8} />
+                                <Pencil className="w-3.5 h-3.5" />
                               </button>
                             )}
                             <button
                               onClick={() => onDelete(c.id)}
-                              className="text-rose-600 hover:text-rose-800 font-bold p-1 cursor-pointer"
+                              className="text-[#D64545] p-1 cursor-pointer hover:opacity-80"
                               title="Delete Complaint"
                             >
-                              <Trash2 className="w-3.5 h-3.5 text-[var(--coral,#D64545)]" strokeWidth={1.8} />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </td>
@@ -915,63 +868,63 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
             </div>
           )}
 
-          {/* 7. Competitor Strategies view */}
+          {/* 7. Competitor Intel view */}
           {type === 'competitors' && (
-            <div className="overflow-x-auto rounded-xl border border-slate-100 shadow-inner bg-white">
+            <div className="overflow-x-auto rounded border border-[#E2E5E1] bg-white shadow-xs">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                    <th className="py-3 px-4">#</th>
-                    <th className="py-3 px-4">Competitor</th>
-                    <th className="py-3 px-4">Promotion Strategy</th>
-                    <th className="py-3 px-4">Impact Threat</th>
-                    <th className="py-3 px-4">Notes</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                  <tr className="bg-[#0F1B33] text-white font-mono text-[10px]">
+                    <th className="py-2.5 px-3">#</th>
+                    <th className="py-2.5 px-3">COMPETITOR</th>
+                    <th className="py-2.5 px-3">PROMOTION STRATEGY</th>
+                    <th className="py-2.5 px-3">IMPACT THREAT</th>
+                    <th className="py-2.5 px-3">NOTES</th>
+                    <th className="py-2.5 px-3 text-right">ACTIONS</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-medium text-slate-600">
+                <tbody className="divide-y divide-[#E2E5E1] font-medium text-[#0F1B33]">
                   {processedData.map((item, idx) => {
                     const c = item as CompetitorIntel;
                     return (
-                      <tr key={c.id} className="hover:bg-slate-50/50">
-                        <td className="py-3 px-4 font-mono font-bold text-slate-700">
-                          {idx + 1}
+                      <tr key={c.id} className="hover:bg-[#EEF0F3]/60 transition-colors">
+                        <td className="py-2.5 px-3 font-mono font-bold text-[#0F1B33]">
+                          {String(idx + 1).padStart(2, '0')}
                         </td>
-                        <td className="py-3 px-4 font-bold text-slate-800">{c.name}</td>
-                        <td className="py-3 px-4 text-slate-700">{c.strategy}</td>
-                        <td className="py-3 px-4">
+                        <td className="py-2.5 px-3 font-bold text-[#0F1B33]">{c.name}</td>
+                        <td className="py-2.5 px-3 text-[#5B6478]">{c.strategy}</td>
+                        <td className="py-2.5 px-3">
                           <span
-                            className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold ${
+                            className={`px-2 py-0.5 rounded font-mono text-[9px] font-bold ${
                               c.impact === 'High'
-                                ? 'bg-red-50 text-red-700 border border-red-200'
+                                ? 'bg-[#D64545]/10 text-[#D64545] border border-[#D64545]/20'
                                 : c.impact === 'Medium'
-                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                ? 'bg-[#C9A227]/10 text-[#0F1B33] border border-[#C9A227]/20'
+                                : 'bg-[#2F9E77]/10 text-[#2F9E77] border border-[#2F9E77]/20'
                             }`}
                           >
-                            {c.impact} Threat
+                            {c.impact.toUpperCase()} THREAT
                           </span>
                         </td>
-                        <td className="py-3 px-4 max-w-xs truncate" title={c.notes}>
+                        <td className="py-2.5 px-3 max-w-xs truncate text-[#5B6478]" title={c.notes}>
                           {c.notes || '-'}
                         </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="py-2.5 px-3 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
                             {onEdit && (
                               <button
                                 onClick={() => onEdit('competitor', c)}
-                                className="text-indigo-600 hover:text-indigo-800 font-bold p-1 cursor-pointer"
+                                className="text-[#2E4B8F] p-1 cursor-pointer hover:opacity-80"
                                 title="Edit Competitor Intel"
                               >
-                                <Pencil className="w-3.5 h-3.5" strokeWidth={1.8} />
+                                <Pencil className="w-3.5 h-3.5" />
                               </button>
                             )}
                             <button
                               onClick={() => onDelete(c.id)}
-                              className="text-rose-600 hover:text-rose-800 font-bold p-1 cursor-pointer"
+                              className="text-[#D64545] p-1 cursor-pointer hover:opacity-80"
                               title="Delete Competitor Intel"
                             >
-                              <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </td>
@@ -992,57 +945,54 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
                 return (
                   <div
                     key={s.id}
-                    className="p-4 bg-slate-50 border border-slate-100 hover:border-slate-300 rounded-xl transition-all relative"
+                    className="ops-card p-4 space-y-2 relative group"
                   >
-                    <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                    <div className="absolute top-3.5 right-3.5 flex items-center gap-1">
                       {onEdit && (
                         <button
                           onClick={() => onEdit('social', s)}
-                          className="px-2 py-0.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 rounded-lg cursor-pointer transition-colors flex items-center gap-1"
+                          className="px-2 py-0.5 text-[10px] font-mono font-bold text-[#2E4B8F] bg-[#2E4B8F]/10 hover:bg-[#2E4B8F]/20 rounded border border-[#2E4B8F]/30 cursor-pointer flex items-center gap-1"
                           title="Edit Campaign"
                         >
-                          <Pencil className="w-3 h-3 text-indigo-600" strokeWidth={2} />
-                          <span>Edit</span>
+                          <Pencil className="w-3 h-3" />
+                          <span>EDIT</span>
                         </button>
                       )}
                       <button
                         onClick={() => onDelete(s.id)}
-                        className="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
+                        className="p-1 text-[#8891A3] hover:text-[#D64545] cursor-pointer transition-colors"
                         title="Delete Campaign"
                       >
-                        <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    <div className="flex items-center gap-2 mb-2 pr-20">
-                      <Smartphone className="w-4 h-4 text-indigo-600 shrink-0" strokeWidth={1.8} />
-                      <h4 className="text-sm font-bold text-slate-800">{s.title}</h4>
+                    <div className="flex items-center gap-2 pr-20">
+                      <Smartphone className="w-4 h-4 text-[#2E4B8F] shrink-0" />
+                      <h4 className="text-sm font-bold text-[#0F1B33]">{s.title}</h4>
                     </div>
-                    <div className="space-y-1 text-xs text-slate-500 font-medium">
+                    <div className="space-y-1 text-xs text-[#5B6478]">
                       <div>
-                        Platform:{' '}
-                        <span className="font-bold text-slate-700">
-                          {platformInfo?.name || s.platform}
-                        </span>
+                        Platform: <strong className="text-[#0F1B33]">{platformInfo?.name || s.platform}</strong>
                       </div>
                       {s.budget && (
                         <div>
-                          Ad Budget: <strong className="text-slate-800">{s.budget}</strong>
+                          Budget: <strong className="font-mono text-[#0F1B33]">{s.budget}</strong>
                         </div>
                       )}
                       <div>
-                        Campaign Status:{' '}
-                        <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] rounded font-bold">
-                          {s.status}
+                        Status:{' '}
+                        <span className="px-2 py-0.5 bg-[#2E4B8F]/10 text-[#2E4B8F] font-mono text-[9px] rounded font-bold">
+                          {s.status.toUpperCase()}
                         </span>
                       </div>
                     </div>
                     {s.notes && (
-                      <p className="mt-2.5 text-xs text-slate-500 italic bg-white p-2 rounded-lg border border-slate-100">
+                      <p className="text-xs text-[#5B6478] bg-[#EEF0F3] p-2 rounded border border-[#E2E5E1] italic">
                         "{s.notes}"
                       </p>
                     )}
-                    <div className="mt-3 text-[9px] text-slate-400 font-semibold tracking-wider uppercase">
-                      Launched on {s.date}
+                    <div className="ops-eyebrow text-[#8891A3] text-[9px]">
+                      LAUNCHED ON {s.date}
                     </div>
                   </div>
                 );
@@ -1057,47 +1007,46 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
               return (
                 <div
                   key={p.id}
-                  className="bg-slate-50 hover:bg-emerald-50/10 rounded-xl p-4 border border-slate-100 hover:border-emerald-200 transition-all duration-200 relative group"
+                  className="ops-card p-4 space-y-2 relative group border-l-4 border-l-[#2F9E77]"
                 >
-                  <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                  <div className="absolute top-3.5 right-3.5 flex items-center gap-1">
                     {onEdit && (
                       <button
                         onClick={() => onEdit('plan', p)}
-                        className="px-2 py-0.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-lg cursor-pointer transition-colors flex items-center gap-1"
+                        className="px-2 py-0.5 text-[10px] font-mono font-bold text-[#2F9E77] bg-[#2F9E77]/10 hover:bg-[#2F9E77]/20 rounded border border-[#2F9E77]/30 cursor-pointer flex items-center gap-1"
                         title="Edit Plan"
                       >
-                        <Pencil className="w-3 h-3 text-emerald-600" strokeWidth={2} />
-                        <span>Edit</span>
+                        <Pencil className="w-3 h-3" />
+                        <span>EDIT</span>
                       </button>
                     )}
                     <button
                       onClick={() => onDelete(p.id)}
-                      className="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
+                      className="p-1 text-[#8891A3] hover:text-[#D64545] cursor-pointer transition-colors"
                       title="Delete Plan"
                     >
-                      <Trash2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                   <div className="flex items-center gap-2 pr-20">
-                    <span className="text-xs font-bold text-emerald-600 font-mono">
-                      #{idx + 1}
+                    <span className="font-mono text-xs font-bold text-[#2F9E77]">
+                      #{String(idx + 1).padStart(2, '0')}
                     </span>
-                    <h4 className="text-sm font-bold text-slate-800">{p.title}</h4>
-                    <span className="bg-emerald-50 text-emerald-700 text-[9px] px-2 py-0.5 rounded-full font-bold">
-                      {p.status}
+                    <h4 className="text-sm font-bold text-[#0F1B33]">{p.title}</h4>
+                    <span className="bg-[#2F9E77]/10 text-[#2F9E77] font-mono text-[9px] px-2 py-0.5 rounded font-bold border border-[#2F9E77]/20">
+                      {p.status.toUpperCase()}
                     </span>
                   </div>
                   {p.budget && (
-                    <div className="mt-2 text-xs font-medium text-slate-500">
-                      Proposed Budget:{' '}
-                      <strong className="text-slate-800">{p.budget}</strong>
+                    <div className="text-xs text-[#5B6478]">
+                      Proposed Budget: <strong className="font-mono text-[#0F1B33]">{p.budget}</strong>
                     </div>
                   )}
-                  <p className="mt-3 text-xs text-slate-600 leading-relaxed font-medium bg-white p-3 rounded-lg border border-slate-200/50 whitespace-pre-wrap">
+                  <p className="text-xs text-[#0F1B33] leading-relaxed bg-[#EEF0F3] p-2.5 rounded border border-[#E2E5E1] whitespace-pre-wrap">
                     {p.details}
                   </p>
-                  <div className="mt-3 text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
-                    Formulated On {p.date}
+                  <div className="ops-eyebrow text-[#8891A3] text-[9px]">
+                    FORMULATED ON {p.date}
                   </div>
                 </div>
               );
@@ -1107,4 +1056,5 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
     </div>
   );
 }
+
 

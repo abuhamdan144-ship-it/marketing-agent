@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import { AppData } from '../types';
 import {
   TrendingUp,
@@ -26,24 +27,24 @@ export default function MoreView({ appData, onNavigate }: MoreViewProps) {
       title: 'Operations Analytics',
       desc: 'Performance trends, charts & conversion intel',
       icon: TrendingUp,
-      color: 'bg-indigo-50 text-indigo-600 border-indigo-100',
-      badge: 'Intel Center',
+      color: 'bg-[#C9A227]/10 text-[#C9A227] border-[#C9A227]/30',
+      badge: 'INTEL CENTER',
     },
     {
       id: 'companies',
       title: 'Companies',
       desc: 'Corporate accounts & camp manager contacts',
       icon: Building2,
-      color: 'bg-blue-50 text-blue-600 border-blue-100',
-      badge: `${appData.companies.length} logged`,
+      color: 'bg-[#2E4B8F]/20 text-[#2E4B8F] border-[#2E4B8F]/40',
+      badge: `${appData.companies.length} LOGGED`,
     },
     {
       id: 'feedback',
       title: 'Feedback',
       desc: 'Customer satisfaction ratings & client notes',
       icon: MessageCircle,
-      color: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-      badge: `${appData.feedback.length} reviews`,
+      color: 'bg-[#2F9E77]/10 text-[#2F9E77] border-[#2F9E77]/30',
+      badge: `${appData.feedback.length} REVIEWS`,
     },
   ];
 
@@ -94,18 +95,23 @@ export default function MoreView({ appData, onNavigate }: MoreViewProps) {
   ];
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <motion.div 
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      className="space-y-6"
+    >
       {/* Header Banner */}
-      <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
-        <div className="flex items-center gap-2.5 mb-1">
-          <div className="w-8 h-8 rounded-xl bg-[var(--gold-dim,#F4E9D2)] flex items-center justify-center text-[var(--ink,#16213E)]">
+      <div className="bg-[#0F1B33] rounded p-4 border border-white/10 shadow-ops-panel flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded bg-[#1C2A4A] border border-[#C9A227]/30 flex items-center justify-center text-[#C9A227]">
             <Grid className="w-4 h-4" strokeWidth={2} />
           </div>
           <div>
-            <h2 className="text-sm font-extrabold text-[var(--ink,#16213E)] uppercase tracking-wider font-display">
-              More Operations &amp; Workspace
+            <h2 className="ops-eyebrow text-[#C9A227]">
+              MORE OPERATIONS &amp; WORKSPACE
             </h2>
-            <p className="text-[11px] text-slate-500 font-semibold">
+            <p className="text-[11px] text-[#8891A3] font-mono mt-0.5">
               Select a section below to access detailed registers, analytics, and app settings
             </p>
           </div>
@@ -113,88 +119,90 @@ export default function MoreView({ appData, onNavigate }: MoreViewProps) {
       </div>
 
       {/* Featured Primary Items (Analytics, Companies, Feedback) */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">
-          Featured Registers &amp; Analytics
+      <div className="space-y-2.5">
+        <h3 className="ops-eyebrow text-[#8891A3]">
+          FEATURED REGISTERS &amp; ANALYTICS
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {primaryItems.map((item) => {
             const Icon = item.icon;
             return (
-              <button
+              <motion.button
                 key={item.id}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => onNavigate(item.id)}
-                className="bg-white rounded-2xl p-4 border border-slate-100 hover:border-indigo-200 shadow-xs hover:shadow-md transition-all text-left flex flex-col justify-between group cursor-pointer active:scale-98"
+                className="bg-[#0F1B33] rounded p-4 border border-white/10 hover:border-[#C9A227]/40 shadow-ops-panel transition-all text-left flex flex-col justify-between group cursor-pointer"
               >
                 <div className="flex items-start justify-between mb-3">
-                  <div className={`p-2.5 rounded-xl border ${item.color}`}>
+                  <div className={`p-2 rounded border ${item.color}`}>
                     <Icon className="w-5 h-5" strokeWidth={1.8} />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-500 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">
+                  <span className="text-[10px] font-mono font-bold text-[#8891A3] bg-[#1C2A4A] px-2 py-0.5 rounded border border-white/10">
                     {item.badge}
                   </span>
                 </div>
                 <div>
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">
+                    <h4 className="text-xs font-mono font-bold text-white group-hover:text-[#C9A227] transition-colors">
                       {item.title}
                     </h4>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all" />
+                    <ChevronRight className="w-3.5 h-3.5 text-[#8891A3] group-hover:text-[#C9A227] group-hover:translate-x-0.5 transition-all" />
                   </div>
-                  <p className="text-[11px] text-slate-400 font-medium mt-1 leading-snug">
+                  <p className="text-[11px] text-[#8891A3] font-mono mt-1 leading-snug">
                     {item.desc}
                   </p>
                 </div>
-              </button>
+              </motion.button>
             );
           })}
         </div>
       </div>
 
       {/* Secondary Registers */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">
-          Additional Tools &amp; Settings
+      <div className="space-y-2.5">
+        <h3 className="ops-eyebrow text-[#8891A3]">
+          ADDITIONAL TOOLS &amp; SETTINGS
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {secondaryItems.map((item) => {
             const Icon = item.icon;
             return (
-              <button
+              <motion.button
                 key={item.id}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => onNavigate(item.id)}
-                className="bg-white rounded-2xl p-4 border border-slate-100 hover:border-slate-200 shadow-xs hover:shadow-sm transition-all text-left flex items-center justify-between group cursor-pointer active:scale-98"
+                className="bg-[#0F1B33] rounded p-3.5 border border-white/10 hover:border-[#C9A227]/30 shadow-ops-panel transition-all text-left flex items-center justify-between group cursor-pointer"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className={`p-2 rounded-xl shrink-0 ${
+                    className={`p-2 rounded shrink-0 border ${
                       item.isComplaint
-                        ? 'bg-rose-50 text-[var(--coral,#D64545)]'
-                        : 'bg-slate-50 text-slate-600'
+                        ? 'bg-[#D64545]/10 text-[#D64545] border-[#D64545]/30'
+                        : 'bg-[#1C2A4A] text-[#8891A3] border-white/10'
                     }`}
                   >
                     <Icon className="w-4 h-4" strokeWidth={1.8} />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="text-xs font-bold text-slate-800 truncate group-hover:text-indigo-600 transition-colors">
+                    <h4 className="text-xs font-mono font-bold text-white truncate group-hover:text-[#C9A227] transition-colors">
                       {item.title}
                     </h4>
-                    <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5">
+                    <p className="text-[10px] text-[#8891A3] font-mono truncate mt-0.5">
                       {item.desc}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                  <span className="text-[9px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100 hidden xs:inline-block">
+                  <span className="text-[9px] font-mono font-bold text-[#8891A3] bg-[#1C2A4A] px-2 py-0.5 rounded border border-white/5 hidden xs:inline-block">
                     {item.badge}
                   </span>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight className="w-3.5 h-3.5 text-[#8891A3] group-hover:text-[#C9A227] group-hover:translate-x-0.5 transition-all" />
                 </div>
-              </button>
+              </motion.button>
             );
           })}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

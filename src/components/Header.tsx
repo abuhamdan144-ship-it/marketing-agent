@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, RefreshCw, Database } from 'lucide-react';
+import { Building2, RefreshCw, ShieldCheck, Cpu } from 'lucide-react';
+import { motion } from 'motion/react';
+import { ExchangeRates } from '../types';
+import RateTicker from './RateTicker';
 
 interface HeaderProps {
   lastUpdate?: string;
   isOnline: boolean;
+  rates?: ExchangeRates;
   rateSource?: string;
   syncStatus?: 'idle' | 'loading' | 'synced' | 'error';
   isForcedOffline?: boolean;
@@ -14,6 +18,7 @@ interface HeaderProps {
 
 export default function Header({ 
   isOnline, 
+  rates,
   syncStatus = 'synced',
   isForcedOffline = false,
   onForceResync,
@@ -37,81 +42,89 @@ export default function Header({
   };
 
   return (
-    <header 
-      className="sticky top-0 z-50 px-3.5 py-2.5 text-white shadow-md border-b border-white/10"
-      style={{
-        background: 'linear-gradient(135deg, var(--ink, #16213E) 0%, #1C2A4A 100%)',
-      }}
-    >
-      <div className="max-w-5xl mx-auto flex flex-col justify-between">
-        {/* Top Row: Logo, App Name, Status Pill & Resync Button */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="flex items-center justify-center w-8 h-8 shrink-0 bg-white/10 rounded-lg border border-white/15">
-              <Building2 className="w-4 h-4 text-white" strokeWidth={1.8} />
+    <header className="sticky top-0 z-50 bg-[#0F1B33] text-white shadow-xl border-b border-white/10">
+      <div className="max-w-7xl mx-auto px-4 py-3">
+        {/* Top Row: Brand & Ops Console Badges */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center justify-center w-9 h-9 shrink-0 bg-[#1C2A4A] rounded-lg border border-[#C9A227]/30 shadow-inner">
+              <Building2 className="w-5 h-5 text-[#C9A227]" strokeWidth={2} />
             </div>
-            <h1 className="text-xs sm:text-sm font-bold tracking-tight font-display text-white whitespace-nowrap truncate">
-              Marketing Agent Notebook
-            </h1>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="ops-eyebrow text-[#C9A227] tracking-widest text-[9px]">AL JADEED EXCHANGE</span>
+                <span className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-mono font-bold bg-[#1C2A4A] text-slate-300 rounded border border-white/10">OPS TERMINAL v3.2</span>
+              </div>
+              <h1 className="text-sm sm:text-base font-extrabold tracking-tight text-white font-sans truncate">
+                Field Marketing Operations Console
+              </h1>
+            </div>
           </div>
 
-          {/* Status Controls */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Controls & Live Indicators */}
+          <div className="flex items-center gap-2.5 shrink-0">
             {onForceResync && (
-              <button
+              <motion.button
+                whileTap={{ scale: 0.96 }}
                 onClick={onForceResync}
                 disabled={isSyncing}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-semibold text-white cursor-pointer transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#1C2A4A] hover:bg-[#2E4B8F]/40 border border-white/10 text-xs font-mono font-medium text-slate-200 cursor-pointer transition-colors disabled:opacity-50"
                 title="Force Resync Cloud Database and Clear Stale Cache"
               >
-                <RefreshCw className={`w-3 h-3 text-amber-300 ${isSyncing ? 'animate-spin' : ''}`} strokeWidth={2} />
-                <span className="hidden sm:inline">Resync DB</span>
-              </button>
+                <RefreshCw className={`w-3.5 h-3.5 text-[#C9A227] ${isSyncing ? 'animate-spin' : ''}`} strokeWidth={2} />
+                <span className="hidden sm:inline">RESYNC CLOUD</span>
+              </motion.button>
             )}
 
-            {/* Single Status Pill */}
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/10 shrink-0">
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  isForcedOffline
-                    ? 'bg-amber-400'
-                    : isOnline && syncStatus !== 'error'
-                    ? 'bg-[var(--signal,#2F9E77)]'
-                    : 'bg-rose-400'
-                }`}
-              />
-              <span
-                className={`text-xs font-semibold ${
-                  isForcedOffline
-                    ? 'text-amber-300'
-                    : isOnline && syncStatus !== 'error'
-                    ? 'text-[var(--signal,#2F9E77)]'
-                    : 'text-rose-300'
-                }`}
-              >
-                {isForcedOffline ? 'Offline Mode' : isOnline ? (syncStatus === 'loading' ? 'Syncing...' : 'Cloud Synced') : 'Offline'}
+            {/* Status Indicator Pill */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#0B1526] border border-white/10 shrink-0">
+              <span className="relative flex h-2 w-2">
+                <span
+                  className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                    isForcedOffline ? 'bg-amber-400' : isOnline && syncStatus !== 'error' ? 'bg-[#4ADE94]' : 'bg-[#F27373]'
+                  }`}
+                />
+                <span
+                  className={`relative inline-flex rounded-full h-2 w-2 ${
+                    isForcedOffline ? 'bg-amber-500' : isOnline && syncStatus !== 'error' ? 'bg-[#2F9E77]' : 'bg-[#D64545]'
+                  }`}
+                />
+              </span>
+              <span className="font-mono text-xs font-semibold tracking-wider text-slate-200">
+                {isForcedOffline ? 'OFFLINE' : isOnline ? (syncStatus === 'loading' ? 'SYNCING' : 'ONLINE') : 'DISCONNECTED'}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Thin Divider Line */}
-        <div className="border-t border-[var(--line,#E2E5E1)]/20 my-2" />
+        {/* Sub-header status bar */}
+        <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-xs text-[#8891A3]">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#2F9E77]" />
+              <span className="ops-eyebrow text-[#8891A3]">DATABASE:</span>
+              <span className="font-mono text-xs font-medium text-slate-300">FIRESTORE ACTIVE</span>
+            </div>
+            <div className="hidden md:flex items-center gap-1.5">
+              <Cpu className="w-3.5 h-3.5 text-[#2E4B8F]" />
+              <span className="ops-eyebrow text-[#8891A3]">NODE:</span>
+              <span className="font-mono text-xs text-slate-300">MUSCAT_HQ_01</span>
+            </div>
+          </div>
 
-        {/* Bottom Row: Session Uptime Label & Timer */}
-        <div className="flex items-center justify-between text-xs">
-          <div className="flex items-center gap-1.5">
-            <Database className="w-3 h-3 text-emerald-400" strokeWidth={2} />
-            <span className="text-[10px] font-bold tracking-wider uppercase text-[var(--ink-30,#A6ACBC)]">
-              FIREBASE CLOUD DATABASE ACTIVE
+          <div className="flex items-center gap-2 font-mono text-xs">
+            <span className="ops-eyebrow text-[#8891A3]">SESSION UPTIME:</span>
+            <span className="font-mono font-bold text-[#C9A227] tracking-wider">
+              {formatUptime(uptimeSeconds)}
             </span>
           </div>
-          <span className="font-mono text-xs sm:text-sm font-semibold tracking-wider text-[var(--gold,#C89B3C)]">
-            {formatUptime(uptimeSeconds)}
-          </span>
         </div>
       </div>
+
+      {/* Marquee Ticker directly below header */}
+      <RateTicker rates={rates} />
     </header>
   );
 }
+
 

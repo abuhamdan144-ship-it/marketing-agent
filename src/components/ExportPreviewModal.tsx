@@ -13,7 +13,6 @@ import {
   Eye, 
   Share2, 
   ClipboardList,
-  ChevronRight,
   Info
 } from 'lucide-react';
 
@@ -33,72 +32,63 @@ export default function ExportPreviewModal({ isOpen, onClose, onConfirm, appData
       id: 'companies',
       name: 'Registered Companies',
       count: appData.companies?.length || 0,
-      icon: <Building className="w-4 h-4 text-indigo-500" />,
-      color: 'bg-indigo-50',
+      icon: <Building className="w-4 h-4 text-[#C9A227]" />,
       description: 'Corporate client list with contract terms and business domains'
     },
     {
       id: 'camps',
       name: 'Labor Camps Target List',
       count: appData.camps?.length || 0,
-      icon: <Tent className="w-4 h-4 text-emerald-500" />,
-      color: 'bg-emerald-50',
+      icon: <Tent className="w-4 h-4 text-[#2F9E77]" />,
       description: 'Camp coordinates, population metrics, and access statuses'
     },
     {
       id: 'customers',
       name: 'Leads & Customers Register',
       count: appData.customers?.length || 0,
-      icon: <Users className="w-4 h-4 text-sky-500" />,
-      color: 'bg-sky-50',
+      icon: <Users className="w-4 h-4 text-[#2E4B8F]" />,
       description: 'Detailed customer contact profiles and remittance behavior'
     },
     {
       id: 'visits',
       name: 'Field Visits & Campaigns',
       count: appData.visits?.length || 0,
-      icon: <MapPin className="w-4 h-4 text-violet-500" />,
-      color: 'bg-violet-50',
+      icon: <MapPin className="w-4 h-4 text-[#C9A227]" />,
       description: 'Logged field visitation timelines, audience reach, and outcomes'
     },
     {
       id: 'feedbacks',
       name: 'Customer Feedback',
       count: appData.feedback?.length || 0,
-      icon: <MessageSquare className="w-4 h-4 text-amber-500" />,
-      color: 'bg-amber-50',
+      icon: <MessageSquare className="w-4 h-4 text-[#2F9E77]" />,
       description: 'Logged customer satisfaction surveys and experience comments'
     },
     {
       id: 'complaints',
       name: 'Customer Disputes',
       count: appData.complaints?.length || 0,
-      icon: <AlertTriangle className="w-4 h-4 text-rose-500" />,
-      color: 'bg-rose-50',
+      icon: <AlertTriangle className="w-4 h-4 text-[#D64545]" />,
       description: 'Pending and resolved customer issues or operational slip-ups'
     },
     {
       id: 'competitors',
       name: 'Competitor Intel',
       count: appData.competitors?.length || 0,
-      icon: <Eye className="w-4 h-4 text-slate-500" />,
-      color: 'bg-slate-100',
+      icon: <Eye className="w-4 h-4 text-[#8891A3]" />,
       description: 'Rival remittance operator rates, charges, and marketing moves'
     },
     {
       id: 'social',
       name: 'Social Campaigns',
       count: appData.social?.length || 0,
-      icon: <Share2 className="w-4 h-4 text-blue-500" />,
-      color: 'bg-blue-50',
+      icon: <Share2 className="w-4 h-4 text-[#2E4B8F]" />,
       description: 'Digital promotional campaigns launched on social platforms'
     },
     {
       id: 'plans',
       name: 'Marketing Action Plans',
       count: appData.plans?.length || 0,
-      icon: <ClipboardList className="w-4 h-4 text-purple-500" />,
-      color: 'bg-purple-50',
+      icon: <ClipboardList className="w-4 h-4 text-[#C9A227]" />,
       description: 'Structured strategies formulated for market penetration'
     }
   ];
@@ -106,91 +96,91 @@ export default function ExportPreviewModal({ isOpen, onClose, onConfirm, appData
   const totalRecords = collections.reduce((sum, c) => sum + c.count, 0);
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl border border-slate-100 max-h-[90vh] overflow-hidden flex flex-col animate-zoom-in">
+    <div className="fixed inset-0 bg-[#0B1526]/80 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+      <div className="bg-[#0F1B33] rounded-lg w-full max-w-2xl shadow-ops-panel border border-white/10 max-h-[90vh] overflow-hidden flex flex-col">
         
         {/* Modal Header */}
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="p-4 border-b border-white/10 flex items-center justify-between bg-[#1C2A4A]">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-md shadow-indigo-200">
+            <div className="p-2 bg-[#0F1B33] text-[#C9A227] rounded border border-[#C9A227]/30">
               <FileSpreadsheet className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider font-display">
-                Excel Export Data Preview
+              <h3 className="ops-eyebrow text-[#C9A227]">
+                EXCEL EXPORT DATA PREVIEW
               </h3>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+              <p className="text-[10px] text-[#8891A3] font-mono mt-0.5">
                 Audit and inspect database volumes prior to workbook compilation
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg text-sm cursor-pointer transition-colors"
+            className="p-1.5 hover:bg-white/10 text-[#8891A3] hover:text-white rounded transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-5 flex-1">
+        <div className="p-5 overflow-y-auto space-y-4 flex-1">
           {/* Quick Stats Banner */}
-          <div className="bg-gradient-to-r from-slate-900 to-indigo-950 rounded-xl p-4 text-white flex items-center justify-between border border-indigo-950">
+          <div className="bg-[#1C2A4A] rounded p-4 text-white flex items-center justify-between border border-white/10">
             <div>
-              <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest font-sans">
-                Total Aggregated Worksheets
+              <span className="ops-eyebrow text-[#8891A3]">
+                Aggregated Worksheets
               </span>
-              <p className="text-2xl font-black font-display mt-0.5">
-                {collections.length} <span className="text-slate-400 text-sm font-normal">Tables Selected</span>
+              <p className="text-xl font-mono font-bold text-white mt-0.5">
+                {collections.length} <span className="text-[#8891A3] text-xs font-normal">Tables</span>
               </p>
             </div>
             <div className="text-right">
-              <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest font-sans">
+              <span className="ops-eyebrow text-[#8891A3]">
                 Active Row Counts
               </span>
-              <p className="text-2xl font-black font-display mt-0.5 text-emerald-400">
-                {totalRecords.toLocaleString()} <span className="text-slate-400 text-sm font-normal text-slate-300">records</span>
+              <p className="text-xl font-mono font-bold text-[#4ADE94] mt-0.5">
+                {totalRecords.toLocaleString()} <span className="text-[#8891A3] text-xs font-normal">records</span>
               </p>
             </div>
           </div>
 
           {/* Guidelines */}
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-start gap-2.5">
-            <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <div className="text-[11px] text-amber-800 leading-relaxed font-medium">
-              <strong>Workbook Structure Info:</strong> The generated <code>Marketing_Agent_Database.xlsx</code> workbook compiles each collection below into a separate dedicated worksheet tab. Cell values, currencies, dates, and coordinator coordinates will be auto-formatted.
+          <div className="bg-[#2E4B8F]/20 border border-[#2E4B8F]/40 rounded p-3 flex items-start gap-2.5">
+            <Info className="w-4 h-4 text-[#C9A227] shrink-0 mt-0.5" />
+            <div className="text-[11px] text-[#8891A3] font-mono leading-relaxed">
+              <strong className="text-white">Workbook Structure Info:</strong> The generated <code className="text-[#C9A227]">Marketing_Agent_Database.xlsx</code> workbook compiles each collection below into a separate dedicated worksheet tab. Cell values, currencies, dates, and coordinator coordinates will be auto-formatted.
             </div>
           </div>
 
           {/* Collection breakdown list */}
-          <div className="space-y-2.5">
-            <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+          <div className="space-y-2">
+            <h4 className="ops-eyebrow text-[#8891A3]">
               Database Collection Breakdown
             </h4>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {collections.map((col) => (
                 <div 
                   key={col.id}
-                  className="p-3.5 bg-white rounded-xl border border-slate-100 hover:border-indigo-100 flex items-start gap-3 transition-all hover:shadow-sm"
+                  className="p-3 bg-[#1C2A4A]/60 rounded border border-white/5 hover:border-[#C9A227]/30 flex items-start gap-2.5 transition-all"
                 >
-                  <div className={`p-2 rounded-lg ${col.color} shrink-0`}>
+                  <div className="p-1.5 rounded bg-[#0F1B33] border border-white/10 shrink-0">
                     {col.icon}
                   </div>
-                  <div className="space-y-1 min-w-0 flex-1">
+                  <div className="space-y-0.5 min-w-0 flex-1">
                     <div className="flex justify-between items-baseline gap-2">
-                      <span className="text-xs font-bold text-slate-700 truncate block">
+                      <span className="text-xs font-mono font-bold text-white truncate block">
                         {col.name}
                       </span>
-                      <span className={`text-[10px] font-extrabold shrink-0 px-2 py-0.5 rounded-full ${
+                      <span className={`text-[10px] font-mono font-bold shrink-0 px-1.5 py-0.5 rounded ${
                         col.count > 0 
-                          ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' 
-                          : 'bg-slate-50 text-slate-400 border border-slate-100'
+                          ? 'bg-[#2F9E77]/20 text-[#4ADE94] border border-[#2F9E77]/30' 
+                          : 'bg-white/5 text-[#8891A3] border border-white/5'
                       }`}>
                         {col.count} {col.count === 1 ? 'row' : 'rows'}
                       </span>
                     </div>
-                    <p className="text-[10px] text-slate-400 font-semibold line-clamp-1 leading-relaxed">
+                    <p className="text-[10px] text-[#8891A3] font-mono line-clamp-1">
                       {col.description}
                     </p>
                   </div>
@@ -201,24 +191,24 @@ export default function ExportPreviewModal({ isOpen, onClose, onConfirm, appData
         </div>
 
         {/* Modal Footer */}
-        <div className="p-5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center sm:text-left flex items-center justify-center sm:justify-start gap-1">
-            <Database className="w-3 h-3 text-indigo-500" />
+        <div className="p-4 border-t border-white/10 bg-[#1C2A4A] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p className="text-[10px] text-[#8891A3] font-mono uppercase tracking-wider flex items-center justify-center sm:justify-start gap-1">
+            <Database className="w-3 h-3 text-[#C9A227]" />
             <span>Ready to export full package</span>
           </p>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="flex-1 sm:flex-initial px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer transition-colors"
+              className="flex-1 sm:flex-initial px-4 py-2 bg-transparent hover:bg-white/5 border border-white/10 text-white font-mono font-bold text-xs rounded transition-colors"
             >
-              Cancel
+              CANCEL
             </button>
             <button
               onClick={onConfirm}
-              className="flex-1 sm:flex-initial px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-indigo-200 cursor-pointer transition-colors flex items-center justify-center gap-1.5"
+              className="flex-1 sm:flex-initial px-4 py-2 bg-[#C9A227] hover:bg-[#b59121] text-[#0F1B33] font-mono font-bold text-xs rounded shadow-ops-panel transition-colors flex items-center justify-center gap-1.5"
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
-              Confirm & Compile Workbook (.xlsx)
+              COMPILE WORKBOOK (.XLSX)
             </button>
           </div>
         </div>
