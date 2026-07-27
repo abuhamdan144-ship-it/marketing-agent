@@ -275,9 +275,24 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
                       : 'text-[#8891A3]'
                 }`}
               >
-                <Icon className="w-4 h-4" strokeWidth={isActive ? 2.5 : 2} />
+                {!isOutdoor && isActive && (
+                  <div className="absolute inset-0 pointer-events-none rounded-md overflow-hidden">
+                    <div className="absolute inset-0 rounded-md" style={{ padding: 1 }}>
+                      <div
+                        className="absolute inset-0 rounded-md beam-rotate"
+                        style={{
+                          background:
+                            'conic-gradient(from var(--beam-angle, 0deg), transparent 0%, transparent 74%, rgba(201,162,39,0.85) 82%, rgba(255,241,199,0.95) 86%, rgba(201,162,39,0.85) 90%, transparent 98%)',
+                        }}
+                      />
+                      <div className="absolute rounded-md" style={{ inset: 1, background: '#101C36' }} />
+                    </div>
+                    <div key={activeTab} className="sweep pointer-events-none absolute inset-0 rounded-md" />
+                  </div>
+                )}
+                <Icon className="w-4 h-4 relative z-10" strokeWidth={isActive ? 2.5 : 2} />
                 {t.badge && t.badge > 0 ? (
-                  <span className={`absolute -top-1 -right-1 font-mono text-[9px] font-black px-1 rounded ${
+                  <span className={`absolute -top-1 -right-1 z-20 font-mono text-[9px] font-black px-1 rounded ${
                     isOutdoor ? 'bg-[#B91C1C] text-white border border-black' : 'bg-[#D64545] text-white border border-[#0F1B33]'
                   }`}>
                     {t.badge}
