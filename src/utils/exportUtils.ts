@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { AppData } from '../types';
+import { AppData, Camp } from '../types';
 
 export const CORRIDORS = [
   { id: 'pkr', name: 'PKR', flag: '🇵🇰', code: 'PKR' },
@@ -502,3 +502,88 @@ export function exportExcel(appData: AppData): void {
     console.error('Excel generation error:', error);
   }
 }
+
+export function exportCategoryCampsToExcel(camps: Camp[], categoryName: string): void {
+  try {
+    const categoryCamps = camps.filter((c) => c.category === categoryName);
+    if (categoryCamps.length === 0) return;
+
+    const getOrdinal = (day?: number): string => {
+      if (!day || day < 1 || day > 31) return '-';
+      if (day >= 11 && day <= 13) return `${day}th`;
+      switch (day % 10) {
+        case 1: return `${day}st`;
+        case 2: return `${day}nd`;
+        case 3: return `${day}rd`;
+        default: return `${day}th`;
+      }
+    };
+
+    const rows = categoryCamps.map((c, i) => ({
+      'S.No': i + 1,
+      'Camp Name': c.name || '-',
+      'Region / City': c.region || '-',
+      'Location': c.location || '-',
+      'Landmark': c.landmark || '-',
+      'Sponsoring Company': c.company || '-',
+      'Camp Boss Name': c.boss_name || '-',
+      'Boss Phone': c.boss_phone || '-',
+      'Worker Count': c.workers ? Number(c.workers) : 0,
+      'Salary Date': c.salaryDate ? getOrdinal(c.salaryDate) : '-',
+      'Notes': c.notes || '-',
+      'Recorded Date': c.date || '-'
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+
+    const safeCategoryName = categoryName.slice(0, 24);
+    XLSX.utils.book_append_sheet(wb, ws, `${safeCategoryName} Camps`);
+
+    const cleanCategory = categoryName.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const fileName = `Camps_${cleanCategory}_${dateStr}.xlsx`;
+
+    XLSX.writeFile(wb, fileName);
+  } catch (error) {
+    console.error('Category Excel export error:', error);
+  }
+}
+
+export function generateCategoryCampsSummaryText(camps: Camp[], categoryName: string): string {
+  const categoryCamps = camps.filter((c) => c.category === categoryName);
+  const today = new Date().toLocaleDateString();
+
+  let text = `🏕️ *LABOR CAMPS SUMMARY — ${categoryName.toUpperCase()}*\n`;
+  text += `📅 *Date:* ${today}\n`;
+  text += `📊 *Total Camps:* ${categoryCamps.length}\n`;
+  text += '='.repeat(38) + '\n\n';
+
+  let totalWorkers = 0;
+
+  if (categoryCamps.length === 0) {
+    text += `No camps currently recorded under category "${categoryName}".\n`;
+  } else {
+    categoryCamps.forEach((c, i) => {
+      const workersNum = c.workers ? parseInt(String(c.workers), 10) || 0 : 0;
+      totalWorkers += workersNum;
+
+      text += `${i + 1}. *${c.name}*\n`;
+      text += `   📍 City/Region: ${c.region || 'Unspecified'}\n`;
+      text += `   🗺️ Location: ${c.location || 'N/A'}${c.landmark ? ` (${c.landmark})` : ''}\n`;
+      if (c.company) text += `   🏢 Company: ${c.company}\n`;
+      text += `   👤 Boss: ${c.boss_name || 'N/A'} ${c.boss_phone ? `(${c.boss_phone})` : ''}\n`;
+      text += `   👷 Workers: ${c.workers || 'N/A'}\n`;
+      if (c.salaryDate) text += `   📅 Salary Payday: Day ${c.salaryDate} of month\n`;
+      if (c.notes) text += `   📝 Notes: ${c.notes}\n`;
+      text += '\n';
+    });
+
+    text += '-'.repeat(38) + '\n';
+    text += `👥 *SUMMARY:* ${categoryCamps.length} Camps | ${totalWorkers.toLocaleString()} Total Workers\n`;
+    text += `🏬 *Al Jadeed Exchange Field Operations*\n`;
+  }
+
+  return text;
+}
+

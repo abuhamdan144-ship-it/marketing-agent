@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Company, Camp, Customer, Visit, Feedback, Complaint, CompetitorIntel, SocialAd, MarketingPlan } from '../types';
-import { SOCIAL_PLATFORMS } from '../utils/exportUtils';
+import { SOCIAL_PLATFORMS, exportCategoryCampsToExcel, generateCategoryCampsSummaryText } from '../utils/exportUtils';
 import {
   Calendar,
   Search,
@@ -23,6 +23,12 @@ import {
   Navigation,
   Tag,
   Pencil,
+  ChevronDown,
+  ChevronRight,
+  FileSpreadsheet,
+  MessageCircle,
+  Mail,
+  Share2,
 } from 'lucide-react';
 
 interface ListsAndTablesProps {
@@ -34,16 +40,23 @@ interface ListsAndTablesProps {
 }
 
 const CATEGORY_OPTIONS = ['All', 'Construction', 'Oil & Gas', 'Facilities Management', 'Cleaning Services', 'Manpower Supply', 'Other'];
+const BUSINESS_CATEGORIES = ['Construction', 'Oil & Gas', 'Facilities Management', 'Cleaning Services', 'Manpower Supply', 'Other'];
 const REGION_OPTIONS = ['All', 'Barka', 'Muscat', 'Sohar', 'Buraimi', 'Nizwa', 'Other'];
 
 export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEdit }: ListsAndTablesProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
 
-  // Camp Specific Filter & Sort state
+  // Camp Specific Filter, Export & Sort state
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedRegion, setSelectedRegion] = useState<string>('All');
   const [campSortOrder, setCampSortOrder] = useState<'default' | 'payday'>('default');
+  const [exportCategory, setExportCategory] = useState<string | null>(null);
+  const [collapsedRegions, setCollapsedRegions] = useState<Record<string, boolean>>({});
+
+  const toggleRegionCollapse = (regionKey: string) => {
+    setCollapsedRegions((prev) => ({ ...prev, [regionKey]: !prev[regionKey] }));
+  };
 
   const getOrdinal = (day: number): string => {
     if (day >= 11 && day <= 13) return `${day}th`;
@@ -179,6 +192,156 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
       return sortOrder === 'newest' ? b.id - a.id : a.id - b.id;
     });
   }, [data, type, searchTerm, sortOrder, selectedCategory, selectedRegion, campSortOrder]);
+
+  // Group camps by region when no specific region filter is active ("All")
+  const groupedByRegion = useMemo(() => {
+    if (type !== 'camps' || selectedRegion !== 'All') return null;
+
+    const groups: { [key: string]: Camp[] } = {};
+    (processedData as Camp[]).forEach((camp) => {
+      const rawRegion = (camp.region || '').trim();
+      const regKey = rawRegion ? rawRegion : 'Unspecified';
+      if (!groups[regKey]) {
+        groups[regKey] = [];
+      }
+      groups[regKey].push(camp);
+    });
+
+    // Sort region/city sections alphabetically ("Unspecified" placed at end)
+    const sortedKeys = Object.keys(groups).sort((a, b) => {
+      if (a === 'Unspecified') return 1;
+      if (b === 'Unspecified') return -1;
+      return a.localeCompare(b, undefined, { sensitivity: 'base' });
+    });
+
+    return { groups, sortedKeys };
+  }, [processedData, type, selectedRegion]);
+
+  const renderCampCard = (c: Camp, idx: number) => {
+    const daysLeft = c.salaryDate ? getDaysUntilPayday(c.salaryDate) : null;
+    return (
+      <div
+        key={c.id}
+        className="ops-card p-4 space-y-2.5 relative group border-l-4 border-l-[#C9A227] bg-white rounded shadow-xs"
+      >
+        <div className="absolute top-3.5 right-3.5 flex items-center gap-1 z-10">
+          {onEdit && (
+            <button
+              onClick={() => onEdit('camp', c)}
+              className="px-2 py-0.5 text-[10px] font-mono font-bold text-[#2E4B8F] bg-[#2E4B8F]/10 hover:bg-[#2E4B8F]/20 rounded border border-[#2E4B8F]/30 cursor-pointer flex items-center gap-1"
+              title="Edit Camp Details"
+            >
+              <Pencil className="w-3 h-3" />
+              <span>EDIT</span>
+            </button>
+          )}
+          <button
+            onClick={() => onDelete(c.id)}
+            className="p-1 text-[#8891A3] hover:text-[#D64545] cursor-pointer transition-colors"
+            title="Delete Entry"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Header Row */}
+        <div className="flex flex-wrap items-center gap-2 pr-20">
+          <span className="font-mono text-xs font-bold text-[#C9A227]">
+            #{String(idx + 1).padStart(2, '0')}
+          </span>
+          <h4 className="text-base font-bold text-[#0F1B33]">{c.name}</h4>
+
+          {c.region && (
+            <span className="bg-[#2E4B8F]/10 text-[#2E4B8F] font-mono text-[9px] px-2 py-0.5 rounded font-bold border border-[#2E4B8F]/20">
+              {c.region.toUpperCase()}
+            </span>
+          )}
+
+          {c.category && (
+            <span className="bg-[#C9A227]/10 text-[#0F1B33] font-mono text-[9px] px-2 py-0.5 rounded font-bold border border-[#C9A227]/30">
+              {c.category.toUpperCase()}
+            </span>
+          )}
+
+          {c.salaryDate && (
+            <span className="bg-[#2F9E77]/10 text-[#2F9E77] font-mono text-[9px] px-2 py-0.5 rounded font-bold border border-[#2F9E77]/30 flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              <span>PAYDAY: {getOrdinal(c.salaryDate)}</span>
+              {daysLeft !== null && daysLeft <= 5 && (
+                <span className="ml-1 bg-[#2F9E77] text-white px-1.5 py-0.2 rounded text-[8px] font-black">
+                  {daysLeft === 0 ? 'TODAY' : `${daysLeft}D LEFT`}
+                </span>
+              )}
+            </span>
+          )}
+        </div>
+
+        {/* Details Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#5B6478] bg-[#EEF0F3] p-2.5 rounded border border-[#E2E5E1]">
+          <div className="flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-[#8891A3] shrink-0" />
+            <span>
+              Address:{' '}
+              {c.mapsLink ? (
+                <a
+                  href={c.mapsLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-[#2E4B8F] hover:underline inline-flex items-center gap-1"
+                >
+                  <span>{c.location}</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              ) : (
+                <span className="font-bold text-[#0F1B33]">{c.location || '-'}</span>
+              )}
+            </span>
+          </div>
+
+          {c.landmark && (
+            <div className="flex items-center gap-1.5">
+              <Navigation className="w-3.5 h-3.5 text-[#8891A3] shrink-0" />
+              <span>
+                Landmark: <strong className="text-[#0F1B33]">{c.landmark}</strong>
+              </span>
+            </div>
+          )}
+
+          {c.company && (
+            <div className="flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-[#8891A3] shrink-0" />
+              <span>
+                Company: <strong className="text-[#0F1B33]">{c.company}</strong>
+              </span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5 text-[#8891A3] shrink-0" />
+            <span>
+              Workers: <strong className="font-mono text-[#0F1B33]">{c.workers || 'N/A'}</strong>
+            </span>
+          </div>
+        </div>
+
+        {/* Boss Info */}
+        <div className="p-2 bg-white rounded border border-[#E2E5E1] text-xs">
+          <span className="ops-eyebrow text-[#0F1B33]">CAMP BOSS CONTACT</span>
+          <p className="text-[#0F1B33] font-medium mt-0.5 font-mono">
+            {c.boss_name} · <strong className="text-[#2E4B8F]">{c.boss_phone}</strong>
+          </p>
+        </div>
+
+        {c.notes && (
+          <p className="text-xs text-[#5B6478] bg-[#EEF0F3] p-2 rounded border border-[#E2E5E1] italic">
+            "{c.notes}"
+          </p>
+        )}
+
+        <div className="ops-eyebrow text-[#8891A3] text-[9px]">REGISTERED ON {c.date}</div>
+      </div>
+    );
+  };
 
   const handleEmptyState = (title: string, btnLabel: string, modalType: string) => (
     <div className="flex flex-col items-center justify-center p-10 text-center border border-dashed border-[#E2E5E1] rounded-lg bg-white">
@@ -341,6 +504,156 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
             </div>
           </div>
         )}
+
+        {/* Category-Wise Export & Share Panel for Camps */}
+        {type === 'camps' && (
+          <div className="bg-[#0F1B33] text-white rounded p-3.5 border border-white/10 space-y-3 shadow-xs mt-3">
+            <div className="flex items-center justify-between border-b border-white/10 pb-2">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-[#1C2A4A] rounded border border-[#C9A227]/30 text-[#C9A227]">
+                  <FileSpreadsheet className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="ops-eyebrow text-[#C9A227] tracking-wider">
+                    CATEGORY-WISE EXPORT &amp; SHARE
+                  </h4>
+                  <p className="text-[10px] text-[#8891A3] font-mono">
+                    Select a business category to download standalone Excel or dispatch summary reports
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Category Selection Buttons */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+              {BUSINESS_CATEGORIES.map((cat) => {
+                const count = data.filter((c: Camp) => c.category === cat).length;
+                const isSelected = exportCategory === cat;
+
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setExportCategory(isSelected ? null : cat)}
+                    className={`p-2 rounded border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      isSelected
+                        ? 'bg-[#C9A227] text-[#0F1B33] border-[#C9A227] font-bold shadow-xs'
+                        : 'bg-[#1C2A4A]/70 text-white border-white/10 hover:border-[#C9A227]/40 hover:bg-[#1C2A4A]'
+                    }`}
+                  >
+                    <span className="text-[10px] font-mono font-bold leading-tight block truncate">
+                      {cat.toUpperCase()}
+                    </span>
+                    <div className="mt-1 flex items-center justify-between">
+                      <span
+                        className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                          isSelected
+                            ? 'bg-[#0F1B33] text-[#C9A227]'
+                            : 'bg-black/30 text-[#4ADE94]'
+                        }`}
+                      >
+                        {count} {count === 1 ? 'CAMP' : 'CAMPS'}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Expanded Category Actions Drawer */}
+            {exportCategory && (() => {
+              const categoryCamps = data.filter((c: Camp) => c.category === exportCategory);
+              const count = categoryCamps.length;
+
+              return (
+                <div className="bg-[#1C2A4A] p-3 rounded border border-[#C9A227]/40 space-y-2.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-white/10">
+                    <div>
+                      <span className="ops-eyebrow text-[#C9A227]">
+                        SELECTED CATEGORY: {exportCategory.toUpperCase()}
+                      </span>
+                      <p className="text-xs font-mono text-white mt-0.5">
+                        Contains <strong className="text-[#4ADE94]">{count}</strong> registered {count === 1 ? 'camp' : 'camps'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setExportCategory(null)}
+                      className="text-[10px] font-mono text-[#8891A3] hover:text-white underline cursor-pointer self-start sm:self-auto"
+                    >
+                      Close Panel
+                    </button>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (count === 0) {
+                          alert(`No camps registered under ${exportCategory} category.`);
+                          return;
+                        }
+                        exportCategoryCampsToExcel(data, exportCategory);
+                      }}
+                      disabled={count === 0}
+                      className="px-3 py-2 bg-[#2F9E77] hover:bg-[#258262] text-white font-mono font-bold text-xs rounded shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-40 transition-colors"
+                    >
+                      <FileSpreadsheet className="w-3.5 h-3.5" />
+                      <span>EXCEL (.XLSX)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (count === 0) {
+                          alert(`No camps registered under ${exportCategory} category.`);
+                          return;
+                        }
+                        const summaryText = generateCategoryCampsSummaryText(data, exportCategory);
+                        const waUrl = `https://wa.me/?text=${encodeURIComponent(summaryText)}`;
+                        window.open(waUrl, '_blank');
+                      }}
+                      disabled={count === 0}
+                      className="px-3 py-2 bg-[#25D366] hover:bg-[#1eb857] text-[#0F1B33] font-mono font-bold text-xs rounded shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-40 transition-colors"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      <span>WHATSAPP SUMMARY</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (count === 0) {
+                          alert(`No camps registered under ${exportCategory} category.`);
+                          return;
+                        }
+                        const summaryText = generateCategoryCampsSummaryText(data, exportCategory);
+                        const dateStr = new Date().toISOString().slice(0, 10);
+                        const subject = `Labor Camps — ${exportCategory} — ${dateStr}`;
+                        const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(summaryText)}`;
+                        window.location.href = mailtoUrl;
+                      }}
+                      disabled={count === 0}
+                      className="px-3 py-2 bg-[#2E4B8F] hover:bg-[#22396e] text-white font-mono font-bold text-xs rounded shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-40 transition-colors"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>EMAIL REPORT</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Helper Caption */}
+            <p className="text-[10px] text-[#8891A3] font-mono leading-relaxed flex items-start gap-1.5 pt-1 border-t border-white/5">
+              <span className="text-[#C9A227] shrink-0 font-bold">ⓘ</span>
+              <span>
+                Note: Web browsers cannot automatically attach downloaded files to WhatsApp or Email drafts due to security restrictions. To share the actual Excel workbook, click <strong>Excel (.xlsx)</strong> to download first, then manually attach the file to your message or email.
+              </span>
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Render based on Type */}
@@ -462,125 +775,66 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
 
           {/* 2. Camps view */}
           {type === 'camps' &&
-            processedData.map((item, idx) => {
-              const c = item as Camp;
-              const daysLeft = c.salaryDate ? getDaysUntilPayday(c.salaryDate) : null;
-              return (
-                <div
-                  key={c.id}
-                  className="ops-card p-4 space-y-2.5 relative group border-l-4 border-l-[#C9A227]"
-                >
-                  <div className="absolute top-3.5 right-3.5 flex items-center gap-1">
-                    {onEdit && (
-                      <button
-                        onClick={() => onEdit('camp', c)}
-                        className="px-2 py-0.5 text-[10px] font-mono font-bold text-[#2E4B8F] bg-[#2E4B8F]/10 hover:bg-[#2E4B8F]/20 rounded border border-[#2E4B8F]/30 cursor-pointer flex items-center gap-1"
-                        title="Edit Camp Details"
-                      >
-                        <Pencil className="w-3 h-3" />
-                        <span>EDIT</span>
-                      </button>
-                    )}
-                    <button
-                      onClick={() => onDelete(c.id)}
-                      className="p-1 text-[#8891A3] hover:text-[#D64545] cursor-pointer transition-colors"
-                      title="Delete Entry"
+            (selectedRegion === 'All' && groupedByRegion ? (
+              <div className="space-y-3">
+                {groupedByRegion.sortedKeys.map((cityKey) => {
+                  const cityCamps = groupedByRegion.groups[cityKey];
+                  const isCollapsed = !!collapsedRegions[cityKey];
+                  const totalWorkers = cityCamps.reduce(
+                    (sum, c) => sum + (c.workers ? parseInt(String(c.workers), 10) || 0 : 0),
+                    0
+                  );
+
+                  return (
+                    <div
+                      key={cityKey}
+                      className="border border-[#E2E5E1] rounded overflow-hidden shadow-xs bg-white"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  {/* Header Row */}
-                  <div className="flex flex-wrap items-center gap-2 pr-20">
-                    <span className="font-mono text-xs font-bold text-[#C9A227]">
-                      #{String(idx + 1).padStart(2, '0')}
-                    </span>
-                    <h4 className="text-base font-bold text-[#0F1B33]">{c.name}</h4>
-
-                    {c.region && (
-                      <span className="bg-[#2E4B8F]/10 text-[#2E4B8F] font-mono text-[9px] px-2 py-0.5 rounded font-bold border border-[#2E4B8F]/20">
-                        {c.region.toUpperCase()}
-                      </span>
-                    )}
-
-                    {c.category && (
-                      <span className="bg-[#C9A227]/10 text-[#0F1B33] font-mono text-[9px] px-2 py-0.5 rounded font-bold border border-[#C9A227]/30">
-                        {c.category.toUpperCase()}
-                      </span>
-                    )}
-
-                    {c.salaryDate && (
-                      <span className="bg-[#2F9E77]/10 text-[#2F9E77] font-mono text-[9px] px-2 py-0.5 rounded font-bold border border-[#2F9E77]/30 flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        <span>PAYDAY: {getOrdinal(c.salaryDate)}</span>
-                        {daysLeft !== null && daysLeft <= 5 && (
-                          <span className="ml-1 bg-[#2F9E77] text-white px-1.5 py-0.2 rounded text-[8px] font-black">
-                            {daysLeft === 0 ? 'TODAY' : `${daysLeft}D LEFT`}
+                      {/* Section Header */}
+                      <button
+                        type="button"
+                        onClick={() => toggleRegionCollapse(cityKey)}
+                        className="w-full px-4 py-2.5 bg-[#0F1B33] text-white flex items-center justify-between cursor-pointer hover:bg-[#1C2A4A] transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <MapPin className="w-4 h-4 text-[#C9A227] shrink-0" />
+                          <h3 className="font-mono text-xs font-bold tracking-wider text-white uppercase">
+                            {cityKey}
+                          </h3>
+                          <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-[#C9A227] text-[#0F1B33] shrink-0">
+                            {cityCamps.length} {cityCamps.length === 1 ? 'CAMP' : 'CAMPS'}
                           </span>
-                        )}
-                      </span>
-                    )}
-                  </div>
+                          {totalWorkers > 0 && (
+                            <span className="hidden sm:inline-block font-mono text-[10px] text-[#8891A3] bg-white/10 px-2 py-0.5 rounded border border-white/10">
+                              👥 {totalWorkers.toLocaleString()} WORKERS
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[#8891A3]">
+                          <span className="text-[10px] font-mono hidden xs:inline-block">
+                            {isCollapsed ? 'EXPAND' : 'COLLAPSE'}
+                          </span>
+                          {isCollapsed ? (
+                            <ChevronRight className="w-4 h-4 text-[#C9A227]" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 text-[#C9A227]" />
+                          )}
+                        </div>
+                      </button>
 
-                  {/* Details Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#5B6478] bg-[#EEF0F3] p-2.5 rounded border border-[#E2E5E1]">
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-[#8891A3] shrink-0" />
-                      <span>Address: {c.mapsLink ? (
-                        <a
-                          href={c.mapsLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-bold text-[#2E4B8F] hover:underline inline-flex items-center gap-1"
-                        >
-                          <span>{c.location}</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      ) : (
-                        <span className="font-bold text-[#0F1B33]">{c.location || '-'}</span>
-                      )}</span>
+                      {/* Section Content */}
+                      {!isCollapsed && (
+                        <div className="p-3.5 space-y-2.5 bg-[#F4F6F8]">
+                          {cityCamps.map((c, idx) => renderCampCard(c, idx))}
+                        </div>
+                      )}
                     </div>
-
-                    {c.landmark && (
-                      <div className="flex items-center gap-1.5">
-                        <Navigation className="w-3.5 h-3.5 text-[#8891A3] shrink-0" />
-                        <span>Landmark: <strong className="text-[#0F1B33]">{c.landmark}</strong></span>
-                      </div>
-                    )}
-
-                    {c.company && (
-                      <div className="flex items-center gap-1.5">
-                        <Building2 className="w-3.5 h-3.5 text-[#8891A3] shrink-0" />
-                        <span>Company: <strong className="text-[#0F1B33]">{c.company}</strong></span>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-[#8891A3] shrink-0" />
-                      <span>Workers: <strong className="font-mono text-[#0F1B33]">{c.workers || 'N/A'}</strong></span>
-                    </div>
-                  </div>
-
-                  {/* Boss Info */}
-                  <div className="p-2 bg-white rounded border border-[#E2E5E1] text-xs">
-                    <span className="ops-eyebrow text-[#0F1B33]">CAMP BOSS CONTACT</span>
-                    <p className="text-[#0F1B33] font-medium mt-0.5 font-mono">
-                      {c.boss_name} · <strong className="text-[#2E4B8F]">{c.boss_phone}</strong>
-                    </p>
-                  </div>
-
-                  {c.notes && (
-                    <p className="text-xs text-[#5B6478] bg-[#EEF0F3] p-2 rounded border border-[#E2E5E1] italic">
-                      "{c.notes}"
-                    </p>
-                  )}
-
-                  <div className="ops-eyebrow text-[#8891A3] text-[9px]">
-                    REGISTERED ON {c.date}
-                  </div>
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            ) : (
+              processedData.map((item, idx) => renderCampCard(item as Camp, idx))
+            ))}
 
           {/* 3. Customers view */}
           {type === 'customers' && (
