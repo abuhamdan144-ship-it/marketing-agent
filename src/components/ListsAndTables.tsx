@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Company, Camp, Customer, Visit, Feedback, Complaint, CompetitorIntel, SocialAd, MarketingPlan } from '../types';
 import { SOCIAL_PLATFORMS, exportCategoryCampsToExcel, generateCategoryCampsSummaryText } from '../utils/exportUtils';
+import { useTheme } from '../context/ThemeContext';
 import {
   Calendar,
   Search,
@@ -44,6 +45,7 @@ const BUSINESS_CATEGORIES = ['Construction', 'Oil & Gas', 'Facilities Management
 const REGION_OPTIONS = ['All', 'Barka', 'Muscat', 'Sohar', 'Buraimi', 'Nizwa', 'Other'];
 
 export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEdit }: ListsAndTablesProps) {
+  const { isOutdoor } = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
 
@@ -507,17 +509,25 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
 
         {/* Category-Wise Export & Share Panel for Camps */}
         {type === 'camps' && (
-          <div className="bg-[#0F1B33] text-white rounded p-3.5 border border-white/10 space-y-3 shadow-xs mt-3">
-            <div className="flex items-center justify-between border-b border-white/10 pb-2">
+          <div className={`rounded p-3.5 space-y-3 mt-3 transition-colors ${
+            isOutdoor 
+              ? 'bg-[#FFFFFF] text-black border-2 border-black shadow-none' 
+              : 'bg-[#0F1B33] text-white border border-white/10 shadow-xs'
+          }`}>
+            <div className={`flex items-center justify-between pb-2 border-b ${
+              isOutdoor ? 'border-black' : 'border-white/10'
+            }`}>
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-[#1C2A4A] rounded border border-[#C9A227]/30 text-[#C9A227]">
+                <div className={`p-1.5 rounded border ${
+                  isOutdoor ? 'bg-black text-white border-black' : 'bg-[#1C2A4A] border-[#C9A227]/30 text-[#C9A227]'
+                }`}>
                   <FileSpreadsheet className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="ops-eyebrow text-[#C9A227] tracking-wider">
+                  <h4 className={`ops-eyebrow tracking-wider ${isOutdoor ? 'text-black font-extrabold' : 'text-[#C9A227]'}`}>
                     CATEGORY-WISE EXPORT &amp; SHARE
                   </h4>
-                  <p className="text-[10px] text-[#8891A3] font-mono">
+                  <p className={`text-[10px] font-mono ${isOutdoor ? 'text-black font-bold' : 'text-[#8891A3]'}`}>
                     Select a business category to download standalone Excel or dispatch summary reports
                   </p>
                 </div>
@@ -535,10 +545,14 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
                     key={cat}
                     type="button"
                     onClick={() => setExportCategory(isSelected ? null : cat)}
-                    className={`p-2 rounded border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                      isSelected
-                        ? 'bg-[#C9A227] text-[#0F1B33] border-[#C9A227] font-bold shadow-xs'
-                        : 'bg-[#1C2A4A]/70 text-white border-white/10 hover:border-[#C9A227]/40 hover:bg-[#1C2A4A]'
+                    className={`p-2 rounded text-left transition-all cursor-pointer flex flex-col justify-between border-2 ${
+                      isOutdoor
+                        ? isSelected
+                          ? 'bg-black text-white border-black font-extrabold'
+                          : 'bg-white text-black border-black font-bold hover:bg-black/10'
+                        : isSelected
+                          ? 'bg-[#C9A227] text-[#0F1B33] border-[#C9A227] font-bold shadow-xs'
+                          : 'bg-[#1C2A4A]/70 text-white border-white/10 hover:border-[#C9A227]/40 hover:bg-[#1C2A4A]'
                     }`}
                   >
                     <span className="text-[10px] font-mono font-bold leading-tight block truncate">
@@ -547,9 +561,9 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
                     <div className="mt-1 flex items-center justify-between">
                       <span
                         className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded ${
-                          isSelected
-                            ? 'bg-[#0F1B33] text-[#C9A227]'
-                            : 'bg-black/30 text-[#4ADE94]'
+                          isOutdoor
+                            ? isSelected ? 'bg-white text-black' : 'bg-black text-white'
+                            : isSelected ? 'bg-[#0F1B33] text-[#C9A227]' : 'bg-black/30 text-[#4ADE94]'
                         }`}
                       >
                         {count} {count === 1 ? 'CAMP' : 'CAMPS'}

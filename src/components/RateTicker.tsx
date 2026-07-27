@@ -3,24 +3,36 @@ import { motion } from 'motion/react';
 import { ExchangeRates } from '../types';
 import { CORRIDORS } from '../utils/exportUtils';
 import { TrendingUp, Activity } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 interface RateTickerProps {
   rates?: ExchangeRates;
 }
 
 export default function RateTicker({ rates }: RateTickerProps) {
+  const { isOutdoor } = useTheme();
   // Duplicate corridors for smooth infinite loop
   const tickerItems = [...CORRIDORS, ...CORRIDORS, ...CORRIDORS];
 
   return (
-    <div className="w-full bg-[#0B1526] border-y border-white/10 overflow-hidden py-1.5 px-3 flex items-center select-none text-xs">
-      <div className="flex items-center gap-2 pr-3 bg-[#0B1526] z-10 shrink-0 border-r border-white/10 mr-2 shadow-md">
+    <div className={`w-full overflow-hidden py-1.5 px-3 flex items-center select-none text-xs border-y transition-colors ${
+      isOutdoor 
+        ? 'bg-[#111111] border-black text-white' 
+        : 'bg-[#0B1526] border-white/10 text-slate-200'
+    }`}>
+      <div className={`flex items-center gap-2 pr-3 z-10 shrink-0 border-r mr-2 ${
+        isOutdoor 
+          ? 'bg-[#111111] border-white' 
+          : 'bg-[#0B1526] border-white/10 shadow-md'
+      }`}>
         <span className="flex h-2 w-2 relative">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4ADE94] opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-[#2F9E77]"></span>
+          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isOutdoor ? 'bg-[#4ADE94]' : 'bg-[#4ADE94]'} opacity-75`}></span>
+          <span className={`relative inline-flex rounded-full h-2 w-2 ${isOutdoor ? 'bg-[#0F6B3D]' : 'bg-[#2F9E77]'}`}></span>
         </span>
-        <span className="ops-eyebrow text-[#C9A227] flex items-center gap-1 font-mono tracking-wider text-[10px]">
-          <Activity className="w-3 h-3 text-[#C9A227]" />
+        <span className={`ops-eyebrow flex items-center gap-1 font-mono tracking-wider text-[10px] ${
+          isOutdoor ? 'text-white font-black' : 'text-[#C9A227]'
+        }`}>
+          <Activity className={`w-3 h-3 ${isOutdoor ? 'text-white' : 'text-[#C9A227]'}`} />
           OMR FX TICKER
         </span>
       </div>
@@ -42,11 +54,17 @@ export default function RateTicker({ rates }: RateTickerProps) {
             return (
               <div key={`${corridor.id}-${idx}`} className="inline-flex items-center gap-2 text-xs">
                 <span className="text-sm leading-none">{corridor.flag}</span>
-                <span className="font-semibold text-slate-300 font-mono tracking-tight">1 OMR =</span>
-                <span className="font-mono font-bold text-emerald-400 bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                <span className={`font-mono tracking-tight ${isOutdoor ? 'font-bold text-white' : 'font-semibold text-slate-300'}`}>
+                  1 OMR =
+                </span>
+                <span className={`font-mono font-bold px-1.5 py-0.5 rounded ${
+                  isOutdoor 
+                    ? 'bg-white text-black font-extrabold border border-black' 
+                    : 'text-emerald-400 bg-emerald-950/40 border border-emerald-500/20'
+                }`}>
                   {rateVal} {corridor.code}
                 </span>
-                <TrendingUp className="w-3 h-3 text-[#2F9E77]" />
+                <TrendingUp className={`w-3 h-3 ${isOutdoor ? 'text-[#4ADE94]' : 'text-[#2F9E77]'}`} />
               </div>
             );
           })}

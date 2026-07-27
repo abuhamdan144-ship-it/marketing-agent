@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import { useTheme } from '../context/ThemeContext';
 import {
   Building2,
   Tent,
@@ -20,6 +21,8 @@ interface QuickActionsProps {
 }
 
 export default function QuickActions({ onOpenModal, onExportAll }: QuickActionsProps) {
+  const { isOutdoor } = useTheme();
+
   const primaryAction = {
     type: 'visit',
     label: 'Field Visit',
@@ -46,12 +49,20 @@ export default function QuickActions({ onOpenModal, onExportAll }: QuickActionsP
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="ops-card p-5 space-y-3"
+      className={`p-5 space-y-3 rounded-lg border ${
+        isOutdoor 
+          ? 'bg-[#FFFFFF] text-black border-2 border-black shadow-none' 
+          : 'ops-card'
+      }`}
     >
-      <div className="flex items-center justify-between border-b border-[#E2E5E1] pb-2.5">
+      <div className={`flex items-center justify-between pb-2.5 border-b ${
+        isOutdoor ? 'border-black' : 'border-[#E2E5E1]'
+      }`}>
         <div className="flex items-center gap-1.5">
-          <Zap className="w-3.5 h-3.5 text-[#C9A227]" strokeWidth={2.2} />
-          <span className="ops-eyebrow text-[#0F1B33]">OPERATIONS CONTROL &amp; QUICK LOGGING</span>
+          <Zap className={`w-3.5 h-3.5 ${isOutdoor ? 'text-black' : 'text-[#C9A227]'}`} strokeWidth={2.5} />
+          <span className={`ops-eyebrow ${isOutdoor ? 'text-black font-extrabold' : 'text-[#0F1B33]'}`}>
+            OPERATIONS CONTROL &amp; QUICK LOGGING
+          </span>
         </div>
       </div>
 
@@ -59,27 +70,37 @@ export default function QuickActions({ onOpenModal, onExportAll }: QuickActionsP
       <motion.button
         whileTap={{ scale: 0.98 }}
         onClick={() => onOpenModal(primaryAction.type)}
-        className="w-full flex items-center justify-between p-3.5 rounded-lg bg-[#0F1B33] text-white hover:bg-[#1C2A4A] transition-colors cursor-pointer border border-[#C9A227]/30 shadow-ops-panel group"
+        className={`w-full flex items-center justify-between p-3.5 rounded-lg transition-colors cursor-pointer border-2 group ${
+          isOutdoor
+            ? 'bg-[#000000] text-[#FFFFFF] border-black shadow-none'
+            : 'bg-[#0F1B33] text-white hover:bg-[#1C2A4A] border-[#C9A227]/30 shadow-ops-panel'
+        }`}
       >
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded bg-[#C9A227] flex items-center justify-center text-[#0F1B33] font-bold shadow-xs shrink-0">
-            <PrimaryIcon className="w-5 h-5" strokeWidth={2.2} />
+          <div className={`w-9 h-9 rounded flex items-center justify-center font-bold shadow-xs shrink-0 ${
+            isOutdoor ? 'bg-white text-black' : 'bg-[#C9A227] text-[#0F1B33]'
+          }`}>
+            <PrimaryIcon className="w-5 h-5" strokeWidth={2.5} />
           </div>
           <div className="text-left">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold tracking-tight text-white">
+              <span className="text-sm font-extrabold tracking-tight text-white">
                 {primaryAction.label}
               </span>
-              <span className="ops-eyebrow text-[#C9A227] bg-[#C9A227]/15 px-1.5 py-0.5 rounded border border-[#C9A227]/30 text-[8px]">
+              <span className={`ops-eyebrow px-1.5 py-0.5 rounded border text-[8px] font-black ${
+                isOutdoor ? 'bg-white text-black border-black' : 'text-[#C9A227] bg-[#C9A227]/15 border-[#C9A227]/30'
+              }`}>
                 HIGH FREQUENCY
               </span>
             </div>
-            <p className="text-[11px] text-slate-300 font-medium leading-tight mt-0.5">
+            <p className="text-[11px] text-slate-200 font-bold leading-tight mt-0.5">
               {primaryAction.desc}
             </p>
           </div>
         </div>
-        <div className="font-mono text-xs font-bold text-[#C9A227] bg-white/5 px-2.5 py-1 rounded border border-white/10 flex items-center gap-1 shrink-0">
+        <div className={`font-mono text-xs font-black px-2.5 py-1 rounded border flex items-center gap-1 shrink-0 ${
+          isOutdoor ? 'bg-white text-black border-black' : 'text-[#C9A227] bg-white/5 border-white/10'
+        }`}>
           <span>+ LOG VISIT</span>
         </div>
       </motion.button>
@@ -99,26 +120,32 @@ export default function QuickActions({ onOpenModal, onExportAll }: QuickActionsP
                   onOpenModal(act.type);
                 }
               }}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg border text-center transition-colors cursor-pointer hover:border-[#0F1B33]/30 ${
-                act.isSpecial
-                  ? 'bg-[#1C2A4A]/5 border-[#2E4B8F]/30 text-[#0F1B33]'
-                  : 'bg-white border-[#E2E5E1] text-[#0F1B33]'
+              className={`flex flex-col items-center justify-center p-3 rounded-lg border text-center transition-colors cursor-pointer ${
+                isOutdoor
+                  ? 'bg-white text-black border-2 border-black hover:bg-black/10 shadow-none font-extrabold'
+                  : act.isSpecial
+                    ? 'bg-[#1C2A4A]/5 border-[#2E4B8F]/30 text-[#0F1B33] hover:border-[#0F1B33]/30'
+                    : 'bg-white border-[#E2E5E1] text-[#0F1B33] hover:border-[#0F1B33]/30'
               }`}
             >
               <div className="mb-1">
                 <Icon
                   className={`w-4 h-4 ${
-                    act.isComplaint
-                      ? 'text-[#D64545]'
-                      : 'text-[#0F1B33]'
+                    isOutdoor
+                      ? 'text-black'
+                      : act.isComplaint
+                        ? 'text-[#D64545]'
+                        : 'text-[#0F1B33]'
                   }`}
-                  strokeWidth={2}
+                  strokeWidth={2.2}
                 />
               </div>
-              <span className="text-xs font-bold text-[#0F1B33] tracking-tight">
+              <span className={`text-xs tracking-tight ${isOutdoor ? 'font-black text-black' : 'font-bold text-[#0F1B33]'}`}>
                 {act.label}
               </span>
-              <span className="text-[9px] text-[#8891A3] font-medium mt-0.5 max-w-[90px] mx-auto hidden sm:block truncate">
+              <span className={`text-[9px] mt-0.5 max-w-[90px] mx-auto hidden sm:block truncate ${
+                isOutdoor ? 'text-black font-extrabold' : 'text-[#8891A3] font-medium'
+              }`}>
                 {act.desc}
               </span>
             </motion.button>

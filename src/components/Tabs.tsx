@@ -17,6 +17,7 @@ import {
   MoreHorizontal,
   LucideIcon,
 } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 interface TabsProps {
   activeTab: string;
@@ -45,6 +46,7 @@ function SidebarTabButton({ label, Icon, isActive, isComplaint, badge, onClick }
   const [pos, setPos] = useState({ x: 50, y: 50 });
   const [hovering, setHovering] = useState(false);
   const [sweepKey, setSweepKey] = useState(0);
+  const { isOutdoor } = useTheme();
 
   const handleMove = (e: React.MouseEvent<HTMLButtonElement>) => {
     const rect = ref.current?.getBoundingClientRect();
@@ -55,6 +57,40 @@ function SidebarTabButton({ label, Icon, isActive, isComplaint, badge, onClick }
     });
   };
 
+  if (isOutdoor) {
+    // HIGH-CONTRAST OUTDOOR MODE STYLING
+    return (
+      <motion.button
+        ref={ref}
+        whileTap={{ scale: 0.98 }}
+        onClick={onClick}
+        className={`w-full relative flex items-center justify-between px-3.5 py-2.5 rounded-md text-xs font-bold cursor-pointer overflow-hidden my-0.5 border-2 transition-all ${
+          isActive
+            ? 'bg-[#000000] text-[#FFFFFF] border-[#000000] font-extrabold shadow-sm'
+            : 'bg-[#FFFFFF] text-[#000000] border-[#000000]/20 hover:border-[#000000] hover:bg-[#F0F0F0]'
+        }`}
+      >
+        <div className="relative flex items-center gap-3 z-10">
+          <Icon
+            className={`w-4 h-4 shrink-0 ${
+              isActive ? 'text-[#FFFFFF]' : isComplaint ? 'text-[#B91C1C]' : 'text-[#000000]'
+            }`}
+            strokeWidth={isActive ? 2.5 : 2}
+          />
+          <span className="tracking-tight">{label}</span>
+        </div>
+        {badge && badge > 0 ? (
+          <span className={`relative z-10 font-mono text-[10px] font-black px-1.5 py-0.5 rounded ${
+            isActive ? 'bg-[#FFFFFF] text-[#000000]' : 'bg-[#B91C1C] text-[#FFFFFF]'
+          }`}>
+            {badge}
+          </span>
+        ) : null}
+      </motion.button>
+    );
+  }
+
+  // OFFICE MODE STYLING
   return (
     <motion.button
       ref={ref}
@@ -120,6 +156,8 @@ function SidebarTabButton({ label, Icon, isActive, isComplaint, badge, onClick }
 }
 
 export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
+  const { isOutdoor } = useTheme();
+
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp },
@@ -173,9 +211,15 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
       `}</style>
 
       {/* Desktop / Tablet Sidebar Navigation */}
-      <div className="hidden lg:flex flex-col bg-[#0F1B33] text-[#8891A3] w-64 min-h-screen p-4 border-r border-white/10 shrink-0 select-none">
+      <div className={`hidden lg:flex flex-col w-64 min-h-screen p-4 border-r shrink-0 select-none transition-colors ${
+        isOutdoor 
+          ? 'bg-[#FFFFFF] text-[#000000] border-r-2 border-black' 
+          : 'bg-[#0F1B33] text-[#8891A3] border-white/10'
+      }`}>
         <div className="mb-5 px-2.5">
-          <span className="ops-eyebrow text-[#8891A3] text-[10px]">OPS NAVIGATION</span>
+          <span className={`ops-eyebrow text-[10px] ${isOutdoor ? 'text-[#000000] font-black' : 'text-[#8891A3]'}`}>
+            OPS NAVIGATION
+          </span>
         </div>
         <nav className="space-y-1 flex-1 relative">
           {tabs.map((t) => (
@@ -190,16 +234,22 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
             />
           ))}
         </nav>
-        <div className="mt-auto border-t border-white/10 pt-4 px-2.5">
-          <div className="ops-eyebrow text-[#5B6478]">AL JADEED EXCHANGE</div>
-          <div className="font-mono text-[10px] text-slate-400 font-semibold mt-0.5">
+        <div className={`mt-auto border-t pt-4 px-2.5 ${isOutdoor ? 'border-black' : 'border-white/10'}`}>
+          <div className={`ops-eyebrow ${isOutdoor ? 'text-[#000000] font-black' : 'text-[#5B6478]'}`}>
+            AL JADEED EXCHANGE
+          </div>
+          <div className={`font-mono text-[10px] font-extrabold mt-0.5 ${isOutdoor ? 'text-[#000000]' : 'text-slate-400'}`}>
             OPS CONSOLE v3.2
           </div>
         </div>
       </div>
 
       {/* Persistent Bottom Navigation for Mobile */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0F1B33] border-t border-white/10 px-2 py-1 flex items-center justify-around shadow-2xl z-40 select-none">
+      <div className={`lg:hidden fixed bottom-0 left-0 right-0 px-2 py-1.5 flex items-center justify-around z-40 select-none transition-colors ${
+        isOutdoor 
+          ? 'bg-[#FFFFFF] border-t-2 border-black shadow-none' 
+          : 'bg-[#0F1B33] border-t border-white/10 shadow-2xl'
+      }`}>
         {mobileNavTabs.map((t) => {
           const isActive =
             t.id === 'more'
@@ -215,22 +265,30 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
               className="flex flex-col items-center justify-center flex-1 py-1 cursor-pointer relative"
             >
               <div
-                className={`w-9 h-7 flex items-center justify-center rounded-md transition-all relative ${
-                  isActive
-                    ? 'bg-[#C9A227]/15 text-[#C9A227] border border-[#C9A227]/30'
-                    : 'text-[#8891A3]'
+                className={`w-10 h-8 flex items-center justify-center rounded-md transition-all relative ${
+                  isOutdoor
+                    ? isActive
+                      ? 'bg-[#000000] text-[#FFFFFF] border-2 border-black'
+                      : 'bg-[#FFFFFF] text-[#000000] border border-black/20'
+                    : isActive
+                      ? 'bg-[#C9A227]/15 text-[#C9A227] border border-[#C9A227]/30'
+                      : 'text-[#8891A3]'
                 }`}
               >
-                <Icon className="w-4 h-4" strokeWidth={isActive ? 2.2 : 1.8} />
+                <Icon className="w-4 h-4" strokeWidth={isActive ? 2.5 : 2} />
                 {t.badge && t.badge > 0 ? (
-                  <span className="absolute -top-1 -right-1 font-mono text-[9px] font-bold bg-[#D64545] text-white px-1 rounded border border-[#0F1B33]">
+                  <span className={`absolute -top-1 -right-1 font-mono text-[9px] font-black px-1 rounded ${
+                    isOutdoor ? 'bg-[#B91C1C] text-white border border-black' : 'bg-[#D64545] text-white border border-[#0F1B33]'
+                  }`}>
                     {t.badge}
                   </span>
                 ) : null}
               </div>
               <span
-                className={`text-[10px] font-medium tracking-tight mt-0.5 ${
-                  isActive ? 'text-[#C9A227] font-bold' : 'text-[#8891A3]'
+                className={`text-[10px] tracking-tight mt-0.5 ${
+                  isOutdoor
+                    ? isActive ? 'text-[#000000] font-black underline' : 'text-[#222222] font-bold'
+                    : isActive ? 'text-[#C9A227] font-bold' : 'text-[#8891A3] font-medium'
                 }`}
               >
                 {t.label}
