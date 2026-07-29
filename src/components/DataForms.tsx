@@ -454,11 +454,29 @@ export default function DataForms({ type, onSave, onClose, initialData }: DataFo
                 onChange={(e) => setCampForm({ ...campForm, region: e.target.value })}
                 className="w-full rounded border border-[#E2E5E1] bg-white px-3 py-2 text-sm font-mono focus:border-[#C9A227] focus:outline-none focus:ring-1 focus:ring-[#C9A227]"
               >
-                <option value="Barka">Barka</option>
                 <option value="Muscat">Muscat</option>
+                <option value="Al Khuwair">Al Khuwair</option>
+                <option value="Barka">Barka</option>
                 <option value="Sohar">Sohar</option>
                 <option value="Buraimi">Buraimi</option>
                 <option value="Nizwa">Nizwa</option>
+                <option value="Ibri">Ibri</option>
+                <option value="Ibra">Ibra</option>
+                <option value="Wadi Latham">Wadi Latham</option>
+                <option value="Yibal">Yibal</option>
+                <option value="Fahud">Fahud</option>
+                <option value="Adam">Adam</option>
+                <option value="Ghaba">Ghaba</option>
+                <option value="Haima">Haima</option>
+                <option value="Qatbit">Qatbit</option>
+                <option value="Thumrait">Thumrait</option>
+                <option value="Salalah">Salalah</option>
+                <option value="Duqm">Duqm</option>
+                <option value="Al Ashkharah">Al Ashkharah</option>
+                <option value="Nimr">Nimr</option>
+                <option value="Marmul">Marmul</option>
+                <option value="Rima">Rima</option>
+                <option value="Mukhaizna">Mukhaizna</option>
                 <option value="Other">Other</option>
               </select>
             </div>

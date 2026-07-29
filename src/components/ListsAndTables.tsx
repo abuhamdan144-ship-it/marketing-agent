@@ -42,7 +42,33 @@ interface ListsAndTablesProps {
 
 const CATEGORY_OPTIONS = ['All', 'Construction', 'Oil & Gas', 'Facilities Management', 'Cleaning Services', 'Manpower Supply', 'Other'];
 const BUSINESS_CATEGORIES = ['Construction', 'Oil & Gas', 'Facilities Management', 'Cleaning Services', 'Manpower Supply', 'Other'];
-const REGION_OPTIONS = ['All', 'Barka', 'Muscat', 'Sohar', 'Buraimi', 'Nizwa', 'Other'];
+const REGION_OPTIONS = [
+  'All',
+  'Muscat',
+  'Al Khuwair',
+  'Barka',
+  'Sohar',
+  'Buraimi',
+  'Nizwa',
+  'Ibri',
+  'Ibra',
+  'Wadi Latham',
+  'Yibal',
+  'Fahud',
+  'Adam',
+  'Ghaba',
+  'Haima',
+  'Qatbit',
+  'Thumrait',
+  'Salalah',
+  'Duqm',
+  'Al Ashkharah',
+  'Nimr',
+  'Marmul',
+  'Rima',
+  'Mukhaizna',
+  'Other',
+];
 
 export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEdit }: ListsAndTablesProps) {
   const { isOutdoor } = useTheme();
