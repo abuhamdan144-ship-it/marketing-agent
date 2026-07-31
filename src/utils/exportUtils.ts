@@ -504,9 +504,32 @@ export function exportExcel(appData: AppData): void {
 }
 
 export function exportCategoryCampsToExcel(camps: Camp[], categoryName: string): void {
+  exportCampsToExcel(
+    camps.filter((c) => c.category === categoryName),
+    `Camps_${categoryName}`
+  );
+}
+
+export function generateCategoryCampsSummaryText(camps: Camp[], categoryName: string): string {
+  return generateCampsSummaryText(
+    camps.filter((c) => c.category === categoryName),
+    `LABOR CAMPS SUMMARY — ${categoryName.toUpperCase()}`
+  );
+}
+
+export function exportCampsToPdf(camps: Camp[], title: string = 'Labor Camps Details Report'): void {
   try {
-    const categoryCamps = camps.filter((c) => c.category === categoryName);
-    if (categoryCamps.length === 0) return;
+    if (camps.length === 0) {
+      alert('No camps available to export.');
+      return;
+    }
+
+    const doc = new jsPDF('landscape', 'mm', 'a4');
+
+    // Title Header
+    doc.setFontSize(18);
+    doc.setTextColor(15, 27, 51);
+    doc.text(`Al Jadeed Exchange — ${title}`, 14, 18);
 
     const getOrdinal = (day?: number): string => {
       if (!day || day < 1 || day > 31) return '-';
@@ -519,15 +542,87 @@ export function exportCategoryCampsToExcel(camps: Camp[], categoryName: string):
       }
     };
 
-    const rows = categoryCamps.map((c, i) => ({
+    const totalWorkers = camps.reduce((acc, c) => acc + (c.workers ? parseInt(String(c.workers), 10) || 0 : 0), 0);
+
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.text(`Generated On: ${new Date().toLocaleString()}`, 14, 25);
+    doc.text(`Total Camps: ${camps.length} | Total Workers Covered: ${totalWorkers.toLocaleString()}`, 14, 30);
+
+    const headers = [['#', 'Camp Name', 'Category', 'Region / City', 'Location', 'Landmark', 'Sponsoring Company', 'Camp Boss Name', 'Boss Phone', 'Workers', 'Salary Day', 'Notes']];
+    const body = camps.map((c, i) => [
+      String(i + 1),
+      c.name || '-',
+      c.category || '-',
+      c.region || '-',
+      c.location || '-',
+      c.landmark || '-',
+      c.company || '-',
+      c.boss_name || '-',
+      c.boss_phone || '-',
+      String(c.workers || 0),
+      c.salaryDate ? getOrdinal(c.salaryDate) : '-',
+      c.notes || '-'
+    ]);
+
+    (doc as any).autoTable({
+      startY: 35,
+      head: headers,
+      body: body,
+      theme: 'striped',
+      headStyles: { fillColor: [15, 27, 51], textColor: [201, 162, 39], fontSize: 8, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 7.5 },
+      margin: { left: 14, right: 14 }
+    });
+
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(
+        `Al Jadeed Exchange Field Operations © ${new Date().getFullYear()} · Page ${i} of ${pageCount}`,
+        14,
+        doc.internal.pageSize.height - 8
+      );
+    }
+
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const cleanTitle = title.replace(/[^a-zA-Z0-9]/g, '_');
+    doc.save(`${cleanTitle}_${dateStr}.pdf`);
+  } catch (error) {
+    console.error('Camps PDF export error:', error);
+  }
+}
+
+export function exportCampsToExcel(camps: Camp[], title: string = 'Labor_Camps'): void {
+  try {
+    if (camps.length === 0) {
+      alert('No camps available to export.');
+      return;
+    }
+
+    const getOrdinal = (day?: number): string => {
+      if (!day || day < 1 || day > 31) return '-';
+      if (day >= 11 && day <= 13) return `${day}th`;
+      switch (day % 10) {
+        case 1: return `${day}st`;
+        case 2: return `${day}nd`;
+        case 3: return `${day}rd`;
+        default: return `${day}th`;
+      }
+    };
+
+    const rows = camps.map((c, i) => ({
       'S.No': i + 1,
       'Camp Name': c.name || '-',
+      'Category': c.category || '-',
       'Region / City': c.region || '-',
       'Location': c.location || '-',
       'Landmark': c.landmark || '-',
       'Sponsoring Company': c.company || '-',
       'Camp Boss Name': c.boss_name || '-',
-      'Boss Phone': c.boss_phone || '-',
+      'Camp Boss Phone': c.boss_phone || '-',
       'Worker Count': c.workers ? Number(c.workers) : 0,
       'Salary Date': c.salaryDate ? getOrdinal(c.salaryDate) : '-',
       'Notes': c.notes || '-',
@@ -536,54 +631,68 @@ export function exportCategoryCampsToExcel(camps: Camp[], categoryName: string):
 
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, 'Labor Camps');
 
-    const safeCategoryName = categoryName.slice(0, 24);
-    XLSX.utils.book_append_sheet(wb, ws, `${safeCategoryName} Camps`);
-
-    const cleanCategory = categoryName.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
+    const cleanTitle = title.replace(/[^a-zA-Z0-9]/g, '_');
     const dateStr = new Date().toISOString().slice(0, 10);
-    const fileName = `Camps_${cleanCategory}_${dateStr}.xlsx`;
-
-    XLSX.writeFile(wb, fileName);
+    XLSX.writeFile(wb, `${cleanTitle}_${dateStr}.xlsx`);
   } catch (error) {
-    console.error('Category Excel export error:', error);
+    console.error('Camps Excel export error:', error);
   }
 }
 
-export function generateCategoryCampsSummaryText(camps: Camp[], categoryName: string): string {
-  const categoryCamps = camps.filter((c) => c.category === categoryName);
+export function generateCampsSummaryText(camps: Camp[], title: string = 'LABOR CAMPS DETAILS REPORT'): string {
   const today = new Date().toLocaleDateString();
 
-  let text = `🏕️ *LABOR CAMPS SUMMARY — ${categoryName.toUpperCase()}*\n`;
+  let text = `🏕️ *${title.toUpperCase()}*\n`;
   text += `📅 *Date:* ${today}\n`;
-  text += `📊 *Total Camps:* ${categoryCamps.length}\n`;
-  text += '='.repeat(38) + '\n\n';
+  text += `📊 *Total Camps:* ${camps.length}\n`;
 
   let totalWorkers = 0;
+  camps.forEach((c) => {
+    totalWorkers += c.workers ? parseInt(String(c.workers), 10) || 0 : 0;
+  });
+  text += `👷 *Total Workers Covered:* ${totalWorkers.toLocaleString()}\n`;
+  text += '='.repeat(38) + '\n\n';
 
-  if (categoryCamps.length === 0) {
-    text += `No camps currently recorded under category "${categoryName}".\n`;
+  if (camps.length === 0) {
+    text += `No camps recorded.\n`;
   } else {
-    categoryCamps.forEach((c, i) => {
-      const workersNum = c.workers ? parseInt(String(c.workers), 10) || 0 : 0;
-      totalWorkers += workersNum;
-
+    camps.forEach((c, i) => {
       text += `${i + 1}. *${c.name}*\n`;
-      text += `   📍 City/Region: ${c.region || 'Unspecified'}\n`;
+      if (c.category) text += `   🏷️ Category: ${c.category}\n`;
+      text += `   📍 Region/City: ${c.region || 'Unspecified'}\n`;
       text += `   🗺️ Location: ${c.location || 'N/A'}${c.landmark ? ` (${c.landmark})` : ''}\n`;
       if (c.company) text += `   🏢 Company: ${c.company}\n`;
       text += `   👤 Boss: ${c.boss_name || 'N/A'} ${c.boss_phone ? `(${c.boss_phone})` : ''}\n`;
-      text += `   👷 Workers: ${c.workers || 'N/A'}\n`;
+      text += `   👷 Workers: ${c.workers || '0'}\n`;
       if (c.salaryDate) text += `   📅 Salary Payday: Day ${c.salaryDate} of month\n`;
       if (c.notes) text += `   📝 Notes: ${c.notes}\n`;
       text += '\n';
     });
 
     text += '-'.repeat(38) + '\n';
-    text += `👥 *SUMMARY:* ${categoryCamps.length} Camps | ${totalWorkers.toLocaleString()} Total Workers\n`;
+    text += `👥 *SUMMARY:* ${camps.length} Camps | ${totalWorkers.toLocaleString()} Total Workers\n`;
     text += `🏬 *Al Jadeed Exchange Field Operations*\n`;
   }
 
   return text;
+}
+
+export function shareCampsViaWhatsApp(camps: Camp[], title?: string, targetPhone?: string): void {
+  const text = generateCampsSummaryText(camps, title);
+  const cleanPhone = targetPhone ? targetPhone.replace(/[^0-9]/g, '') : '';
+  const waUrl = cleanPhone 
+    ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`
+    : `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(waUrl, '_blank');
+}
+
+export function shareCampsViaEmail(camps: Camp[], title?: string, targetEmail?: string): void {
+  const text = generateCampsSummaryText(camps, title);
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const subject = `${title || 'Labor Camps Details Report'} — ${dateStr}`;
+  const mailtoUrl = `mailto:${targetEmail || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
+  window.location.href = mailtoUrl;
 }
 

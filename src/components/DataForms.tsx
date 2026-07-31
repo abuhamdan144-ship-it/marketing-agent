@@ -1,12 +1,265 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   MapPin, 
   Locate, 
   Loader2, 
   CheckCircle2, 
   RefreshCw, 
-  AlertCircle 
+  AlertCircle,
+  Search,
+  ChevronDown,
+  Check,
+  X
 } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+
+const REGION_OPTIONS = [
+  'Muscat',
+  'Al Khuwair',
+  'Barka',
+  'Sohar',
+  'Buraimi',
+  'Nizwa',
+  'Ibri',
+  'Ibra',
+  'Wadi Latham',
+  'Yibal',
+  'Fahud',
+  'Adam',
+  'Ghaba',
+  'Haima',
+  'Qatbit',
+  'Thumrait',
+  'Salalah',
+  'Duqm',
+  'Al Ashkharah',
+  'Nimr',
+  'Marmul',
+  'Rima',
+  'Mukhaizna',
+  'Other',
+];
+
+const QUICK_PICK_REGIONS = ['Muscat', 'Barka', 'Adam', 'Fahud', 'Duqm', 'Salalah', 'Ibri'];
+
+interface LocationAutocompleteProps {
+  value: string;
+  onChange: (value: string) => void;
+  isOutdoor?: boolean;
+}
+
+function LocationAutocomplete({ value, onChange, isOutdoor }: LocationAutocompleteProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Close when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredRegions = REGION_OPTIONS.filter((r) =>
+    r.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const showCustomOption =
+    searchQuery.trim().length > 0 &&
+    !REGION_OPTIONS.some((r) => r.toLowerCase() === searchQuery.trim().toLowerCase());
+
+  const handleSelect = (selectedRegion: string) => {
+    onChange(selectedRegion);
+    setSearchQuery('');
+    setIsOpen(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        setIsOpen(true);
+      }
+      return;
+    }
+
+    const totalCount = filteredRegions.length + (showCustomOption ? 1 : 0);
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev + 1) % (totalCount || 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev - 1 + totalCount) % (totalCount || 1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (showCustomOption && highlightedIndex === filteredRegions.length) {
+        handleSelect(searchQuery.trim());
+      } else if (filteredRegions[highlightedIndex]) {
+        handleSelect(filteredRegions[highlightedIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      setIsOpen(false);
+    }
+  };
+
+  return (
+    <div ref={containerRef} className="relative w-full">
+      <div className="relative flex items-center">
+        <Search
+          className={`w-3.5 h-3.5 absolute left-2.5 pointer-events-none ${
+            isOutdoor ? 'text-black' : 'text-[#8891A3]'
+          }`}
+        />
+        <input
+          ref={inputRef}
+          type="text"
+          value={isOpen ? searchQuery : value}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            if (!isOpen) setIsOpen(true);
+            setHighlightedIndex(0);
+          }}
+          onFocus={() => {
+            setSearchQuery('');
+            setIsOpen(true);
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder="Search location / region..."
+          className={`w-full rounded border pl-8 pr-8 py-2 text-sm font-mono focus:outline-none transition-all ${
+            isOutdoor
+              ? 'bg-white text-black border-2 border-black font-extrabold focus:ring-2 focus:ring-black'
+              : 'border-[#E2E5E1] bg-white text-[#0F1B33] focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]'
+          }`}
+        />
+        {value && !isOpen ? (
+          <button
+            type="button"
+            onClick={() => {
+              onChange('');
+              setSearchQuery('');
+              inputRef.current?.focus();
+            }}
+            className="absolute right-2.5 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        ) : (
+          <ChevronDown
+            className={`w-3.5 h-3.5 absolute right-2.5 pointer-events-none transition-transform ${
+              isOpen ? 'rotate-180' : ''
+            } ${isOutdoor ? 'text-black' : 'text-[#8891A3]'}`}
+          />
+        )}
+      </div>
+
+      {isOpen && (
+        <div
+          className={`absolute left-0 right-0 mt-1 z-50 max-h-60 overflow-y-auto rounded-lg shadow-xl border p-1 text-xs font-mono transition-all ${
+            isOutdoor
+              ? 'bg-white text-black border-2 border-black'
+              : 'bg-[#0F1B33] text-white border-white/20 shadow-ops-panel'
+          }`}
+        >
+          {/* Quick Pick Chips */}
+          {!searchQuery && (
+            <div className={`p-1.5 mb-1 border-b ${isOutdoor ? 'border-black/20' : 'border-white/10'}`}>
+              <div className={`text-[9px] font-bold uppercase mb-1 ${isOutdoor ? 'text-black font-black' : 'text-[#C9A227]'}`}>
+                ⚡ QUICK SELECTION
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {QUICK_PICK_REGIONS.map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => handleSelect(q)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors border ${
+                      value === q
+                        ? isOutdoor
+                          ? 'bg-black text-white border-black'
+                          : 'bg-[#C9A227] text-[#0F1B33] border-[#C9A227]'
+                        : isOutdoor
+                          ? 'bg-gray-100 text-black border-black/30 hover:bg-black hover:text-white'
+                          : 'bg-white/10 text-white border-white/10 hover:bg-white/20'
+                    }`}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Region list */}
+          <div className="space-y-0.5">
+            {filteredRegions.map((region, idx) => {
+              const isSelected = value === region;
+              const isHighlighted = idx === highlightedIndex;
+
+              return (
+                <button
+                  key={region}
+                  type="button"
+                  onClick={() => handleSelect(region)}
+                  onMouseEnter={() => setHighlightedIndex(idx)}
+                  className={`w-full text-left px-2.5 py-1.5 rounded flex items-center justify-between cursor-pointer transition-colors ${
+                    isOutdoor
+                      ? isSelected
+                        ? 'bg-black text-white font-black'
+                        : isHighlighted
+                          ? 'bg-gray-200 text-black font-extrabold'
+                          : 'text-black hover:bg-gray-100'
+                      : isSelected
+                        ? 'bg-[#C9A227] text-[#0F1B33] font-bold'
+                        : isHighlighted
+                          ? 'bg-white/15 text-white'
+                          : 'text-slate-200 hover:bg-white/10'
+                  }`}
+                >
+                  <span className="truncate">{region}</span>
+                  {isSelected && <Check className="w-3.5 h-3.5 shrink-0" strokeWidth={2.5} />}
+                </button>
+              );
+            })}
+
+            {/* Custom search option */}
+            {showCustomOption && (
+              <button
+                type="button"
+                onClick={() => handleSelect(searchQuery.trim())}
+                onMouseEnter={() => setHighlightedIndex(filteredRegions.length)}
+                className={`w-full text-left px-2.5 py-2 rounded flex items-center justify-between cursor-pointer border-t transition-colors ${
+                  isOutdoor
+                    ? highlightedIndex === filteredRegions.length
+                      ? 'bg-black text-white font-black'
+                      : 'bg-gray-50 text-black border-black/20 font-bold'
+                    : highlightedIndex === filteredRegions.length
+                      ? 'bg-[#C9A227] text-[#0F1B33] font-bold'
+                      : 'bg-white/5 text-[#4ADE94] border-white/10 font-medium'
+                }`}
+              >
+                <span className="truncate">
+                  ➕ Use custom location: &quot;{searchQuery.trim()}&quot;
+                </span>
+              </button>
+            )}
+
+            {filteredRegions.length === 0 && !showCustomOption && (
+              <div className="p-3 text-center text-slate-400">
+                No location found. Type to set custom region.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface DataFormsProps {
   type: string;
@@ -16,6 +269,7 @@ interface DataFormsProps {
 }
 
 export default function DataForms({ type, onSave, onClose, initialData }: DataFormsProps) {
+  const { isOutdoor } = useTheme();
   // Form States initialized with initialData if editing
   const [companyForm, setCompanyForm] = useState({
     name: initialData?.name || '',
@@ -449,36 +703,11 @@ export default function DataForms({ type, onSave, onClose, initialData }: DataFo
               <label className="ops-eyebrow block mb-1 text-[#0F1B33]">
                 Region / Zone <span className="text-[#D64545]">*</span>
               </label>
-              <select
+              <LocationAutocomplete
                 value={campForm.region}
-                onChange={(e) => setCampForm({ ...campForm, region: e.target.value })}
-                className="w-full rounded border border-[#E2E5E1] bg-white px-3 py-2 text-sm font-mono focus:border-[#C9A227] focus:outline-none focus:ring-1 focus:ring-[#C9A227]"
-              >
-                <option value="Muscat">Muscat</option>
-                <option value="Al Khuwair">Al Khuwair</option>
-                <option value="Barka">Barka</option>
-                <option value="Sohar">Sohar</option>
-                <option value="Buraimi">Buraimi</option>
-                <option value="Nizwa">Nizwa</option>
-                <option value="Ibri">Ibri</option>
-                <option value="Ibra">Ibra</option>
-                <option value="Wadi Latham">Wadi Latham</option>
-                <option value="Yibal">Yibal</option>
-                <option value="Fahud">Fahud</option>
-                <option value="Adam">Adam</option>
-                <option value="Ghaba">Ghaba</option>
-                <option value="Haima">Haima</option>
-                <option value="Qatbit">Qatbit</option>
-                <option value="Thumrait">Thumrait</option>
-                <option value="Salalah">Salalah</option>
-                <option value="Duqm">Duqm</option>
-                <option value="Al Ashkharah">Al Ashkharah</option>
-                <option value="Nimr">Nimr</option>
-                <option value="Marmul">Marmul</option>
-                <option value="Rima">Rima</option>
-                <option value="Mukhaizna">Mukhaizna</option>
-                <option value="Other">Other</option>
-              </select>
+                onChange={(region) => setCampForm({ ...campForm, region })}
+                isOutdoor={isOutdoor}
+              />
             </div>
             <div>
               <label className="ops-eyebrow block mb-1 text-[#0F1B33]">

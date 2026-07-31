@@ -1,7 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Company, Camp, Customer, Visit, Feedback, Complaint, CompetitorIntel, SocialAd, MarketingPlan } from '../types';
-import { SOCIAL_PLATFORMS, exportCategoryCampsToExcel, generateCategoryCampsSummaryText } from '../utils/exportUtils';
+import { 
+  SOCIAL_PLATFORMS, 
+  exportCategoryCampsToExcel, 
+  generateCategoryCampsSummaryText,
+  exportCampsToPdf,
+  exportCampsToExcel,
+  generateCampsSummaryText,
+  shareCampsViaWhatsApp,
+  shareCampsViaEmail
+} from '../utils/exportUtils';
 import { useTheme } from '../context/ThemeContext';
 import {
   Calendar,
@@ -366,6 +375,52 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
           </p>
         )}
 
+        {/* Quick Single Camp Share & Export Bar */}
+        <div className="pt-2 border-t border-[#E2E5E1] flex flex-wrap items-center justify-between gap-1.5 text-[10px] font-mono">
+          <span className="text-[#8891A3] font-bold">DISPATCH CAMP DETAILS:</span>
+          <div className="flex items-center gap-1 flex-wrap">
+            <button
+              type="button"
+              onClick={() => shareCampsViaWhatsApp([c], `CAMP DETAILS — ${c.name}`)}
+              className="px-2 py-0.5 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#128C7E] font-bold rounded border border-[#25D366]/30 cursor-pointer flex items-center gap-1"
+              title="Send camp details via WhatsApp"
+            >
+              <MessageCircle className="w-3 h-3" />
+              <span>WhatsApp</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => shareCampsViaEmail([c], `CAMP DETAILS — ${c.name}`)}
+              className="px-2 py-0.5 bg-[#2E4B8F]/10 hover:bg-[#2E4B8F]/20 text-[#2E4B8F] font-bold rounded border border-[#2E4B8F]/30 cursor-pointer flex items-center gap-1"
+              title="Send camp details via Email"
+            >
+              <Mail className="w-3 h-3" />
+              <span>Email</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => exportCampsToPdf([c], `Camp_${c.name}`)}
+              className="px-2 py-0.5 bg-[#D64545]/10 hover:bg-[#D64545]/20 text-[#D64545] font-bold rounded border border-[#D64545]/30 cursor-pointer flex items-center gap-1"
+              title="Download PDF for this camp"
+            >
+              <FileText className="w-3 h-3" />
+              <span>PDF</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => exportCampsToExcel([c], `Camp_${c.name}`)}
+              className="px-2 py-0.5 bg-[#2F9E77]/10 hover:bg-[#2F9E77]/20 text-[#2F9E77] font-bold rounded border border-[#2F9E77]/30 cursor-pointer flex items-center gap-1"
+              title="Download Excel for this camp"
+            >
+              <FileSpreadsheet className="w-3 h-3" />
+              <span>Excel</span>
+            </button>
+          </div>
+        </div>
+
         <div className="ops-eyebrow text-[#8891A3] text-[9px]">REGISTERED ON {c.date}</div>
       </div>
     );
@@ -533,6 +588,78 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
           </div>
         )}
 
+        {/* Standalone Camps Export & Share Dispatch Hub */}
+        {type === 'camps' && (
+          <div className={`rounded p-3.5 space-y-3 mt-3 transition-colors ${
+            isOutdoor 
+              ? 'bg-[#FFFFFF] text-black border-2 border-black shadow-none' 
+              : 'bg-[#0F1B33] text-white border border-white/10 shadow-xs'
+          }`}>
+            <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b ${
+              isOutdoor ? 'border-black' : 'border-white/10'
+            }`}>
+              <div className="flex items-center gap-2">
+                <div className={`p-1.5 rounded border ${
+                  isOutdoor ? 'bg-black text-white border-black' : 'bg-[#1C2A4A] border-[#C9A227]/30 text-[#C9A227]'
+                }`}>
+                  <Share2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className={`ops-eyebrow tracking-wider ${isOutdoor ? 'text-black font-extrabold' : 'text-[#C9A227]'}`}>
+                    CAMPS EXPORT &amp; SHARE DISPATCH HUB
+                  </h4>
+                  <p className={`text-[10px] font-mono ${isOutdoor ? 'text-black font-bold' : 'text-[#8891A3]'}`}>
+                    Download or dispatch camps details separately ({processedData.length} camps shown)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 4 Primary Export & Share Buttons */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <button
+                type="button"
+                onClick={() => exportCampsToExcel(processedData as Camp[], 'Labor_Camps_Details')}
+                className="px-3 py-2 bg-[#2F9E77] hover:bg-[#258262] text-white font-mono font-bold text-xs rounded shadow-xs cursor-pointer flex items-center justify-center gap-2 transition-colors"
+                title="Download camps details as Excel spreadsheet"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 shrink-0" />
+                <span>EXCEL (.XLSX)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => exportCampsToPdf(processedData as Camp[], 'Labor Camps Details Report')}
+                className="px-3 py-2 bg-[#D64545] hover:bg-[#b53838] text-white font-mono font-bold text-xs rounded shadow-xs cursor-pointer flex items-center justify-center gap-2 transition-colors"
+                title="Download camps details as PDF report"
+              >
+                <FileText className="w-3.5 h-3.5 shrink-0" />
+                <span>PDF (.PDF)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => shareCampsViaWhatsApp(processedData as Camp[], 'Labor Camps Details Report')}
+                className="px-3 py-2 bg-[#25D366] hover:bg-[#1eb857] text-[#0F1B33] font-mono font-bold text-xs rounded shadow-xs cursor-pointer flex items-center justify-center gap-2 transition-colors"
+                title="Send camps details via WhatsApp"
+              >
+                <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                <span>WHATSAPP</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => shareCampsViaEmail(processedData as Camp[], 'Labor Camps Details Report')}
+                className="px-3 py-2 bg-[#2E4B8F] hover:bg-[#22396e] text-white font-mono font-bold text-xs rounded shadow-xs cursor-pointer flex items-center justify-center gap-2 transition-colors"
+                title="Send camps details via Email"
+              >
+                <Mail className="w-3.5 h-3.5 shrink-0" />
+                <span>EMAIL</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Category-Wise Export & Share Panel for Camps */}
         {type === 'camps' && (
           <div className={`rounded p-3.5 space-y-3 mt-3 transition-colors ${
@@ -554,7 +681,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
                     CATEGORY-WISE EXPORT &amp; SHARE
                   </h4>
                   <p className={`text-[10px] font-mono ${isOutdoor ? 'text-black font-bold' : 'text-[#8891A3]'}`}>
-                    Select a business category to download standalone Excel or dispatch summary reports
+                    Select a business category to download or share category-specific camp details
                   </p>
                 </div>
               </div>
@@ -625,8 +752,8 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
                     </button>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {/* 4 Action Buttons for Selected Category */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <button
                       type="button"
                       onClick={() => {
@@ -637,7 +764,7 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
                         exportCategoryCampsToExcel(data, exportCategory);
                       }}
                       disabled={count === 0}
-                      className="px-3 py-2 bg-[#2F9E77] hover:bg-[#258262] text-white font-mono font-bold text-xs rounded shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-40 transition-colors"
+                      className="px-3 py-2 bg-[#2F9E77] hover:bg-[#258262] text-white font-mono font-bold text-xs rounded shadow-xs cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-40 transition-colors"
                     >
                       <FileSpreadsheet className="w-3.5 h-3.5" />
                       <span>EXCEL (.XLSX)</span>
@@ -650,15 +777,13 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
                           alert(`No camps registered under ${exportCategory} category.`);
                           return;
                         }
-                        const summaryText = generateCategoryCampsSummaryText(data, exportCategory);
-                        const waUrl = `https://wa.me/?text=${encodeURIComponent(summaryText)}`;
-                        window.open(waUrl, '_blank');
+                        exportCampsToPdf(categoryCamps, `${exportCategory} Labor Camps Report`);
                       }}
                       disabled={count === 0}
-                      className="px-3 py-2 bg-[#25D366] hover:bg-[#1eb857] text-[#0F1B33] font-mono font-bold text-xs rounded shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-40 transition-colors"
+                      className="px-3 py-2 bg-[#D64545] hover:bg-[#b53838] text-white font-mono font-bold text-xs rounded shadow-xs cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-40 transition-colors"
                     >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      <span>WHATSAPP SUMMARY</span>
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>PDF (.PDF)</span>
                     </button>
 
                     <button
@@ -668,17 +793,29 @@ export default function ListsAndTables({ type, data, onDelete, onOpenModal, onEd
                           alert(`No camps registered under ${exportCategory} category.`);
                           return;
                         }
-                        const summaryText = generateCategoryCampsSummaryText(data, exportCategory);
-                        const dateStr = new Date().toISOString().slice(0, 10);
-                        const subject = `Labor Camps — ${exportCategory} — ${dateStr}`;
-                        const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(summaryText)}`;
-                        window.location.href = mailtoUrl;
+                        shareCampsViaWhatsApp(categoryCamps, `${exportCategory} Labor Camps Report`);
                       }}
                       disabled={count === 0}
-                      className="px-3 py-2 bg-[#2E4B8F] hover:bg-[#22396e] text-white font-mono font-bold text-xs rounded shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-40 transition-colors"
+                      className="px-3 py-2 bg-[#25D366] hover:bg-[#1eb857] text-[#0F1B33] font-mono font-bold text-xs rounded shadow-xs cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-40 transition-colors"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      <span>WHATSAPP</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (count === 0) {
+                          alert(`No camps registered under ${exportCategory} category.`);
+                          return;
+                        }
+                        shareCampsViaEmail(categoryCamps, `${exportCategory} Labor Camps Report`);
+                      }}
+                      disabled={count === 0}
+                      className="px-3 py-2 bg-[#2E4B8F] hover:bg-[#22396e] text-white font-mono font-bold text-xs rounded shadow-xs cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-40 transition-colors"
                     >
                       <Mail className="w-3.5 h-3.5" />
-                      <span>EMAIL REPORT</span>
+                      <span>EMAIL</span>
                     </button>
                   </div>
                 </div>
