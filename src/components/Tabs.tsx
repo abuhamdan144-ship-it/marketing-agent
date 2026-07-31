@@ -236,7 +236,7 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
         </nav>
         <div className={`mt-auto border-t pt-4 px-2.5 ${isOutdoor ? 'border-black' : 'border-white/10'}`}>
           <div className={`ops-eyebrow ${isOutdoor ? 'text-[#000000] font-black' : 'text-[#5B6478]'}`}>
-            AL JADEED EXCHANGE
+            AGENT BOOK
           </div>
           <div className={`font-mono text-[10px] font-extrabold mt-0.5 ${isOutdoor ? 'text-[#000000]' : 'text-slate-400'}`}>
             OPS CONSOLE v3.2

@@ -1004,7 +1004,7 @@ export default function App() {
       return;
     }
     const reportText = generateFullReport(appData);
-    const subject = encodeURIComponent(`Al Jadeed Marketing Intel Report - ${new Date().toLocaleDateString()}`);
+    const subject = encodeURIComponent(`Agent Book Marketing Intel Report - ${new Date().toLocaleDateString()}`);
     const body = encodeURIComponent(reportText);
     window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
     showToast('Redirecting to default mail client...', 'success');
@@ -1308,7 +1308,7 @@ export default function App() {
                     {getActiveTabLabel()}
                   </h2>
                   <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-                    Records and intelligence relating to Al Jadeed field ops
+                    Records and intelligence relating to Agent Book field ops
                   </p>
                 </div>
                 <span className="bg-indigo-50 text-indigo-700 text-xs font-extrabold px-2.5 py-1 rounded-lg border border-indigo-100">
@@ -1381,7 +1381,7 @@ export default function App() {
                     </label>
                     <input
                       type="email"
-                      placeholder="e.g. ops.manager@aljadeed.com"
+                      placeholder="e.g. ops.manager@agentbook.om"
                       value={settingsForm.managerEmail}
                       onChange={(e) => setSettingsForm({ ...settingsForm, managerEmail: e.target.value })}
                       className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none"
@@ -1568,8 +1568,7 @@ export default function App() {
                   </div>
                 </div>
                 <p className="text-xs text-slate-400 leading-relaxed font-medium">
-                  Established in 1985, Al Jadeed Exchange stands as Muscat's premier exchange corridor.
-                  Empowering labor camps, SMEs, and retail customers with transparent, ultra-fast transfers.
+                  Agent Book empowers marketing agents, field operations, camps, SMEs, and retail operations with real-time intelligence.
                 </p>
               </div>
 
@@ -1586,7 +1585,7 @@ export default function App() {
                     <span>📞</span> +968 2478 5432
                   </p>
                   <p className="flex items-center gap-2">
-                    <span>✉️</span> compliance@aljadeedexchange.om
+                    <span>✉️</span> support@agentbook.om
                   </p>
                 </div>
               </div>
@@ -1627,7 +1626,7 @@ export default function App() {
             {/* Bottom Bar */}
             <div className="pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500 font-semibold">
               <div>
-                © {new Date().getFullYear()} Al Jadeed Exchange. All Rights Reserved. Made with{' '}
+                © {new Date().getFullYear()} Agent Book. All Rights Reserved. Made with{' '}
                 <span className="text-rose-500 animate-pulse">❤️</span> in Muscat, Oman.
               </div>
               <div className="flex gap-4">

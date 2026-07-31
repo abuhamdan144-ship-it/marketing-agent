@@ -783,7 +783,7 @@ export default function AttendanceSheet({
                   ATTENDANCE REGISTER
                 </h1>
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                  Al Jadeed Marketing &amp; Field Operations
+                  Agent Book Field Operations
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-6 pt-2 text-xs font-extrabold border-t border-slate-300 mt-2">
                   <div>

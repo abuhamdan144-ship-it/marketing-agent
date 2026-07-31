@@ -62,7 +62,7 @@ export default function Header({
               <div className="flex items-center gap-2">
                 <span className={`ops-eyebrow tracking-widest text-[9px] ${
                   isOutdoor ? 'text-white font-black' : 'text-[#C9A227]'
-                }`}>AL JADEED EXCHANGE</span>
+                }`}>AGENT BOOK</span>
                 <span className={`hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-mono font-bold rounded border ${
                   isOutdoor ? 'bg-white text-black border-black' : 'bg-[#1C2A4A] text-slate-300 border-white/10'
                 }`}>OPS TERMINAL v3.2</span>

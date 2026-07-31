@@ -25,7 +25,7 @@ export function generateFullReport(appData: AppData): string {
   const today = new Date().toLocaleDateString();
   const agent = appData.settings.agentName || 'Agent';
 
-  let report = '📊 *AL JADEED MARKETING AGENT REPORT*\n';
+  let report = '📊 *AGENT BOOK MARKETING REPORT*\n';
   report += '='.repeat(40) + '\n\n';
   report += `📅 *Date:* ${today}\n`;
   report += `👤 *Agent:* ${agent}\n`;
@@ -529,7 +529,7 @@ export function exportCampsToPdf(camps: Camp[], title: string = 'Labor Camps Det
     // Title Header
     doc.setFontSize(18);
     doc.setTextColor(15, 27, 51);
-    doc.text(`Al Jadeed Exchange — ${title}`, 14, 18);
+    doc.text(`Agent Book — ${title}`, 14, 18);
 
     const getOrdinal = (day?: number): string => {
       if (!day || day < 1 || day > 31) return '-';
@@ -581,7 +581,7 @@ export function exportCampsToPdf(camps: Camp[], title: string = 'Labor Camps Det
       doc.setFontSize(8);
       doc.setTextColor(150);
       doc.text(
-        `Al Jadeed Exchange Field Operations © ${new Date().getFullYear()} · Page ${i} of ${pageCount}`,
+        `Agent Book Field Operations © ${new Date().getFullYear()} · Page ${i} of ${pageCount}`,
         14,
         doc.internal.pageSize.height - 8
       );
@@ -673,7 +673,7 @@ export function generateCampsSummaryText(camps: Camp[], title: string = 'LABOR C
 
     text += '-'.repeat(38) + '\n';
     text += `👥 *SUMMARY:* ${camps.length} Camps | ${totalWorkers.toLocaleString()} Total Workers\n`;
-    text += `🏬 *Al Jadeed Exchange Field Operations*\n`;
+    text += `🏬 *Agent Book Field Operations*\n`;
   }
 
   return text;
