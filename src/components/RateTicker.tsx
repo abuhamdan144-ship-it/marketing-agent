@@ -11,8 +11,14 @@ interface RateTickerProps {
 
 export default function RateTicker({ rates }: RateTickerProps) {
   const { isOutdoor } = useTheme();
-  // Duplicate corridors for smooth infinite loop
-  const tickerItems = [...CORRIDORS, ...CORRIDORS, ...CORRIDORS];
+  // Only show validated live values; repeat once for a seamless loop without clutter.
+  const validCorridors = CORRIDORS.filter((corridor) => {
+    const value = rates?.[corridor.id];
+    return typeof value === 'number' && Number.isFinite(value) && value > 0;
+  });
+  const tickerItems = validCorridors.length > 1 ? [...validCorridors, ...validCorridors] : validCorridors;
+
+  if (validCorridors.length === 0) return null;
 
   return (
     <div className={`w-full overflow-hidden py-1.5 px-3 flex items-center select-none text-xs border-y transition-colors ${
@@ -48,8 +54,9 @@ export default function RateTicker({ rates }: RateTickerProps) {
           }}
         >
           {tickerItems.map((corridor, idx) => {
-            const rawRate = rates ? rates[corridor.id] : undefined;
-            const rateVal = typeof rawRate === 'number' ? rawRate.toFixed(2) : rawRate || '---';
+            const rawRate = rates?.[corridor.id];
+            const rateVal = typeof rawRate === 'number' && Number.isFinite(rawRate) ? rawRate.toFixed(2) : null;
+            if (!rateVal) return null;
 
             return (
               <div key={`${corridor.id}-${idx}`} className="inline-flex items-center gap-2 text-xs">

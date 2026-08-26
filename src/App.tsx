@@ -488,18 +488,21 @@ export default function App() {
         const newRates: Record<string, number> = {};
         const ratesObj = data.rates || data.conversion_rates || {};
         CORRIDORS.forEach((c) => {
-          if (ratesObj[c.code]) {
-            newRates[c.id] = ratesObj[c.code];
+          const numericRate = Number(ratesObj[c.code]);
+          if (Number.isFinite(numericRate) && numericRate > 0) {
+            newRates[c.id] = numericRate;
           }
         });
-        const updatedData = {
-          ...appData,
-          rates: {
-            ...newRates,
-            lastFetch: new Date().toISOString(),
-          },
-        };
-        saveToLocalStorage(updatedData);
+        if (Object.keys(newRates).length !== CORRIDORS.length) {
+          throw new Error('Live rate feed returned incomplete or invalid currency data');
+        }
+        const fetchedAt = new Date().toISOString();
+        setAppData((current) => {
+          const updatedData = { ...current, rates: { ...newRates, lastFetch: fetchedAt } };
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedData));
+          return updatedData;
+        });
+        updateTime();
         setRateSource(`Live API: Refreshed ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`);
         showToast('Rates feed updated live from OMR exchange indices', 'success');
       }
