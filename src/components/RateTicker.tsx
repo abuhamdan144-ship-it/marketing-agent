@@ -13,8 +13,8 @@ export default function RateTicker({ rates }: RateTickerProps) {
   const { isOutdoor } = useTheme();
   // Only show validated live values; repeat once for a seamless loop without clutter.
   const validCorridors = CORRIDORS.filter((corridor) => {
-    const value = rates?.[corridor.id];
-    return typeof value === 'number' && Number.isFinite(value) && value > 0;
+    const value = Number(rates?.[corridor.id]);
+    return Number.isFinite(value) && value > 0;
   });
   const tickerItems = validCorridors.length > 1 ? [...validCorridors, ...validCorridors] : validCorridors;
 
@@ -54,8 +54,8 @@ export default function RateTicker({ rates }: RateTickerProps) {
           }}
         >
           {tickerItems.map((corridor, idx) => {
-            const rawRate = rates?.[corridor.id];
-            const rateVal = typeof rawRate === 'number' && Number.isFinite(rawRate) ? rawRate.toFixed(2) : null;
+            const numericRate = Number(rates?.[corridor.id]);
+            const rateVal = Number.isFinite(numericRate) && numericRate > 0 ? numericRate.toFixed(2) : null;
             if (!rateVal) return null;
 
             return (
