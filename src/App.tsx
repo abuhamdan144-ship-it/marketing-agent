@@ -15,11 +15,15 @@ import MoreView from './components/MoreView';
 import { AppData, Company, Camp, Customer, Visit, Feedback, Complaint, CompetitorIntel, SocialAd, MarketingPlan, AttendanceRecord, Settings } from './types';
 import { generateFullReport, exportPDF, exportExcel, CORRIDORS, SOCIAL_PLATFORMS } from './utils/exportUtils';
 import { 
-  Download, 
-  FileSpreadsheet, 
-  FileText, 
-  MessageCircle, 
-  Mail 
+  Download,
+  FileSpreadsheet,
+  FileText,
+  MessageCircle,
+  Mail,
+  ArrowRight,
+  Sparkles,
+  Activity,
+  Command
 } from 'lucide-react';
 import { 
   initFirebase, 
@@ -1107,6 +1111,33 @@ export default function App() {
           {/* Render Active View */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6 animate-fade-in">
+              {/* Reference-inspired hero surface */}
+              <section className="agent-hero" aria-labelledby="agent-hero-title">
+                <div className="agent-hero-glow agent-hero-glow-one" aria-hidden="true" />
+                <div className="agent-hero-glow agent-hero-glow-two" aria-hidden="true" />
+                <div className="agent-hero-grid" aria-hidden="true" />
+                <div className="agent-hero-content">
+                  <div className="agent-hero-kicker"><span className="agent-hero-kicker-dot" /> FIELD OPERATIONS / MUSCAT HQ</div>
+                  <h2 id="agent-hero-title">Turn every field signal<br /><em>into momentum.</em></h2>
+                  <p>One calm workspace for visits, teams, campaigns, and the decisions that move your operation forward.</p>
+                  <div className="agent-hero-actions">
+                    <button className="liquid-glass-button liquid-glass-button-primary" onClick={() => setActiveTab('visits')}>
+                      <Activity className="w-4 h-4" /> Log a field visit <ArrowRight className="w-4 h-4" />
+                    </button>
+                    <button className="liquid-glass-button liquid-glass-button-quiet" onClick={() => setActiveTab('analytics')}>
+                      <Sparkles className="w-4 h-4" /> Explore analytics
+                    </button>
+                  </div>
+                  <div className="agent-hero-tabs" role="tablist" aria-label="Workspace shortcuts">
+                    <button className="agent-hero-tab is-active" role="tab" aria-selected="true" onClick={() => setActiveTab('dashboard')}><Command className="w-3.5 h-3.5" /> Overview</button>
+                    <button className="agent-hero-tab" role="tab" aria-selected="false" onClick={() => setActiveTab('attendance')}>Attendance</button>
+                    <button className="agent-hero-tab" role="tab" aria-selected="false" onClick={() => setActiveTab('companies')}>Companies</button>
+                    <button className="agent-hero-tab" role="tab" aria-selected="false" onClick={() => setActiveTab('plans')}>Plans</button>
+                  </div>
+                </div>
+                <div className="agent-hero-orbit" aria-hidden="true"><span>LIVE</span><strong>{appData.visits.length.toString().padStart(2, '0')}</strong><small>VISITS LOGGED</small></div>
+              </section>
+
               {/* Overview Counts */}
               <Overview
                 appData={appData}
