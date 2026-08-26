@@ -161,3 +161,90 @@ body:not(.outdoor-mode) main { max-width: 1180px; }
 body:not(.outdoor-mode) button { border-radius: 10px; }
 body:not(.outdoor-mode) .grid { gap: .85rem; }
 body:not(.outdoor-mode) .shadow-ops-panel { box-shadow: 0 6px 20px rgba(24,34,73,.06); }
+
+/* 21st.dev-inspired rebuild: layered command shell with simple, premium component language */
+body:not(.outdoor-mode) > #root > .flex.flex-col.lg\:flex-row {
+  background: #f6f7fb !important;
+}
+body:not(.outdoor-mode) > #root > .flex.flex-col.lg\:flex-row > div.hidden.lg\:flex {
+  width: 232px !important;
+  padding: 18px 14px !important;
+  background: #ffffff !important;
+  color: #6c7690 !important;
+  border-right: 1px solid #e6eaf2 !important;
+}
+body:not(.outdoor-mode) > #root > .flex.flex-col.lg\:flex-row > div.hidden.lg\:flex::before {
+  content: 'AGENT BOOK';
+  display: block;
+  color: #17213b;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -.04em;
+  padding: 8px 10px 22px;
+}
+body:not(.outdoor-mode) > #root > .flex.flex-col.lg\:flex-row > div.hidden.lg\:flex > div.mb-5 { display: none; }
+body:not(.outdoor-mode) > #root > .flex.flex-col.lg\:flex-row > div.hidden.lg\:flex nav { gap: 3px !important; }
+body:not(.outdoor-mode) > #root > .flex.flex-col.lg\:flex-row > div.hidden.lg\:flex nav button {
+  min-height: 42px;
+  padding: 0 12px !important;
+  border: 1px solid transparent !important;
+  border-left: 0 !important;
+  border-radius: 11px !important;
+  color: #78839d !important;
+}
+body:not(.outdoor-mode) > #root > .flex.flex-col.lg\:flex-row > div.hidden.lg\:flex nav button:hover { background: #f3f5fa !important; color: #29375c !important; }
+body:not(.outdoor-mode) > #root > .flex.flex-col.lg\:flex-row > div.hidden.lg\:flex nav button[style*="rgba(201,162,39"] {
+  background: #eef1ff !important;
+  color: #5267d9 !important;
+  border-color: #dbe1ff !important;
+}
+body:not(.outdoor-mode) > #root > .flex.flex-col.lg\:flex-row > div.hidden.lg\:flex nav button[style*="rgba(201,162,39"] svg { color: #5267d9 !important; }
+body:not(.outdoor-mode) > #root > .flex.flex-col.lg\:flex-row > div.hidden.lg\:flex > div.mt-auto {
+  border-top-color: #edf0f5 !important;
+  padding: 18px 10px 4px !important;
+}
+body:not(.outdoor-mode) > #root > .flex.flex-col.lg\:flex-row > div.hidden.lg\:flex > div.mt-auto .ops-eyebrow { color: #5267d9 !important; }
+body:not(.outdoor-mode) > #root > .flex.flex-col.lg\:flex-row > div.hidden.lg\:flex > div.mt-auto .font-mono { color: #9aa3b6 !important; }
+
+/* Dark command header, inspired by 21st's strong black/navy canvas */
+body:not(.outdoor-mode) header {
+  background: #10172b !important;
+  color: #fff !important;
+  border-bottom: 1px solid #252f4b !important;
+  box-shadow: none !important;
+}
+body:not(.outdoor-mode) header h1,
+body:not(.outdoor-mode) header .text-white { color: #f8faff !important; }
+body:not(.outdoor-mode) header .text-slate-300,
+body:not(.outdoor-mode) header .text-\[\#8891A3\] { color: #9ba7c1 !important; }
+body:not(.outdoor-mode) header .bg-\[\#1C2A4A\],
+body:not(.outdoor-mode) header .bg-\[\#0B1526\] { background: #18233e !important; color: #c9d2e7 !important; border-color: #2a385b !important; }
+body:not(.outdoor-mode) header .text-\[\#C9A227\] { color: #b7ff4a !important; }
+body:not(.outdoor-mode) header .border-t { border-top-color: #242f4a !important; }
+
+/* Workspace framing */
+body:not(.outdoor-mode) main { padding: 28px 28px 56px !important; max-width: 1260px !important; }
+body:not(.outdoor-mode) main > div:first-child { border-radius: 16px; }
+body:not(.outdoor-mode) main .space-y-6 > * { animation: rebuild-rise .3s cubic-bezier(.23,1,.32,1) both; }
+body:not(.outdoor-mode) main .space-y-6 > *:nth-child(2) { animation-delay: 40ms; }
+body:not(.outdoor-mode) main .space-y-6 > *:nth-child(3) { animation-delay: 80ms; }
+body:not(.outdoor-mode) main .space-y-6 > *:nth-child(4) { animation-delay: 120ms; }
+@keyframes rebuild-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Cards become quiet white surfaces with a single accent edge */
+body:not(.outdoor-mode) main [class*="rounded-2xl"],
+body:not(.outdoor-mode) main [class*="rounded-xl"] { border-radius: 16px !important; }
+body:not(.outdoor-mode) main [class*="bg-white"] { background: rgba(255,255,255,.96) !important; }
+body:not(.outdoor-mode) main [class*="border-slate-100"],
+body:not(.outdoor-mode) main [class*="border-slate-200"] { border-color: #e7eaf2 !important; }
+body:not(.outdoor-mode) main [class*="shadow-sm"] { box-shadow: 0 8px 26px rgba(30,41,76,.055) !important; }
+body:not(.outdoor-mode) main [class*="text-slate-800"] { color: #17213b !important; }
+body:not(.outdoor-mode) main [class*="text-slate-500"] { color: #758097 !important; }
+body:not(.outdoor-mode) main [class*="bg-indigo-50"] { background: #eef1ff !important; }
+body:not(.outdoor-mode) main [class*="text-indigo-600"],
+body:not(.outdoor-mode) main [class*="text-indigo-700"] { color: #5267d9 !important; }
+
+@media (max-width: 1023px) {
+  body:not(.outdoor-mode) main { padding: 18px 16px 88px !important; }
+}
