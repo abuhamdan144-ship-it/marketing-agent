@@ -116,3 +116,48 @@ body.outdoor-mode input::placeholder, body.outdoor-mode textarea::placeholder { 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* Minimal UI refinement: calm surfaces, fewer visual signals, clearer hierarchy */
+body:not(.outdoor-mode) {
+  background: #f7f8fb;
+  color: #172033;
+}
+body:not(.outdoor-mode) header {
+  background: #ffffff !important;
+  color: #172033 !important;
+  border-bottom: 1px solid #e8ebf2 !important;
+  box-shadow: 0 4px 16px rgba(24, 34, 73, .04) !important;
+}
+body:not(.outdoor-mode) header h1,
+body:not(.outdoor-mode) header .text-white { color: #172033 !important; }
+body:not(.outdoor-mode) header .text-slate-300,
+body:not(.outdoor-mode) header .text-\[\#8891A3\] { color: #667085 !important; }
+body:not(.outdoor-mode) header .bg-\[\#1C2A4A\],
+body:not(.outdoor-mode) header .bg-\[\#0B1526\] { background: #f5f7fb !important; color: #4f5d75 !important; border-color: #e3e8f2 !important; }
+body:not(.outdoor-mode) header .text-\[\#C9A227\] { color: #5267d9 !important; }
+body:not(.outdoor-mode) .ops-card,
+body:not(.outdoor-mode) [class*="bg-white"].rounded-2xl,
+body:not(.outdoor-mode) [class*="bg-white"].rounded-xl {
+  background: #fff !important;
+  border: 1px solid #e7eaf1 !important;
+  box-shadow: 0 4px 18px rgba(24,34,73,.045) !important;
+}
+body:not(.outdoor-mode) .ops-card:hover,
+body:not(.outdoor-mode) [class*="bg-white"].rounded-2xl:hover { box-shadow: 0 8px 24px rgba(24,34,73,.075) !important; }
+body:not(.outdoor-mode) [class*="bg-[#0F1B33]"],
+body:not(.outdoor-mode) [class*="bg-[#0B1526]"],
+body:not(.outdoor-mode) [class*="bg-[var(--ink"] {
+  background: #17213b !important;
+  background-image: none !important;
+  border-color: #263353 !important;
+}
+body:not(.outdoor-mode) [class*="bg-[#1C2A4A]"] { background: #202b49 !important; }
+body:not(.outdoor-mode) [class*="text-[#C9A227]"],
+body:not(.outdoor-mode) [class*="text-[var(--gold"] { color: #5267d9 !important; }
+body:not(.outdoor-mode) [class*="bg-[#C9A227]"],
+body:not(.outdoor-mode) [class*="bg-[var(--gold"] { background: #5267d9 !important; color: #fff !important; }
+body:not(.outdoor-mode) .ops-eyebrow { letter-spacing: .10em; color: #7b8498; }
+body:not(.outdoor-mode) main { max-width: 1180px; }
+body:not(.outdoor-mode) button { border-radius: 10px; }
+body:not(.outdoor-mode) .grid { gap: .85rem; }
+body:not(.outdoor-mode) .shadow-ops-panel { box-shadow: 0 6px 20px rgba(24,34,73,.06); }
