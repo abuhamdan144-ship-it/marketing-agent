@@ -495,12 +495,14 @@ export default function App() {
         const numericRate = Number(item?.tt_rate);
         if (Number.isFinite(numericRate) && numericRate > 0) {
           newRates[c.id] = numericRate;
+          if (item?.updated_at) newRates[`${c.id}UpdatedAt`] = item.updated_at;
           if (item?.updated_at && (!latestSourceUpdate || item.updated_at > latestSourceUpdate)) {
             latestSourceUpdate = item.updated_at;
           }
         }
       });
-      if (Object.keys(newRates).length !== CORRIDORS.length) {
+      const validRateCount = CORRIDORS.filter((c) => typeof newRates[c.id] === 'number').length;
+      if (validRateCount !== CORRIDORS.length) {
         throw new Error('Al Jadeed live feed returned incomplete or invalid currency data');
       }
       const fetchedAt = new Date().toISOString();

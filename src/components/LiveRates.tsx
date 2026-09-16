@@ -63,10 +63,19 @@ export default function LiveRates({ rates, rateSource, isFetching, onRefresh, is
         {CORRIDORS.map((c) => {
           const val = rates[c.id];
           const displayVal = val && typeof val === 'number' ? val.toFixed(2) : '--';
+          const sourceUpdatedAt = rates[`${c.id}UpdatedAt`];
+          const formattedSourceUpdatedAt = sourceUpdatedAt
+            ? new Date(String(sourceUpdatedAt)).toLocaleString('en-GB', {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                timeZoneName: 'short',
+              })
+            : 'Timestamp unavailable';
           return (
             <motion.div
               key={c.id}
               whileHover={{ y: -2 }}
+              title={`Al Jadeed last updated: ${formattedSourceUpdatedAt}`}
               className="flex flex-col items-center justify-center p-3 bg-[#1C2A4A] hover:bg-[#1C2A4A]/80 rounded border border-white/5 hover:border-[#C9A227]/30 transition-all text-center"
             >
               <span className="text-xl">
@@ -77,6 +86,10 @@ export default function LiveRates({ rates, rateSource, isFetching, onRefresh, is
               </span>
               <span className="text-base font-mono font-extrabold text-[#C9A227] mt-0.5">
                 {displayVal}
+              </span>
+              <span className="mt-1 text-[8px] leading-tight text-[#8891A3] font-mono" aria-label={`Al Jadeed last updated ${formattedSourceUpdatedAt}`}>
+                Al Jadeed update
+                <span className="block text-[#B7BFCE]">{formattedSourceUpdatedAt}</span>
               </span>
             </motion.div>
           );

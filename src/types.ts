@@ -123,6 +123,14 @@ export interface ExchangeRates {
   usd?: number;
   lastFetch?: string;
   sourceUpdatedAt?: string;
+  pkrUpdatedAt?: string;
+  inrUpdatedAt?: string;
+  phpUpdatedAt?: string;
+  bdtUpdatedAt?: string;
+  nprUpdatedAt?: string;
+  lkrUpdatedAt?: string;
+  egpUpdatedAt?: string;
+  usdUpdatedAt?: string;
 }
 
 export interface AppData {
