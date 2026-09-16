@@ -1086,6 +1086,7 @@ export default function App() {
         <Header
           lastUpdate={lastUpdate}
           isOnline={isNetworkOnline && !isForcedOffline}
+          rates={appData.rates}
           rateSource={rateSource}
           syncStatus={syncStatus}
           isForcedOffline={isForcedOffline}
