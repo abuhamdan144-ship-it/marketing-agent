@@ -480,7 +480,7 @@ export default function App() {
     }
     setIsFetchingRates(true);
     try {
-      const response = await fetch('https://api.dshinez.com/api/currency-rates/', {
+      const response = await fetch('/api/rates', {
         headers: { Accept: 'application/json' },
         cache: 'no-store',
       });
