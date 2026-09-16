@@ -47,7 +47,16 @@ export default function LiveRates({ rates, rateSource, isFetching, onRefresh, is
           <span className="text-[#8891A3] font-bold">FEED SOURCE:</span>
           <span className="text-slate-200">{rateSource}</span>
         </div>
-        <span className="text-[#8891A3] text-[9px]">OMAN FX</span>
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="text-[#8891A3] text-[9px]">AL JADEED · OMAN</span>
+          {rates.sourceUpdatedAt && (
+            <span className="text-[#8891A3] text-[8px]">
+              Official update: {new Date(String(rates.sourceUpdatedAt)).toLocaleString('en-GB', {
+                day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+              })}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 xs:grid-cols-4 sm:grid-cols-4 gap-2.5">
@@ -76,4 +85,3 @@ export default function LiveRates({ rates, rateSource, isFetching, onRefresh, is
     </motion.div>
   );
 }
-

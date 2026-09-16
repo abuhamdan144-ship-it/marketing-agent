@@ -471,7 +471,7 @@ export default function App() {
     setToast({ message, type });
   };
 
-  // Fetch Live Rates
+  // Fetch live TT rates from Al Jadeed Exchange's official public feed.
   const fetchRates = async () => {
     if (isForcedOffline || !isNetworkOnline) {
       setRateSource(isForcedOffline ? 'Offline cache (Forced Mode)' : 'Offline cache (No Network Connection)');
@@ -480,32 +480,41 @@ export default function App() {
     }
     setIsFetchingRates(true);
     try {
-      const response = await fetch('https://open.er-api.com/v6/latest/OMR');
+      const response = await fetch('https://api.dshinez.com/api/currency-rates/', {
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      });
       if (!response.ok) throw new Error('Network error');
       const data = await response.json();
+      if (!Array.isArray(data)) throw new Error('Al Jadeed returned an invalid rates response');
 
-      if (data.result === 'success') {
-        const newRates: Record<string, number> = {};
-        const ratesObj = data.rates || data.conversion_rates || {};
-        CORRIDORS.forEach((c) => {
-          const numericRate = Number(ratesObj[c.code]);
-          if (Number.isFinite(numericRate) && numericRate > 0) {
-            newRates[c.id] = numericRate;
+      const newRates: Record<string, number | string> = {};
+      let latestSourceUpdate = '';
+      CORRIDORS.forEach((c) => {
+        const item = data.find((rate: any) => rate?.currency_code === c.code);
+        const numericRate = Number(item?.tt_rate);
+        if (Number.isFinite(numericRate) && numericRate > 0) {
+          newRates[c.id] = numericRate;
+          if (item?.updated_at && (!latestSourceUpdate || item.updated_at > latestSourceUpdate)) {
+            latestSourceUpdate = item.updated_at;
           }
-        });
-        if (Object.keys(newRates).length !== CORRIDORS.length) {
-          throw new Error('Live rate feed returned incomplete or invalid currency data');
         }
-        const fetchedAt = new Date().toISOString();
-        setAppData((current) => {
-          const updatedData = { ...current, rates: { ...newRates, lastFetch: fetchedAt } };
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedData));
-          return updatedData;
-        });
-        updateTime();
-        setRateSource(`Live API: Refreshed ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`);
-        showToast('Rates feed updated live from OMR exchange indices', 'success');
+      });
+      if (Object.keys(newRates).length !== CORRIDORS.length) {
+        throw new Error('Al Jadeed live feed returned incomplete or invalid currency data');
       }
+      const fetchedAt = new Date().toISOString();
+      setAppData((current) => {
+        const updatedData = {
+          ...current,
+          rates: { ...newRates, lastFetch: fetchedAt, sourceUpdatedAt: latestSourceUpdate },
+        };
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedData));
+        return updatedData;
+      });
+      updateTime();
+      setRateSource(`Al Jadeed Exchange: Refreshed ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`);
+      showToast('Live rates updated from Al Jadeed Exchange', 'success');
     } catch (error) {
       console.error('Rates fetch error:', error);
       setRateSource('Offline cache used. Reconnecting...');

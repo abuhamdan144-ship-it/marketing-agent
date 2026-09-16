@@ -122,6 +122,7 @@ export interface ExchangeRates {
   egp?: number;
   usd?: number;
   lastFetch?: string;
+  sourceUpdatedAt?: string;
 }
 
 export interface AppData {
