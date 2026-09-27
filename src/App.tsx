@@ -1022,6 +1022,41 @@ export default function App() {
     showToast('Redirecting to WhatsApp with full operations report...', 'success');
   };
 
+  const handleShareRateComparison = () => {
+    const pkRate = appData.rates.competitor?.rates?.BDT?.tt;
+    const westernUnionRate = appData.rates.westernUnion?.rates?.BDT?.tt;
+    const difference = typeof pkRate === 'number' && typeof westernUnionRate === 'number'
+      ? westernUnionRate - pkRate
+      : null;
+    const winner = difference === null
+      ? 'Waiting for both quotes'
+      : difference > 0
+        ? 'Western Union / PK Remit'
+        : difference < 0
+          ? 'PK Exchange'
+          : 'Same rate';
+    const comparisonText = [
+      '📊 OMAN REMITTANCE RATE COMPARISON',
+      `📅 ${new Date().toLocaleDateString('en-GB')}`,
+      '',
+      '🇧🇩 Bangladesh · 1 OMR',
+      `• PK Exchange: ${typeof pkRate === 'number' ? pkRate.toFixed(7) : 'N/A'} BDT`,
+      `• Western Union / PK Remit: ${typeof westernUnionRate === 'number' ? westernUnionRate.toFixed(7) : 'N/A'} BDT`,
+      `• Difference: ${difference === null ? 'N/A' : `${difference >= 0 ? '+' : ''}${difference.toFixed(7)} BDT`}`,
+      `✅ Better rate: ${winner}`,
+      '',
+      `💳 Western Union fee: ${appData.rates.westernUnion?.fee ?? 'N/A'} OMR`,
+      `🧾 VAT: ${appData.rates.westernUnion?.vat ?? 'N/A'} OMR`,
+      `🏦 Delivery: ${appData.rates.westernUnion?.deliveryType ?? 'N/A'}`,
+      '',
+      'Note: Western Union value is the PK Remit reference quote and should be rechecked in the registered app before sending.',
+    ].join('\n');
+    const phone = appData.settings.managerWhatsApp;
+    const target = phone ? `https://wa.me/${phone}` : 'https://wa.me/';
+    window.open(`${target}?text=${encodeURIComponent(comparisonText)}`, '_blank');
+    showToast('Rate comparison opened in WhatsApp', 'success');
+  };
+
   // Email Report Send
   const handleSendEmail = () => {
     const email = appData.settings.managerEmail;
@@ -1204,6 +1239,7 @@ export default function App() {
                 rateSource={rateSource}
                 isFetching={isFetchingRates}
                 onRefresh={fetchRates}
+                onShareComparison={handleShareRateComparison}
                 isOnline={rateSource.includes('Live')}
               />
 

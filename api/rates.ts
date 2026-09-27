@@ -2,7 +2,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const AL_JADEED_RATES_URL = 'https://api.dshinez.com/api/currency-rates/';
 const PK_EXCHANGE_RATES_URL = 'https://www.pkexchange.com.om/rates/';
-const WESTERN_UNION_RATES_URL = 'https://www.westernunion.com/us/en/currency-converter.html';
 
 const CORRIDOR_CODES = ['PKR', 'INR', 'PHP', 'BDT', 'NPR', 'LKR', 'EGP', 'USD'];
 const COUNTRY_TO_CODE: Record<string, string> = {
@@ -91,11 +90,17 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
         ...pkExchange,
       },
       westernUnion: {
-        source: 'Western Union',
-        sourceUrl: WESTERN_UNION_RATES_URL,
-        status: 'not_published',
-        note: 'PK Exchange publishes a general remittance table, but does not publish a separate Western Union rate table on this page.',
-        rates: {},
+        source: 'PK Remit / Western Union reference quote',
+        sourceUrl: 'https://apps.apple.com/om/app/pk-remit/id6514312805',
+        status: 'reference',
+        quoteDate: '2026-09-27',
+        fee: 2,
+        vat: 0.1,
+        deliveryType: 'Direct to bank',
+        note: 'Reference quote transcribed from the user-provided PK Remit screenshot. It is not an official public API feed and should be refreshed manually when the PK Remit quote changes.',
+        rates: {
+          BDT: { tt: 319.2559792, cashPay: null, buy: null, sell: null },
+        },
       },
     });
   } catch (error) {

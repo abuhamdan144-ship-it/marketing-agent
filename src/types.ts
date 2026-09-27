@@ -153,8 +153,12 @@ export interface CompetitorRateFeed {
 export interface WesternUnionRateFeed {
   source: string;
   sourceUrl: string;
-  status: 'available' | 'not_published';
+  status: 'available' | 'not_published' | 'reference';
   note?: string;
+  quoteDate?: string;
+  fee?: number;
+  vat?: number;
+  deliveryType?: string;
   rates: Record<string, CompetitorRate>;
 }
 
