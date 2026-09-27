@@ -12,6 +12,7 @@ import Toast from './components/Toast';
 import ExportPreviewModal from './components/ExportPreviewModal';
 import AttendanceSheet from './components/AttendanceSheet';
 import MoreView from './components/MoreView';
+import BranchManagement from './components/BranchManagement';
 import { AppData, Company, Camp, Customer, Visit, Feedback, Complaint, CompetitorIntel, SocialAd, MarketingPlan, AttendanceRecord, Settings } from './types';
 import { generateFullReport, exportPDF, exportExcel, CORRIDORS, SOCIAL_PLATFORMS } from './utils/exportUtils';
 import { 
@@ -1023,27 +1024,19 @@ export default function App() {
   };
 
   const handleShareRateComparison = () => {
-    const pkRate = appData.rates.competitor?.rates?.BDT?.tt;
-    const westernUnionRate = appData.rates.westernUnion?.rates?.BDT?.tt;
-    const difference = typeof pkRate === 'number' && typeof westernUnionRate === 'number'
-      ? westernUnionRate - pkRate
-      : null;
-    const winner = difference === null
-      ? 'Waiting for both quotes'
-      : difference > 0
-        ? 'Western Union / PK Remit'
-        : difference < 0
-          ? 'PK Exchange'
-          : 'Same rate';
+    const corridorLines = CORRIDORS.map((corridor) => {
+      const pkRate = appData.rates.competitor?.rates?.[corridor.code]?.tt;
+      const westernUnionRate = appData.rates.westernUnion?.rates?.[corridor.code]?.tt;
+      const difference = typeof pkRate === 'number' && typeof westernUnionRate === 'number' ? westernUnionRate - pkRate : null;
+      const winner = difference === null ? 'WU quote unavailable' : difference > 0 ? 'Western Union' : difference < 0 ? 'PK Exchange' : 'Same';
+      return `${corridor.flag} ${corridor.code}: PK ${typeof pkRate === 'number' ? pkRate.toFixed(7) : 'N/A'} | WU ${typeof westernUnionRate === 'number' ? westernUnionRate.toFixed(7) : 'N/A'} | Diff ${difference === null ? 'N/A' : `${difference >= 0 ? '+' : ''}${difference.toFixed(7)}`} | Better: ${winner}`;
+    });
     const comparisonText = [
-      '📊 OMAN REMITTANCE RATE COMPARISON',
+      '📊 FULL OMAN REMITTANCE RATE COMPARISON',
       `📅 ${new Date().toLocaleDateString('en-GB')}`,
       '',
-      '🇧🇩 Bangladesh · 1 OMR',
-      `• PK Exchange: ${typeof pkRate === 'number' ? pkRate.toFixed(7) : 'N/A'} BDT`,
-      `• Western Union / PK Remit: ${typeof westernUnionRate === 'number' ? westernUnionRate.toFixed(7) : 'N/A'} BDT`,
-      `• Difference: ${difference === null ? 'N/A' : `${difference >= 0 ? '+' : ''}${difference.toFixed(7)} BDT`}`,
-      `✅ Better rate: ${winner}`,
+      'All values are 1 OMR = receiving currency',
+      ...corridorLines,
       '',
       `💳 Western Union fee: ${appData.rates.westernUnion?.fee ?? 'N/A'} OMR`,
       `🧾 VAT: ${appData.rates.westernUnion?.vat ?? 'N/A'} OMR`,
@@ -1096,6 +1089,7 @@ export default function App() {
       competitors: 'Competitor Strategies Tracker',
       social: 'Social Ad Campaigns',
       plans: 'Active Marketing Plans',
+      'branch-management': 'Branch-wise Smart Management',
       settings: 'Dashboard Configurations',
       more: 'More Operations & Workspace',
     };
@@ -1390,8 +1384,12 @@ export default function App() {
             />
           )}
 
+          {activeTab === 'branch-management' && (
+            <BranchManagement managerWhatsApp={appData.settings.managerWhatsApp} showToast={showToast} />
+          )}
+
           {/* List views */}
-          {activeTab !== 'dashboard' && activeTab !== 'analytics' && activeTab !== 'attendance' && activeTab !== 'settings' && activeTab !== 'more' && (
+          {activeTab !== 'dashboard' && activeTab !== 'analytics' && activeTab !== 'attendance' && activeTab !== 'settings' && activeTab !== 'more' && activeTab !== 'branch-management' && (
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
               <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
                 <div>

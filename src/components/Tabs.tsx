@@ -13,6 +13,7 @@ import {
   Search,
   Smartphone,
   ClipboardList,
+  Building,
   Settings as SettingsIcon,
   MoreHorizontal,
   LucideIcon,
@@ -171,6 +172,7 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
     { id: 'competitors', label: 'Competitors', icon: Search },
     { id: 'social', label: 'Social Ads', icon: Smartphone },
     { id: 'plans', label: 'Plans', icon: ClipboardList },
+    { id: 'branch-management', label: 'Branch Management', icon: Building },
     { id: 'settings', label: 'Settings', icon: SettingsIcon },
   ];
 
@@ -315,5 +317,4 @@ export default function Tabs({ activeTab, onTabChange, badges }: TabsProps) {
     </div>
   );
 }
-
 

@@ -10,6 +10,7 @@ import {
   Search,
   Smartphone,
   ClipboardList,
+  Building,
   Settings as SettingsIcon,
   ChevronRight,
   Grid,
@@ -84,6 +85,13 @@ export default function MoreView({ appData, onNavigate }: MoreViewProps) {
       desc: 'Structured outreach strategies & goals',
       icon: ClipboardList,
       badge: `${appData.plans.length} active`,
+    },
+    {
+      id: 'branch-management',
+      title: 'Branch Management',
+      desc: 'Branch location, staff, banking, feedback & remittance report',
+      icon: Building,
+      badge: 'SMART OPS',
     },
     {
       id: 'settings',
