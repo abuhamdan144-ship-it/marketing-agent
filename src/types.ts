@@ -112,7 +112,7 @@ export interface Settings {
 }
 
 export interface ExchangeRates {
-  [key: string]: number | string | undefined;
+  [key: string]: number | string | CompetitorRateFeed | WesternUnionRateFeed | undefined;
   pkr?: number;
   inr?: number;
   php?: number;
@@ -131,6 +131,31 @@ export interface ExchangeRates {
   lkrUpdatedAt?: string;
   egpUpdatedAt?: string;
   usdUpdatedAt?: string;
+  competitor?: CompetitorRateFeed;
+  westernUnion?: WesternUnionRateFeed;
+}
+
+export interface CompetitorRate {
+  tt: number | null;
+  cashPay: number | null;
+  buy: number | null;
+  sell: number | null;
+}
+
+export interface CompetitorRateFeed {
+  source: string;
+  sourceUrl: string;
+  publishedDate?: string | null;
+  fetchedAt?: string;
+  rates: Record<string, CompetitorRate>;
+}
+
+export interface WesternUnionRateFeed {
+  source: string;
+  sourceUrl: string;
+  status: 'available' | 'not_published';
+  note?: string;
+  rates: Record<string, CompetitorRate>;
 }
 
 export interface AppData {

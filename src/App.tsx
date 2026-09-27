@@ -471,7 +471,7 @@ export default function App() {
     setToast({ message, type });
   };
 
-  // Fetch live TT rates from Al Jadeed Exchange's official public feed.
+  // Fetch live Al Jadeed rates plus the PK Exchange competitor benchmark.
   const fetchRates = async () => {
     if (isForcedOffline || !isNetworkOnline) {
       setRateSource(isForcedOffline ? 'Offline cache (Forced Mode)' : 'Offline cache (No Network Connection)');
@@ -485,13 +485,15 @@ export default function App() {
         cache: 'no-store',
       });
       if (!response.ok) throw new Error('Network error');
-      const data = await response.json();
-      if (!Array.isArray(data)) throw new Error('Al Jadeed returned an invalid rates response');
+      const payload = await response.json();
+      if (!payload || !Array.isArray(payload.alJadeed) || !payload.pkExchange) {
+        throw new Error('Combined exchange-rate response is invalid');
+      }
 
       const newRates: Record<string, number | string> = {};
       let latestSourceUpdate = '';
       CORRIDORS.forEach((c) => {
-        const item = data.find((rate: any) => rate?.currency_code === c.code);
+        const item = payload.alJadeed.find((rate: any) => rate?.currency_code === c.code);
         const numericRate = Number(item?.tt_rate);
         if (Number.isFinite(numericRate) && numericRate > 0) {
           newRates[c.id] = numericRate;
@@ -509,14 +511,21 @@ export default function App() {
       setAppData((current) => {
         const updatedData = {
           ...current,
-          rates: { ...newRates, lastFetch: fetchedAt, sourceUpdatedAt: latestSourceUpdate },
+          rates: {
+            ...current.rates,
+            ...newRates,
+            lastFetch: fetchedAt,
+            sourceUpdatedAt: latestSourceUpdate,
+            competitor: { ...payload.pkExchange, fetchedAt },
+            westernUnion: payload.westernUnion,
+          },
         };
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedData));
         return updatedData;
       });
       updateTime();
-      setRateSource(`Al Jadeed Exchange: Refreshed ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`);
-      showToast('Live rates updated from Al Jadeed Exchange', 'success');
+      setRateSource(`Al Jadeed + PK Exchange: Refreshed ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`);
+      showToast('Live Al Jadeed and competitor rates updated', 'success');
     } catch (error) {
       console.error('Rates fetch error:', error);
       setRateSource('Offline cache used. Reconnecting...');
